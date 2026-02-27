@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { calculateSeverity, filterBySeverity, getSeverityLabel, type Severity } from '../context-rules';
+import {
+  calculateSeverity,
+  filterBySeverity,
+  getSeverityLabel,
+  type Severity,
+} from '../context-rules';
 
 describe('Context-Aware Severity', () => {
   describe('Test Fixture Detection', () => {
@@ -14,9 +19,9 @@ describe('Context-Aware Severity', () => {
           await cleanupDatabase();
         });
       `;
-      
+
       const result = calculateSeverity(file, file, code, 1.0, 10);
-      
+
       expect(result.severity).toBe('info');
       expect(result.reason).toContain('test isolation');
       expect(result.matchedRule).toBe('test-fixtures');
@@ -29,9 +34,9 @@ describe('Context-Aware Severity', () => {
           jest.clearAllMocks();
         });
       `;
-      
+
       const result = calculateSeverity(file, file, code, 0.9, 8);
-      
+
       expect(result.severity).toBe('info');
       expect(result.matchedRule).toBe('test-fixtures');
     });
@@ -49,9 +54,9 @@ describe('Context-Aware Severity', () => {
           };
         }
       `;
-      
+
       const result = calculateSeverity(file, file, code, 0.8, 20);
-      
+
       expect(result.severity).toBe('minor');
       expect(result.reason).toContain('branding consistency');
       expect(result.matchedRule).toBe('templates');
@@ -70,9 +75,9 @@ describe('Context-Aware Severity', () => {
           await page.fill('input[name="username"]', value);
         }
       `;
-      
+
       const result = calculateSeverity(file, file, code, 0.85, 15);
-      
+
       // Debug: The detection is working now with 'await page' pattern
       expect(result.severity).toBe('minor');
       expect(result.reason).toContain('test independence');
@@ -89,9 +94,9 @@ describe('Context-Aware Severity', () => {
           testEnvironment: 'node'
         };
       `;
-      
+
       const result = calculateSeverity(file, file, code, 0.9, 10);
-      
+
       expect(result.severity).toBe('minor');
       expect(result.matchedRule).toBe('config-files');
     });
@@ -109,9 +114,9 @@ describe('Context-Aware Severity', () => {
         
         type UserRole = 'admin' | 'user';
       `;
-      
+
       const result = calculateSeverity(file, file, code, 0.95, 12);
-      
+
       expect(result.severity).toBe('info');
       expect(result.reason).toContain('type safety');
       expect(result.matchedRule).toBe('type-definitions');
@@ -122,9 +127,9 @@ describe('Context-Aware Severity', () => {
     it('should mark large identical code as critical', () => {
       const file = 'src/utils/helper.ts';
       const code = 'function compute() {\n'.repeat(35) + '}';
-      
+
       const result = calculateSeverity(file, file, code, 1.0, 35);
-      
+
       expect(result.severity).toBe('critical');
       expect(result.reason).toContain('maintenance burden');
     });
@@ -132,9 +137,9 @@ describe('Context-Aware Severity', () => {
     it('should mark high similarity medium-sized code as high', () => {
       const file = 'src/services/api.ts';
       const code = 'function fetchData() {\n'.repeat(20) + '}';
-      
+
       const result = calculateSeverity(file, file, code, 0.96, 20);
-      
+
       expect(result.severity).toBe('major');
       expect(result.reason).toContain('consolidated');
     });
@@ -148,11 +153,15 @@ describe('Context-Aware Severity', () => {
         { severity: 'minor' as Severity },
         { severity: 'info' as Severity },
       ];
-      
+
       const filtered = filterBySeverity(duplicates, 'minor');
-      
+
       expect(filtered).toHaveLength(3);
-      expect(filtered.map(d => d.severity)).toEqual(['critical', 'major', 'minor']);
+      expect(filtered.map((d) => d.severity)).toEqual([
+        'critical',
+        'major',
+        'minor',
+      ]);
     });
 
     it('should show all severities when filtering by info', () => {
@@ -160,9 +169,9 @@ describe('Context-Aware Severity', () => {
         { severity: 'critical' as Severity },
         { severity: 'info' as Severity },
       ];
-      
+
       const filtered = filterBySeverity(duplicates, 'info');
-      
+
       expect(filtered).toHaveLength(2);
     });
 
@@ -172,9 +181,9 @@ describe('Context-Aware Severity', () => {
         { severity: 'major' as Severity },
         { severity: 'minor' as Severity },
       ];
-      
+
       const filtered = filterBySeverity(duplicates, 'critical');
-      
+
       expect(filtered).toHaveLength(1);
       expect(filtered[0].severity).toBe('critical');
     });
@@ -199,9 +208,9 @@ describe('Context-Aware Severity', () => {
           email: 'test@example.com'
         };
       `;
-      
+
       const result = calculateSeverity(file, file, code, 0.9, 10);
-      
+
       expect(result.severity).toBe('info');
       expect(result.matchedRule).toBe('mock-data');
     });
@@ -218,9 +227,9 @@ describe('Context-Aware Severity', () => {
           });
         }
       `;
-      
+
       const result = calculateSeverity(file, file, code, 0.95, 15);
-      
+
       expect(result.severity).toBe('info');
       expect(result.matchedRule).toBe('migration-scripts');
     });

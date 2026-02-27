@@ -82,9 +82,13 @@ export function groupDuplicatesByFilePair(
     const deduplicated = deduplicateOverlappingRanges(groupDups);
 
     // Calculate aggregate metrics
-    const totalTokenCost = deduplicated.reduce((sum, d) => sum + d.tokenCost, 0);
+    const totalTokenCost = deduplicated.reduce(
+      (sum, d) => sum + d.tokenCost,
+      0
+    );
     const averageSimilarity =
-      deduplicated.reduce((sum, d) => sum + d.similarity, 0) / deduplicated.length;
+      deduplicated.reduce((sum, d) => sum + d.similarity, 0) /
+      deduplicated.length;
     const maxSimilarity = Math.max(...deduplicated.map((d) => d.similarity));
 
     // Use highest severity in group
@@ -202,7 +206,8 @@ export function createRefactorClusters(
     const files = getUniqueFiles(clusterDups);
     const totalTokenCost = clusterDups.reduce((sum, d) => sum + d.tokenCost, 0);
     const averageSimilarity =
-      clusterDups.reduce((sum, d) => sum + d.similarity, 0) / clusterDups.length;
+      clusterDups.reduce((sum, d) => sum + d.similarity, 0) /
+      clusterDups.length;
     const severity = getHighestSeverity(clusterDups.map((d) => d.severity));
     const patternType = getMostCommonPatternType(clusterDups);
 
@@ -235,8 +240,14 @@ function identifyCluster(dup: DuplicatePattern): string {
 
   // Blog/article patterns
   if (
-    (file1.includes('/blog/') || file1.startsWith('blog/') || file1.includes('/articles/') || file1.startsWith('articles/')) &&
-    (file2.includes('/blog/') || file2.startsWith('blog/') || file2.includes('/articles/') || file2.startsWith('articles/'))
+    (file1.includes('/blog/') ||
+      file1.startsWith('blog/') ||
+      file1.includes('/articles/') ||
+      file1.startsWith('articles/')) &&
+    (file2.includes('/blog/') ||
+      file2.startsWith('blog/') ||
+      file2.includes('/articles/') ||
+      file2.startsWith('articles/'))
   ) {
     return 'blog-seo-boilerplate';
   }
@@ -251,8 +262,14 @@ function identifyCluster(dup: DuplicatePattern): string {
     // Use original file paths (not lowercased) for component name extraction
     const component1 = extractComponentName(dup.file1);
     const component2 = extractComponentName(dup.file2);
-    console.log(`Component check: ${dup.file1} -> ${component1}, ${dup.file2} -> ${component2}`);
-    if (component1 && component2 && areSimilarComponents(component1, component2)) {
+    console.log(
+      `Component check: ${dup.file1} -> ${component1}, ${dup.file2} -> ${component2}`
+    );
+    if (
+      component1 &&
+      component2 &&
+      areSimilarComponents(component1, component2)
+    ) {
       const category = getComponentCategory(component1);
       console.log(`Creating cluster: component-${category}`);
       return `component-${category}`;
@@ -261,8 +278,12 @@ function identifyCluster(dup: DuplicatePattern): string {
 
   // E2E test patterns
   if (
-    (file1.includes('/e2e/') || file1.startsWith('e2e/') || file1.includes('.e2e.')) &&
-    (file2.includes('/e2e/') || file2.startsWith('e2e/') || file2.includes('.e2e.'))
+    (file1.includes('/e2e/') ||
+      file1.startsWith('e2e/') ||
+      file1.includes('.e2e.')) &&
+    (file2.includes('/e2e/') ||
+      file2.startsWith('e2e/') ||
+      file2.includes('.e2e.'))
   ) {
     return 'e2e-test-patterns';
   }
@@ -279,8 +300,14 @@ function identifyCluster(dup: DuplicatePattern): string {
 
   // Infrastructure scripts
   if (
-    (file1.includes('/scripts/') || file1.startsWith('scripts/') || file1.includes('/infra/') || file1.startsWith('infra/')) &&
-    (file2.includes('/scripts/') || file2.startsWith('scripts/') || file2.includes('/infra/') || file2.startsWith('infra/'))
+    (file1.includes('/scripts/') ||
+      file1.startsWith('scripts/') ||
+      file1.includes('/infra/') ||
+      file1.startsWith('infra/')) &&
+    (file2.includes('/scripts/') ||
+      file2.startsWith('scripts/') ||
+      file2.includes('/infra/') ||
+      file2.startsWith('infra/'))
   ) {
     return 'infrastructure-scripts';
   }
@@ -391,51 +418,62 @@ function getClusterInfo(
   patternType: PatternType,
   fileCount: number
 ): { name: string; suggestion: string; reason: string } {
-  const templates: Record<string, { name: string; suggestion: string; reason: string }> =
-    {
-      'blog-seo-boilerplate': {
-        name: `Blog SEO Boilerplate (${fileCount} files)`,
-        suggestion:
-          'Create BlogPageLayout component with SEO schema generator, breadcrumb component, and metadata helpers',
-        reason: 'SEO boilerplate duplication increases maintenance burden and schema consistency risk',
-      },
-      'e2e-test-patterns': {
-        name: `E2E Test Patterns (${fileCount} files)`,
-        suggestion:
-          'Extract page object helpers and common test utilities (waitFor, fillForm, etc.)',
-        reason: 'Test helper extraction improves maintainability while preserving test independence',
-      },
-      'api-handlers': {
-        name: `API Handler Patterns (${fileCount} files)`,
-        suggestion: 'Extract common middleware, error handling, and response formatting',
-        reason: 'API handler duplication leads to inconsistent error handling and response formats',
-      },
-      'validators': {
-        name: `Validator Patterns (${fileCount} files)`,
-        suggestion: 'Consolidate into shared schema validators (Zod/Yup) with reusable rules',
-        reason: 'Validator duplication causes inconsistent validation and harder maintenance',
-      },
-      'infrastructure-scripts': {
-        name: `Infrastructure Scripts (${fileCount} files)`,
-        suggestion: 'Extract common CLI parsing, file I/O, and error handling utilities',
-        reason: 'Script duplication is often acceptable for one-off tasks, but common patterns can be shared',
-      },
-      'component-button': {
-        name: `Button Component Variants (${fileCount} files)`,
-        suggestion: 'Create unified Button component with variant props',
-        reason: 'Multiple button variants should share base styles and behavior',
-      },
-      'component-card': {
-        name: `Card Component Variants (${fileCount} files)`,
-        suggestion: 'Create unified Card component with composition pattern',
-        reason: 'Card variants should share layout structure and styling',
-      },
-      'component-modal': {
-        name: `Modal Component Variants (${fileCount} files)`,
-        suggestion: 'Create base Modal component with customizable content',
-        reason: 'Modal variants should share overlay, animation, and accessibility logic',
-      },
-    };
+  const templates: Record<
+    string,
+    { name: string; suggestion: string; reason: string }
+  > = {
+    'blog-seo-boilerplate': {
+      name: `Blog SEO Boilerplate (${fileCount} files)`,
+      suggestion:
+        'Create BlogPageLayout component with SEO schema generator, breadcrumb component, and metadata helpers',
+      reason:
+        'SEO boilerplate duplication increases maintenance burden and schema consistency risk',
+    },
+    'e2e-test-patterns': {
+      name: `E2E Test Patterns (${fileCount} files)`,
+      suggestion:
+        'Extract page object helpers and common test utilities (waitFor, fillForm, etc.)',
+      reason:
+        'Test helper extraction improves maintainability while preserving test independence',
+    },
+    'api-handlers': {
+      name: `API Handler Patterns (${fileCount} files)`,
+      suggestion:
+        'Extract common middleware, error handling, and response formatting',
+      reason:
+        'API handler duplication leads to inconsistent error handling and response formats',
+    },
+    validators: {
+      name: `Validator Patterns (${fileCount} files)`,
+      suggestion:
+        'Consolidate into shared schema validators (Zod/Yup) with reusable rules',
+      reason:
+        'Validator duplication causes inconsistent validation and harder maintenance',
+    },
+    'infrastructure-scripts': {
+      name: `Infrastructure Scripts (${fileCount} files)`,
+      suggestion:
+        'Extract common CLI parsing, file I/O, and error handling utilities',
+      reason:
+        'Script duplication is often acceptable for one-off tasks, but common patterns can be shared',
+    },
+    'component-button': {
+      name: `Button Component Variants (${fileCount} files)`,
+      suggestion: 'Create unified Button component with variant props',
+      reason: 'Multiple button variants should share base styles and behavior',
+    },
+    'component-card': {
+      name: `Card Component Variants (${fileCount} files)`,
+      suggestion: 'Create unified Card component with composition pattern',
+      reason: 'Card variants should share layout structure and styling',
+    },
+    'component-modal': {
+      name: `Modal Component Variants (${fileCount} files)`,
+      suggestion: 'Create base Modal component with customizable content',
+      reason:
+        'Modal variants should share overlay, animation, and accessibility logic',
+    },
+  };
 
   if (templates[clusterId]) {
     return templates[clusterId];
@@ -459,6 +497,8 @@ export function filterClustersByImpact(
   minFileCount: number = 3
 ): RefactorCluster[] {
   return clusters.filter(
-    (cluster) => cluster.totalTokenCost >= minTokenCost || cluster.files.length >= minFileCount
+    (cluster) =>
+      cluster.totalTokenCost >= minTokenCost ||
+      cluster.files.length >= minFileCount
   );
 }

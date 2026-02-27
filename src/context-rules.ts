@@ -28,7 +28,7 @@ export const CONTEXT_RULES: ContextRule[] = [
         file.includes('__tests__') ||
         file.includes('/test/') ||
         file.includes('/tests/');
-      
+
       const hasTestFixtures =
         code.includes('beforeAll') ||
         code.includes('afterAll') ||
@@ -36,7 +36,7 @@ export const CONTEXT_RULES: ContextRule[] = [
         code.includes('afterEach') ||
         code.includes('setUp') ||
         code.includes('tearDown');
-      
+
       return isTestFile && hasTestFixtures;
     },
     severity: 'info',
@@ -54,16 +54,20 @@ export const CONTEXT_RULES: ContextRule[] = [
         file.includes('-template') ||
         file.includes('/email-templates/') ||
         file.includes('/emails/');
-      
+
       const hasTemplateContent =
         (code.includes('return') || code.includes('export')) &&
-        (code.includes('html') || code.includes('subject') || code.includes('body'));
-      
+        (code.includes('html') ||
+          code.includes('subject') ||
+          code.includes('body'));
+
       return isTemplate && hasTemplateContent;
     },
     severity: 'minor',
-    reason: 'Template duplication may be intentional for maintainability and branding consistency',
-    suggestion: 'Extract shared structure only if templates become hard to maintain',
+    reason:
+      'Template duplication may be intentional for maintainability and branding consistency',
+    suggestion:
+      'Extract shared structure only if templates become hard to maintain',
   },
 
   // E2E/Integration Test Page Objects - Test independence
@@ -80,7 +84,7 @@ export const CONTEXT_RULES: ContextRule[] = [
         file.includes('cypress/') ||
         file.includes('/integration/') ||
         file.includes('integration/');
-      
+
       const hasPageObjectPatterns =
         code.includes('page.') ||
         code.includes('await page') ||
@@ -89,12 +93,14 @@ export const CONTEXT_RULES: ContextRule[] = [
         code.includes('selector') ||
         code.includes('click(') ||
         code.includes('fill(');
-      
+
       return isE2ETest && hasPageObjectPatterns;
     },
     severity: 'minor',
-    reason: 'E2E test duplication ensures test independence and reduces coupling',
-    suggestion: 'Consider page object pattern only if duplication causes maintenance issues',
+    reason:
+      'E2E test duplication ensures test independence and reduces coupling',
+    suggestion:
+      'Consider page object pattern only if duplication causes maintenance issues',
   },
 
   // Configuration Files - Often necessarily similar by design
@@ -113,7 +119,8 @@ export const CONTEXT_RULES: ContextRule[] = [
     },
     severity: 'minor',
     reason: 'Configuration files often have similar structure by design',
-    suggestion: 'Consider shared config base only if configurations become hard to maintain',
+    suggestion:
+      'Consider shared config base only if configurations become hard to maintain',
   },
 
   // Type Definitions - Duplication for type safety and module independence
@@ -121,17 +128,19 @@ export const CONTEXT_RULES: ContextRule[] = [
     name: 'type-definitions',
     detect: (file, code) => {
       const isTypeFile = file.endsWith('.d.ts') || file.includes('/types/');
-      
+
       const hasTypeDefinitions =
         code.includes('interface ') ||
         code.includes('type ') ||
         code.includes('enum ');
-      
+
       return isTypeFile && hasTypeDefinitions;
     },
     severity: 'info',
-    reason: 'Type duplication may be intentional for module independence and type safety',
-    suggestion: 'Extract to shared types package only if causing maintenance burden',
+    reason:
+      'Type duplication may be intentional for module independence and type safety',
+    suggestion:
+      'Extract to shared types package only if causing maintenance burden',
   },
 
   // Migration Scripts - One-off scripts that are similar by nature
@@ -159,14 +168,14 @@ export const CONTEXT_RULES: ContextRule[] = [
         file.includes('/fixtures/') ||
         file.includes('.mock.') ||
         file.includes('.fixture.');
-      
+
       const hasMockData =
         code.includes('mock') ||
         code.includes('Mock') ||
         code.includes('fixture') ||
         code.includes('stub') ||
         code.includes('export const');
-      
+
       return isMockFile && hasMockData;
     },
     severity: 'info',
@@ -206,7 +215,8 @@ export function calculateSeverity(
   if (similarity >= 0.95 && linesOfCode >= 30) {
     return {
       severity: 'critical',
-      reason: 'Large nearly-identical code blocks waste tokens and create maintenance burden',
+      reason:
+        'Large nearly-identical code blocks waste tokens and create maintenance burden',
       suggestion: 'Extract to shared utility module immediately',
     };
   } else if (similarity >= 0.95 && linesOfCode >= 15) {
@@ -225,7 +235,8 @@ export function calculateSeverity(
     return {
       severity: 'minor',
       reason: 'Moderate similarity detected',
-      suggestion: 'Consider extracting shared patterns if code evolves together',
+      suggestion:
+        'Consider extracting shared patterns if code evolves together',
     };
   } else {
     return {
@@ -258,9 +269,9 @@ export function filterBySeverity<T extends { severity: Severity }>(
 ): T[] {
   const severityOrder: Severity[] = ['info', 'minor', 'major', 'critical'];
   const minIndex = severityOrder.indexOf(minSeverity);
-  
+
   if (minIndex === -1) return duplicates;
-  
+
   return duplicates.filter((dup) => {
     const dupIndex = severityOrder.indexOf(dup.severity);
     return dupIndex >= minIndex;

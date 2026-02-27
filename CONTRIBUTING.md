@@ -5,6 +5,7 @@ Thank you for your interest in contributing to AIReady Pattern Detection! We wel
 ## 🐛 Reporting Issues
 
 Found a bug or have a feature request? [Open an issue](https://github.com/caopengau/aiready-pattern-detect/issues) with:
+
 - Clear description of the problem or feature
 - Sample code that demonstrates the issue
 - Expected vs actual behavior
@@ -33,6 +34,7 @@ pnpm test
 ## 📝 Making Changes
 
 1. **Fork the repository** and create a new branch:
+
    ```bash
    git checkout -b fix/similarity-calculation
    # or
@@ -46,15 +48,17 @@ pnpm test
    - Keep detection logic modular
 
 3. **Test your changes**:
+
    ```bash
    pnpm build
    pnpm test
-   
+
    # Test on real codebases
    ./dist/cli.js /path/to/test-repo
    ```
 
 4. **Commit using conventional commits**:
+
    ```bash
    git commit -m "fix: improve similarity threshold accuracy"
    git commit -m "feat: add React component pattern detection"
@@ -84,6 +88,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 - Verify output formats (console, JSON, HTML)
 
 Example test:
+
 ```typescript
 test('detects API handler patterns', () => {
   const results = detectDuplicatePatterns([...]);
@@ -95,6 +100,7 @@ test('detects API handler patterns', () => {
 ## 🎯 Areas for Contribution
 
 Great places to start:
+
 - **New pattern types**: Add detection for new code patterns
 - **Better categorization**: Improve pattern type classification
 - **Detection accuracy**: Reduce false positives/negatives
@@ -119,6 +125,7 @@ Great places to start:
 ## 💡 Feature Ideas
 
 Looking for inspiration? Consider:
+
 - Language-specific pattern types (Go, Rust, etc.)
 - Integration with popular linters
 - VS Code extension

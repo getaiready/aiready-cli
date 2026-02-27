@@ -1,6 +1,6 @@
 /**
  * Python Pattern Extractor
- * 
+ *
  * Extracts functions and classes from Python code for similarity analysis
  */
 
@@ -10,7 +10,9 @@ import type { CodePattern } from '../types';
 /**
  * Extract patterns from Python files
  */
-export async function extractPythonPatterns(files: string[]): Promise<CodePattern[]> {
+export async function extractPythonPatterns(
+  files: string[]
+): Promise<CodePattern[]> {
   const patterns: CodePattern[] = [];
   const parser = getParser('dummy.py');
 
@@ -19,7 +21,7 @@ export async function extractPythonPatterns(files: string[]): Promise<CodePatter
     return patterns;
   }
 
-  const pythonFiles = files.filter(f => f.toLowerCase().endsWith('.py'));
+  const pythonFiles = files.filter((f) => f.toLowerCase().endsWith('.py'));
 
   for (const file of pythonFiles) {
     try {
@@ -116,40 +118,49 @@ export function calculatePythonSimilarity(
  */
 function calculateNameSimilarity(name1: string, name2: string): number {
   if (name1 === name2) return 1;
-  
+
   // Remove common prefixes/suffixes
-  const clean1 = name1.replace(/^(get|set|is|has|create|delete|update|fetch)_?/, '');
-  const clean2 = name2.replace(/^(get|set|is|has|create|delete|update|fetch)_?/, '');
-  
+  const clean1 = name1.replace(
+    /^(get|set|is|has|create|delete|update|fetch)_?/,
+    ''
+  );
+  const clean2 = name2.replace(
+    /^(get|set|is|has|create|delete|update|fetch)_?/,
+    ''
+  );
+
   if (clean1 === clean2) return 0.9;
-  
+
   // Check for substring match
   if (clean1.includes(clean2) || clean2.includes(clean1)) {
     return 0.7;
   }
-  
+
   // Simple character overlap
   const set1 = new Set(clean1.split('_'));
   const set2 = new Set(clean2.split('_'));
-  const intersection = new Set([...set1].filter(x => set2.has(x)));
+  const intersection = new Set([...set1].filter((x) => set2.has(x)));
   const union = new Set([...set1, ...set2]);
-  
+
   return intersection.size / union.size;
 }
 
 /**
  * Calculate import similarity (Jaccard index)
  */
-function calculateImportSimilarity(imports1: string[], imports2: string[]): number {
+function calculateImportSimilarity(
+  imports1: string[],
+  imports2: string[]
+): number {
   if (imports1.length === 0 && imports2.length === 0) return 1;
   if (imports1.length === 0 || imports2.length === 0) return 0;
 
   const set1 = new Set(imports1);
   const set2 = new Set(imports2);
-  
-  const intersection = new Set([...set1].filter(x => set2.has(x)));
+
+  const intersection = new Set([...set1].filter((x) => set2.has(x)));
   const union = new Set([...set1, ...set2]);
-  
+
   return intersection.size / union.size;
 }
 
@@ -158,14 +169,18 @@ function calculateImportSimilarity(imports1: string[], imports2: string[]): numb
  */
 function calculateSignatureSimilarity(sig1: string, sig2: string): number {
   if (sig1 === sig2) return 1;
-  
+
   // Extract parameter counts
-  const params1 = (sig1.match(/\([^)]*\)/)?.[0] || '').split(',').filter(Boolean).length;
-  const params2 = (sig2.match(/\([^)]*\)/)?.[0] || '').split(',').filter(Boolean).length;
-  
+  const params1 = (sig1.match(/\([^)]*\)/)?.[0] || '')
+    .split(',')
+    .filter(Boolean).length;
+  const params2 = (sig2.match(/\([^)]*\)/)?.[0] || '')
+    .split(',')
+    .filter(Boolean).length;
+
   if (params1 === params2) return 0.8;
   if (Math.abs(params1 - params2) === 1) return 0.5;
-  
+
   return 0;
 }
 
@@ -177,9 +192,12 @@ export function detectPythonAntiPatterns(patterns: CodePattern[]): string[] {
 
   // Group by similar names
   const nameGroups = new Map<string, CodePattern[]>();
-  
+
   for (const pattern of patterns) {
-    const baseName = pattern.name.replace(/^(get|set|create|delete|update)_/, '');
+    const baseName = pattern.name.replace(
+      /^(get|set|create|delete|update)_/,
+      ''
+    );
     if (!nameGroups.has(baseName)) {
       nameGroups.set(baseName, []);
     }

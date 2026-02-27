@@ -1,13 +1,25 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { analyzePatterns, generateSummary, detectDuplicatePatterns } from './index';
+import {
+  analyzePatterns,
+  generateSummary,
+  detectDuplicatePatterns,
+} from './index';
 import type { PatternType, DuplicatePattern } from './detector';
-import { filterBySeverity, getSeverityLabel, type Severity } from './context-rules';
+import {
+  filterBySeverity,
+  getSeverityLabel,
+  type Severity,
+} from './context-rules';
 import chalk from 'chalk';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
-import { loadConfig, mergeConfigWithDefaults, resolveOutputPath } from '@aiready/core';
+import {
+  loadConfig,
+  mergeConfigWithDefaults,
+  resolveOutputPath,
+} from '@aiready/core';
 
 const program = new Command();
 
@@ -15,27 +27,72 @@ program
   .name('aiready-patterns')
   .description('Detect duplicate patterns in your codebase')
   .version('0.1.0')
-  .addHelpText('after', '\nCONFIGURATION:\n  Supports config files: aiready.json, aiready.config.json, .aiready.json, .aireadyrc.json, aiready.config.js, .aireadyrc.js\n  CLI options override config file settings\n\nPARAMETER TUNING:\n  If you get too few results: decrease --similarity, --min-lines, or --min-shared-tokens\n  If analysis is too slow: increase --min-lines, --min-shared-tokens, or decrease --max-candidates\n  If you get too many false positives: increase --similarity or --min-lines\n\nEXAMPLES:\n  aiready-patterns .                                    # Basic analysis with smart defaults\n  aiready-patterns . --similarity 0.3 --min-lines 3     # More sensitive detection\n  aiready-patterns . --max-candidates 50 --no-approx    # Slower but more thorough\n  aiready-patterns . --output json > report.json       # JSON export')
+  .addHelpText(
+    'after',
+    '\nCONFIGURATION:\n  Supports config files: aiready.json, aiready.config.json, .aiready.json, .aireadyrc.json, aiready.config.js, .aireadyrc.js\n  CLI options override config file settings\n\nPARAMETER TUNING:\n  If you get too few results: decrease --similarity, --min-lines, or --min-shared-tokens\n  If analysis is too slow: increase --min-lines, --min-shared-tokens, or decrease --max-candidates\n  If you get too many false positives: increase --similarity or --min-lines\n\nEXAMPLES:\n  aiready-patterns .                                    # Basic analysis with smart defaults\n  aiready-patterns . --similarity 0.3 --min-lines 3     # More sensitive detection\n  aiready-patterns . --max-candidates 50 --no-approx    # Slower but more thorough\n  aiready-patterns . --output json > report.json       # JSON export'
+  )
   .argument('<directory>', 'Directory to analyze')
-  .option('-s, --similarity <number>', 'Minimum similarity score (0-1). Lower = more results, higher = fewer but more accurate. Default: 0.4')
-  .option('-l, --min-lines <number>', 'Minimum lines to consider. Lower = more results, higher = faster analysis. Default: 5')
-  .option('--batch-size <number>', 'Batch size for comparisons. Higher = faster but more memory. Default: 100')
-  .option('--no-approx', 'Disable approximate candidate selection. Slower but more thorough on small repos')
-  .option('--min-shared-tokens <number>', 'Minimum shared tokens to consider a candidate. Higher = faster, fewer results. Default: 8')
-  .option('--max-candidates <number>', 'Maximum candidates per block. Higher = more thorough but slower. Default: 100')
-  .option('--no-stream-results', 'Disable incremental output (default: enabled)')
+  .option(
+    '-s, --similarity <number>',
+    'Minimum similarity score (0-1). Lower = more results, higher = fewer but more accurate. Default: 0.4'
+  )
+  .option(
+    '-l, --min-lines <number>',
+    'Minimum lines to consider. Lower = more results, higher = faster analysis. Default: 5'
+  )
+  .option(
+    '--batch-size <number>',
+    'Batch size for comparisons. Higher = faster but more memory. Default: 100'
+  )
+  .option(
+    '--no-approx',
+    'Disable approximate candidate selection. Slower but more thorough on small repos'
+  )
+  .option(
+    '--min-shared-tokens <number>',
+    'Minimum shared tokens to consider a candidate. Higher = faster, fewer results. Default: 8'
+  )
+  .option(
+    '--max-candidates <number>',
+    'Maximum candidates per block. Higher = more thorough but slower. Default: 100'
+  )
+  .option(
+    '--no-stream-results',
+    'Disable incremental output (default: enabled)'
+  )
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
-  .option('--min-severity <level>', 'Minimum severity to show: critical|major|minor|info. Default: minor')
-  .option('--exclude-test-fixtures', 'Exclude test fixture duplication (beforeAll/afterAll)')
+  .option(
+    '--min-severity <level>',
+    'Minimum severity to show: critical|major|minor|info. Default: minor'
+  )
+  .option(
+    '--exclude-test-fixtures',
+    'Exclude test fixture duplication (beforeAll/afterAll)'
+  )
   .option('--exclude-templates', 'Exclude template file duplication')
-  .option('--include-tests', 'Include test files in analysis (excluded by default)')
-  .option('--max-results <number>', 'Maximum number of results to show in console output. Default: 10')
+  .option(
+    '--include-tests',
+    'Include test files in analysis (excluded by default)'
+  )
+  .option(
+    '--max-results <number>',
+    'Maximum number of results to show in console output. Default: 10'
+  )
   .option('--no-group-by-file-pair', 'Disable grouping duplicates by file pair')
   .option('--no-create-clusters', 'Disable creating refactor clusters')
-  .option('--min-cluster-tokens <number>', 'Minimum token cost for cluster reporting. Default: 1000')
-  .option('--min-cluster-files <number>', 'Minimum files for cluster reporting. Default: 3')
-  .option('--show-raw-duplicates', 'Show raw duplicates instead of grouped view')
+  .option(
+    '--min-cluster-tokens <number>',
+    'Minimum token cost for cluster reporting. Default: 1000'
+  )
+  .option(
+    '--min-cluster-files <number>',
+    'Minimum files for cluster reporting. Default: 3'
+  )
+  .option(
+    '--show-raw-duplicates',
+    'Show raw duplicates instead of grouped view'
+  )
   .option(
     '-o, --output <format>',
     'Output format: console, json, html',
@@ -79,25 +136,48 @@ program
     // Override with CLI options (CLI takes precedence)
     const finalOptions = {
       rootDir: directory,
-      minSimilarity: options.similarity ? parseFloat(options.similarity) : mergedConfig.minSimilarity,
-      minLines: options.minLines ? parseInt(options.minLines) : mergedConfig.minLines,
-      batchSize: options.batchSize ? parseInt(options.batchSize) : mergedConfig.batchSize,
+      minSimilarity: options.similarity
+        ? parseFloat(options.similarity)
+        : mergedConfig.minSimilarity,
+      minLines: options.minLines
+        ? parseInt(options.minLines)
+        : mergedConfig.minLines,
+      batchSize: options.batchSize
+        ? parseInt(options.batchSize)
+        : mergedConfig.batchSize,
       approx: options.approx !== false && mergedConfig.approx, // CLI --no-approx takes precedence
-      minSharedTokens: options.minSharedTokens ? parseInt(options.minSharedTokens) : mergedConfig.minSharedTokens,
-      maxCandidatesPerBlock: options.maxCandidates ? parseInt(options.maxCandidates) : mergedConfig.maxCandidatesPerBlock,
-      streamResults: options.streamResults !== false && mergedConfig.streamResults,
+      minSharedTokens: options.minSharedTokens
+        ? parseInt(options.minSharedTokens)
+        : mergedConfig.minSharedTokens,
+      maxCandidatesPerBlock: options.maxCandidates
+        ? parseInt(options.maxCandidates)
+        : mergedConfig.maxCandidatesPerBlock,
+      streamResults:
+        options.streamResults !== false && mergedConfig.streamResults,
       include: options.include?.split(',') || mergedConfig.include,
       exclude: options.exclude?.split(',') || mergedConfig.exclude,
-      minSeverity: (options.minSeverity || mergedConfig.minSeverity) as Severity,
-      excludeTestFixtures: options.excludeTestFixtures || mergedConfig.excludeTestFixtures,
-      excludeTemplates: options.excludeTemplates || mergedConfig.excludeTemplates,
+      minSeverity: (options.minSeverity ||
+        mergedConfig.minSeverity) as Severity,
+      excludeTestFixtures:
+        options.excludeTestFixtures || mergedConfig.excludeTestFixtures,
+      excludeTemplates:
+        options.excludeTemplates || mergedConfig.excludeTemplates,
       includeTests: options.includeTests || mergedConfig.includeTests,
-      maxResults: options.maxResults ? parseInt(options.maxResults) : mergedConfig.maxResults,
-      groupByFilePair: options.groupByFilePair !== false && mergedConfig.groupByFilePair,
-      createClusters: options.createClusters !== false && mergedConfig.createClusters,
-      minClusterTokenCost: options.minClusterTokens ? parseInt(options.minClusterTokens) : mergedConfig.minClusterTokenCost,
-      minClusterFiles: options.minClusterFiles ? parseInt(options.minClusterFiles) : mergedConfig.minClusterFiles,
-      showRawDuplicates: options.showRawDuplicates || mergedConfig.showRawDuplicates,
+      maxResults: options.maxResults
+        ? parseInt(options.maxResults)
+        : mergedConfig.maxResults,
+      groupByFilePair:
+        options.groupByFilePair !== false && mergedConfig.groupByFilePair,
+      createClusters:
+        options.createClusters !== false && mergedConfig.createClusters,
+      minClusterTokenCost: options.minClusterTokens
+        ? parseInt(options.minClusterTokens)
+        : mergedConfig.minClusterTokenCost,
+      minClusterFiles: options.minClusterFiles
+        ? parseInt(options.minClusterFiles)
+        : mergedConfig.minClusterFiles,
+      showRawDuplicates:
+        options.showRawDuplicates || mergedConfig.showRawDuplicates,
     };
 
     // Test files are excluded by default in core's DEFAULT_EXCLUDE
@@ -115,24 +195,37 @@ program
       );
     }
 
-    const { results, duplicates: rawDuplicates, files, groups, clusters } = await analyzePatterns(finalOptions);
+    const {
+      results,
+      duplicates: rawDuplicates,
+      files,
+      groups,
+      clusters,
+    } = await analyzePatterns(finalOptions);
 
     // Apply severity filtering
     let filteredDuplicates = rawDuplicates;
-    
+
     // Filter by minimum severity
     if (finalOptions.minSeverity) {
-      filteredDuplicates = filterBySeverity(filteredDuplicates, finalOptions.minSeverity);
+      filteredDuplicates = filterBySeverity(
+        filteredDuplicates,
+        finalOptions.minSeverity
+      );
     }
-    
+
     // Filter out test fixtures if requested
     if (finalOptions.excludeTestFixtures) {
-      filteredDuplicates = filteredDuplicates.filter(d => d.matchedRule !== 'test-fixtures');
+      filteredDuplicates = filteredDuplicates.filter(
+        (d) => d.matchedRule !== 'test-fixtures'
+      );
     }
-    
+
     // Filter out templates if requested
     if (finalOptions.excludeTemplates) {
-      filteredDuplicates = filteredDuplicates.filter(d => d.matchedRule !== 'templates');
+      filteredDuplicates = filteredDuplicates.filter(
+        (d) => d.matchedRule !== 'templates'
+      );
     }
 
     const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -154,12 +247,12 @@ program
         `pattern-report-${new Date().toISOString().split('T')[0]}.json`,
         directory
       );
-      
+
       const dir = dirname(outputPath);
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
       }
-      
+
       writeFileSync(outputPath, JSON.stringify(jsonOutput, null, 2));
       console.log(chalk.green(`\n✓ JSON report saved to ${outputPath}`));
       return;
@@ -172,12 +265,12 @@ program
         `pattern-report-${new Date().toISOString().split('T')[0]}.html`,
         directory
       );
-      
+
       const dir = dirname(outputPath);
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
       }
-      
+
       writeFileSync(outputPath, html);
       console.log(chalk.green(`\n✓ HTML report saved to ${outputPath}`));
       return;
@@ -187,7 +280,7 @@ program
     const terminalWidth = process.stdout.columns || 80;
     const dividerWidth = Math.min(60, terminalWidth - 2);
     const divider = '━'.repeat(dividerWidth);
-    
+
     console.log(chalk.cyan(divider));
     console.log(chalk.bold.white('  PATTERN ANALYSIS SUMMARY'));
     console.log(chalk.cyan(divider) + '\n');
@@ -196,7 +289,9 @@ program
       chalk.white(`📁 Files analyzed: ${chalk.bold(results.length)}`)
     );
     console.log(
-      chalk.yellow(`⚠  AI confusion patterns detected: ${chalk.bold(totalIssues)}`)
+      chalk.yellow(
+        `⚠  AI confusion patterns detected: ${chalk.bold(totalIssues)}`
+      )
     );
     console.log(
       chalk.red(
@@ -219,14 +314,18 @@ program
 
       sortedTypes.forEach(([type, count]) => {
         const icon = getPatternIcon(type as PatternType);
-        console.log(`${icon} ${chalk.white(type.padEnd(15))} ${chalk.bold(count)}`);
+        console.log(
+          `${icon} ${chalk.white(type.padEnd(15))} ${chalk.bold(count)}`
+        );
       });
     }
 
     // Show grouped duplicates by file pair (reduces noise)
     if (!finalOptions.showRawDuplicates && groups && groups.length > 0) {
       console.log(chalk.cyan('\n' + divider));
-      console.log(chalk.bold.white(`  📦 DUPLICATE GROUPS (${groups.length} file pairs)`));
+      console.log(
+        chalk.bold.white(`  📦 DUPLICATE GROUPS (${groups.length} file pairs)`)
+      );
       console.log(chalk.cyan(divider) + '\n');
 
       // Sort by severity, then by token cost
@@ -239,7 +338,8 @@ program
 
       const topGroups = groups
         .sort((a, b) => {
-          const severityDiff = severityOrder[b.severity] - severityOrder[a.severity];
+          const severityDiff =
+            severityOrder[b.severity] - severityOrder[a.severity];
           if (severityDiff !== 0) return severityDiff;
           return b.totalTokenCost - a.totalTokenCost;
         })
@@ -251,58 +351,85 @@ program
         const file1Name = file1.split('/').pop() || file1;
         const file2Name = file2.split('/').pop() || file2;
 
-        console.log(`${idx + 1}. ${severityBadge} ${chalk.bold(file1Name)} ↔ ${chalk.bold(file2Name)}`);
-        console.log(`   Occurrences: ${chalk.bold(group.occurrences)} | Total tokens: ${chalk.bold(group.totalTokenCost.toLocaleString())} | Avg similarity: ${chalk.bold(Math.round(group.averageSimilarity * 100) + '%')}`);
-        
+        console.log(
+          `${idx + 1}. ${severityBadge} ${chalk.bold(file1Name)} ↔ ${chalk.bold(file2Name)}`
+        );
+        console.log(
+          `   Occurrences: ${chalk.bold(group.occurrences)} | Total tokens: ${chalk.bold(group.totalTokenCost.toLocaleString())} | Avg similarity: ${chalk.bold(Math.round(group.averageSimilarity * 100) + '%')}`
+        );
+
         // Show first 3 line ranges
         const displayRanges = group.lineRanges.slice(0, 3);
         displayRanges.forEach((range) => {
-          console.log(`   ${chalk.gray(file1)}:${chalk.cyan(`${range.file1.start}-${range.file1.end}`)} ↔ ${chalk.gray(file2)}:${chalk.cyan(`${range.file2.start}-${range.file2.end}`)}`);
+          console.log(
+            `   ${chalk.gray(file1)}:${chalk.cyan(`${range.file1.start}-${range.file1.end}`)} ↔ ${chalk.gray(file2)}:${chalk.cyan(`${range.file2.start}-${range.file2.end}`)}`
+          );
         });
-        
+
         if (group.lineRanges.length > 3) {
-          console.log(`   ${chalk.gray(`... and ${group.lineRanges.length - 3} more ranges`)}`);
+          console.log(
+            `   ${chalk.gray(`... and ${group.lineRanges.length - 3} more ranges`)}`
+          );
         }
         console.log();
       });
 
       if (groups.length > topGroups.length) {
-        console.log(chalk.gray(`   ... and ${groups.length - topGroups.length} more file pairs`));
+        console.log(
+          chalk.gray(
+            `   ... and ${groups.length - topGroups.length} more file pairs`
+          )
+        );
       }
     }
 
     // Show refactor clusters (high-level patterns)
     if (!finalOptions.showRawDuplicates && clusters && clusters.length > 0) {
       console.log(chalk.cyan('\n' + divider));
-      console.log(chalk.bold.white(`  🎯 REFACTOR CLUSTERS (${clusters.length} patterns)`));
+      console.log(
+        chalk.bold.white(`  🎯 REFACTOR CLUSTERS (${clusters.length} patterns)`)
+      );
       console.log(chalk.cyan(divider) + '\n');
 
       clusters
         .sort((a, b) => b.totalTokenCost - a.totalTokenCost)
         .forEach((cluster, idx) => {
           const severityBadge = getSeverityBadge(cluster.severity);
-          console.log(`${idx + 1}. ${severityBadge} ${chalk.bold(cluster.name)}`);
-          console.log(`   Total tokens: ${chalk.bold(cluster.totalTokenCost.toLocaleString())} | Avg similarity: ${chalk.bold(Math.round(cluster.averageSimilarity * 100) + '%')} | Duplicates: ${chalk.bold(cluster.duplicateCount)}`);
-          
+          console.log(
+            `${idx + 1}. ${severityBadge} ${chalk.bold(cluster.name)}`
+          );
+          console.log(
+            `   Total tokens: ${chalk.bold(cluster.totalTokenCost.toLocaleString())} | Avg similarity: ${chalk.bold(Math.round(cluster.averageSimilarity * 100) + '%')} | Duplicates: ${chalk.bold(cluster.duplicateCount)}`
+          );
+
           // Show first 5 files
           const displayFiles = cluster.files.slice(0, 5);
-          console.log(`   Files (${cluster.files.length}): ${displayFiles.map(f => chalk.gray(f.split('/').pop() || f)).join(', ')}`);
+          console.log(
+            `   Files (${cluster.files.length}): ${displayFiles.map((f) => chalk.gray(f.split('/').pop() || f)).join(', ')}`
+          );
           if (cluster.files.length > 5) {
-            console.log(`   ${chalk.gray(`... and ${cluster.files.length - 5} more files`)}`);
+            console.log(
+              `   ${chalk.gray(`... and ${cluster.files.length - 5} more files`)}`
+            );
           }
-          
+
           if (cluster.reason) {
             console.log(`   ${chalk.italic.gray(cluster.reason)}`);
           }
           if (cluster.suggestion) {
-            console.log(`   ${chalk.cyan('→')} ${chalk.italic(cluster.suggestion)}`);
+            console.log(
+              `   ${chalk.cyan('→')} ${chalk.italic(cluster.suggestion)}`
+            );
           }
           console.log();
         });
     }
 
     // Show top duplicates with detailed information (raw view or fallback)
-    if (totalIssues > 0 && (finalOptions.showRawDuplicates || !groups || groups.length === 0)) {
+    if (
+      totalIssues > 0 &&
+      (finalOptions.showRawDuplicates || !groups || groups.length === 0)
+    ) {
       console.log(chalk.cyan('\n' + divider));
       console.log(chalk.bold.white('  TOP DUPLICATE PATTERNS'));
       console.log(chalk.cyan(divider) + '\n');
@@ -317,7 +444,8 @@ program
 
       const topDuplicates = filteredDuplicates
         .sort((a, b) => {
-          const severityDiff = severityOrder[b.severity] - severityOrder[a.severity];
+          const severityDiff =
+            severityOrder[b.severity] - severityOrder[a.severity];
           if (severityDiff !== 0) return severityDiff;
           return b.similarity - a.similarity;
         })
@@ -330,11 +458,19 @@ program
         const file1Name = dup.file1.split('/').pop() || dup.file1;
         const file2Name = dup.file2.split('/').pop() || dup.file2;
 
-        console.log(`${severityBadge} ${chalk.bold(file1Name)} ↔ ${chalk.bold(file2Name)}`);
-        console.log(`   Similarity: ${chalk.bold(Math.round(dup.similarity * 100) + '%')} | Pattern: ${dup.patternType} | Tokens: ${chalk.bold(dup.tokenCost.toLocaleString())}`);
-        console.log(`   ${chalk.gray(dup.file1)}:${chalk.cyan(dup.line1 + '-' + dup.endLine1)}`);
-        console.log(`   ${chalk.gray(dup.file2)}:${chalk.cyan(dup.line2 + '-' + dup.endLine2)}`);
-        
+        console.log(
+          `${severityBadge} ${chalk.bold(file1Name)} ↔ ${chalk.bold(file2Name)}`
+        );
+        console.log(
+          `   Similarity: ${chalk.bold(Math.round(dup.similarity * 100) + '%')} | Pattern: ${dup.patternType} | Tokens: ${chalk.bold(dup.tokenCost.toLocaleString())}`
+        );
+        console.log(
+          `   ${chalk.gray(dup.file1)}:${chalk.cyan(dup.line1 + '-' + dup.endLine1)}`
+        );
+        console.log(
+          `   ${chalk.gray(dup.file2)}:${chalk.cyan(dup.line2 + '-' + dup.endLine2)}`
+        );
+
         if (dup.reason) {
           console.log(`   ${chalk.italic.gray(dup.reason)}`);
         }
@@ -343,10 +479,14 @@ program
         }
         console.log();
       });
-      
+
       // Show count of filtered duplicates
       if (filteredDuplicates.length > topDuplicates.length) {
-        console.log(chalk.gray(`   ... and ${filteredDuplicates.length - topDuplicates.length} more duplicates`));
+        console.log(
+          chalk.gray(
+            `   ... and ${filteredDuplicates.length - topDuplicates.length} more duplicates`
+          )
+        );
       }
     }
 
@@ -365,35 +505,53 @@ program
       console.log(chalk.cyan(divider) + '\n');
 
       criticalIssues.slice(0, 5).forEach((issue) => {
-        console.log(chalk.red('● ') + chalk.white(`${issue.file}:${issue.location.line}`));
+        console.log(
+          chalk.red('● ') + chalk.white(`${issue.file}:${issue.location.line}`)
+        );
         console.log(`  ${chalk.dim(issue.message)}`);
-        console.log(`  ${chalk.green('→')} ${chalk.italic(issue.suggestion)}\n`);
+        console.log(
+          `  ${chalk.green('→')} ${chalk.italic(issue.suggestion)}\n`
+        );
       });
     }
 
     // Show a success message if no duplicates
     if (totalIssues === 0) {
       console.log(chalk.green('\n✨ Great! No duplicate patterns detected.\n'));
-      console.log(chalk.yellow('💡 If you expected to find duplicates, try adjusting parameters:'));
-      console.log(chalk.dim('   • Lower similarity threshold: --similarity 0.3'));
+      console.log(
+        chalk.yellow(
+          '💡 If you expected to find duplicates, try adjusting parameters:'
+        )
+      );
+      console.log(
+        chalk.dim('   • Lower similarity threshold: --similarity 0.3')
+      );
       console.log(chalk.dim('   • Reduce minimum lines: --min-lines 3'));
       console.log(chalk.dim('   • Include test files: --include-tests'));
-      console.log(chalk.dim('   • Lower shared tokens threshold: --min-shared-tokens 5'));
+      console.log(
+        chalk.dim('   • Lower shared tokens threshold: --min-shared-tokens 5')
+      );
       console.log('');
     }
 
     // Show guidance if very few results
     if (totalIssues > 0 && totalIssues < 5) {
-      console.log(chalk.yellow('\n💡 Few results found. To find more duplicates, try:'));
-      console.log(chalk.dim('   • Lower similarity threshold: --similarity 0.3'));
+      console.log(
+        chalk.yellow('\n💡 Few results found. To find more duplicates, try:')
+      );
+      console.log(
+        chalk.dim('   • Lower similarity threshold: --similarity 0.3')
+      );
       console.log(chalk.dim('   • Reduce minimum lines: --min-lines 3'));
       console.log(chalk.dim('   • Include test files: --include-tests'));
-      console.log(chalk.dim('   • Lower shared tokens threshold: --min-shared-tokens 5'));
+      console.log(
+        chalk.dim('   • Lower shared tokens threshold: --min-shared-tokens 5')
+      );
       console.log('');
     }
 
     console.log(chalk.cyan(divider));
-    
+
     if (totalIssues > 0) {
       console.log(
         chalk.white(
@@ -408,7 +566,9 @@ program
       )
     );
     console.log(
-      chalk.dim('🐛 Found a bug? Report it: https://github.com/caopengau/aiready-pattern-detect/issues\n')
+      chalk.dim(
+        '🐛 Found a bug? Report it: https://github.com/caopengau/aiready-pattern-detect/issues\n'
+      )
     );
   });
 
@@ -425,10 +585,7 @@ function getPatternIcon(type: PatternType): string {
   return icons[type];
 }
 
-function generateHTMLReport(
-  summary: any,
-  results: any[]
-): string {
+function generateHTMLReport(summary: any, results: any[]): string {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -520,4 +677,3 @@ function getSeverityBadge(severity: Severity): string {
   };
   return badges[severity] || badges.info;
 }
-

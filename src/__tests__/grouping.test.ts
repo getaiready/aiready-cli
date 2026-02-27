@@ -60,9 +60,9 @@ describe('grouping utilities', () => {
       const groups = groupDuplicatesByFilePair(duplicates);
 
       expect(groups).toHaveLength(2);
-      
+
       // Find the a.ts::b.ts group
-      const abGroup = groups.find(g => g.filePair === 'a.ts::b.ts');
+      const abGroup = groups.find((g) => g.filePair === 'a.ts::b.ts');
       expect(abGroup).toBeDefined();
       expect(abGroup!.occurrences).toBe(2);
       expect(abGroup!.totalTokenCost).toBe(180);
@@ -70,9 +70,9 @@ describe('grouping utilities', () => {
       expect(abGroup!.maxSimilarity).toBe(0.95);
       expect(abGroup!.severity).toBe('critical'); // Highest severity
       expect(abGroup!.lineRanges).toHaveLength(2);
-      
+
       // Find the c.ts::d.ts group
-      const cdGroup = groups.find(g => g.filePair === 'c.ts::d.ts');
+      const cdGroup = groups.find((g) => g.filePair === 'c.ts::d.ts');
       expect(cdGroup).toBeDefined();
       expect(cdGroup!.occurrences).toBe(1);
       expect(cdGroup!.totalTokenCost).toBe(50);
@@ -235,9 +235,12 @@ describe('grouping utilities', () => {
 
       const clusters = createRefactorClusters(duplicates);
 
-      console.log('Created clusters:', clusters.map(c => ({ id: c.id, name: c.name })));
+      console.log(
+        'Created clusters:',
+        clusters.map((c) => ({ id: c.id, name: c.name }))
+      );
 
-      const blogCluster = clusters.find(c => c.id.startsWith('blog-seo'));
+      const blogCluster = clusters.find((c) => c.id.startsWith('blog-seo'));
       expect(blogCluster).toBeDefined();
       expect(blogCluster!.name).toContain('Blog SEO Boilerplate');
       expect(blogCluster!.files).toHaveLength(3); // 3 unique files
@@ -311,11 +314,21 @@ describe('grouping utilities', () => {
 
       const clusters = createRefactorClusters(duplicates);
 
-      console.log('Input duplicates:', duplicates.map(d => ({ file1: d.file1, file2: d.file2, type: d.patternType })));
-      console.log('Created clusters:', clusters.map(c => ({ id: c.id, name: c.name, files: c.files })));
+      console.log(
+        'Input duplicates:',
+        duplicates.map((d) => ({
+          file1: d.file1,
+          file2: d.file2,
+          type: d.patternType,
+        }))
+      );
+      console.log(
+        'Created clusters:',
+        clusters.map((c) => ({ id: c.id, name: c.name, files: c.files }))
+      );
 
-      const buttonCluster = clusters.find(c => c.id.includes('button'));
-      const cardCluster = clusters.find(c => c.id.includes('card'));
+      const buttonCluster = clusters.find((c) => c.id.includes('button'));
+      const cardCluster = clusters.find((c) => c.id.includes('card'));
 
       expect(buttonCluster).toBeDefined();
       expect(buttonCluster!.name).toContain('Button');
@@ -362,7 +375,7 @@ describe('grouping utilities', () => {
 
       const clusters = createRefactorClusters(duplicates);
 
-      const e2eCluster = clusters.find(c => c.id === 'e2e-test-patterns');
+      const e2eCluster = clusters.find((c) => c.id === 'e2e-test-patterns');
       expect(e2eCluster).toBeDefined();
       expect(e2eCluster!.name).toContain('E2E Test');
       expect(e2eCluster!.suggestion).toContain('test utilities');
@@ -413,7 +426,7 @@ describe('grouping utilities', () => {
       const filtered = filterClustersByImpact(allClusters, 1000, 1);
 
       // Only clusters with >= 1000 tokens should remain
-      expect(filtered.every(c => c.totalTokenCost >= 1000)).toBe(true);
+      expect(filtered.every((c) => c.totalTokenCost >= 1000)).toBe(true);
     });
 
     it('should filter clusters by minimum file count', () => {
@@ -469,7 +482,7 @@ describe('grouping utilities', () => {
       const filtered = filterClustersByImpact(allClusters, 0, 3);
 
       // Only clusters with >= 3 files should remain
-      expect(filtered.every(c => c.files.length >= 3)).toBe(true);
+      expect(filtered.every((c) => c.files.length >= 3)).toBe(true);
     });
 
     it('should handle empty input', () => {

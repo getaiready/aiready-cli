@@ -86,7 +86,9 @@ describe('Pattern Scoring', () => {
       const result = calculatePatternScore(duplicates, 10);
 
       expect(result.rawMetrics.highImpactDuplicates).toBe(1);
-      expect(result.factors.some(f => f.name.includes('High-Impact'))).toBe(true);
+      expect(result.factors.some((f) => f.name.includes('High-Impact'))).toBe(
+        true
+      );
     });
 
     it('should generate recommendations for severe issues', () => {
@@ -105,7 +107,9 @@ describe('Pattern Scoring', () => {
       const result = calculatePatternScore(duplicates, 20);
 
       expect(result.recommendations.length).toBeGreaterThan(0);
-      expect(result.recommendations.some(r => r.priority === 'high')).toBe(true);
+      expect(result.recommendations.some((r) => r.priority === 'high')).toBe(
+        true
+      );
     });
 
     it('should handle edge case of zero files analyzed', () => {

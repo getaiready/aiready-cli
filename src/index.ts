@@ -1,6 +1,10 @@
 import { scanFiles, readFileContent } from '@aiready/core';
 import type { AnalysisResult, Issue, ScanOptions } from '@aiready/core';
-import { detectDuplicatePatterns, type PatternType, type DuplicatePattern } from './detector';
+import {
+  detectDuplicatePatterns,
+  type PatternType,
+  type DuplicatePattern,
+} from './detector';
 import type { Severity } from './context-rules';
 import {
   groupDuplicatesByFilePair,
@@ -11,7 +15,13 @@ import {
 } from './grouping';
 import { calculatePatternScore } from './scoring';
 
-export type { PatternType, DuplicatePattern, Severity, DuplicateGroup, RefactorCluster };
+export type {
+  PatternType,
+  DuplicatePattern,
+  Severity,
+  DuplicateGroup,
+  RefactorCluster,
+};
 export { calculatePatternScore };
 
 export interface PatternDetectOptions extends ScanOptions {
@@ -69,8 +79,8 @@ function getRefactoringSuggestion(
     similarity > 0.95
       ? ' (CRITICAL: Nearly identical code)'
       : similarity > 0.9
-      ? ' (HIGH: Very similar, refactor soon)'
-      : '';
+        ? ' (HIGH: Very similar, refactor soon)'
+        : '';
 
   return baseMessages[patternType] + urgency;
 }
@@ -78,7 +88,10 @@ function getRefactoringSuggestion(
 /**
  * Determine smart defaults based on repository size estimation
  */
-async function getSmartDefaults(directory: string, userOptions: Partial<PatternDetectOptions>): Promise<PatternDetectOptions> {
+async function getSmartDefaults(
+  directory: string,
+  userOptions: Partial<PatternDetectOptions>
+): Promise<PatternDetectOptions> {
   // If user explicitly disabled smart defaults, return conservative defaults
   if (userOptions.useSmartDefaults === false) {
     return {
@@ -111,19 +124,28 @@ async function getSmartDefaults(directory: string, userOptions: Partial<PatternD
 
   // Reverse computation: calculate optimal parameters to target ~30 second completion
   // Based on empirical performance: ~100,000 block-candidate comparisons per second
-  
+
   // maxCandidatesPerBlock: scale inversely with repo size to maintain ~30s target
-  const maxCandidatesPerBlock = Math.max(3, Math.min(10, Math.floor(30000 / estimatedBlocks)));
-  
+  const maxCandidatesPerBlock = Math.max(
+    3,
+    Math.min(10, Math.floor(30000 / estimatedBlocks))
+  );
+
   // minSimilarity: increase with repo size to reduce noise in large repos
   const minSimilarity = Math.min(0.75, 0.5 + (estimatedBlocks / 10000) * 0.25);
-  
+
   // minLines: increase with repo size to focus on substantial duplications
-  const minLines = Math.max(6, Math.min(12, 6 + Math.floor(estimatedBlocks / 2000)));
-  
+  const minLines = Math.max(
+    6,
+    Math.min(12, 6 + Math.floor(estimatedBlocks / 2000))
+  );
+
   // minSharedTokens: increase with repo size for better pre-filtering
-  const minSharedTokens = Math.max(10, Math.min(20, 10 + Math.floor(estimatedBlocks / 2000)));
-  
+  const minSharedTokens = Math.max(
+    10,
+    Math.min(20, 10 + Math.floor(estimatedBlocks / 2000))
+  );
+
   // batchSize: larger for better I/O efficiency in bigger repos
   const batchSize = estimatedBlocks > 1000 ? 200 : 100;
 
@@ -146,7 +168,10 @@ async function getSmartDefaults(directory: string, userOptions: Partial<PatternD
   // Only apply smart defaults for options that aren't already set
   const result: PatternDetectOptions = { ...defaults };
   for (const [key, value] of Object.entries(defaults)) {
-    if (key in userOptions && userOptions[key as keyof PatternDetectOptions] !== undefined) {
+    if (
+      key in userOptions &&
+      userOptions[key as keyof PatternDetectOptions] !== undefined
+    ) {
       (result as any)[key] = userOptions[key as keyof PatternDetectOptions];
     }
   }
@@ -157,7 +182,10 @@ async function getSmartDefaults(directory: string, userOptions: Partial<PatternD
 /**
  * Log current configuration settings
  */
-function logConfiguration(config: PatternDetectOptions, estimatedBlocks: number): void {
+function logConfiguration(
+  config: PatternDetectOptions,
+  estimatedBlocks: number
+): void {
   // Allow callers to suppress verbose tool-level configuration logging
   if ((config as any).suppressToolConfig) return;
   console.log('📋 Configuration:');
@@ -172,14 +200,12 @@ function logConfiguration(config: PatternDetectOptions, estimatedBlocks: number)
   console.log('');
 }
 
-export async function analyzePatterns(
-  options: PatternDetectOptions
-): Promise<{ 
-  results: AnalysisResult[], 
-  duplicates: DuplicatePattern[], 
-  files: string[],
-  groups?: DuplicateGroup[],
-  clusters?: RefactorCluster[]
+export async function analyzePatterns(options: PatternDetectOptions): Promise<{
+  results: AnalysisResult[];
+  duplicates: DuplicatePattern[];
+  files: string[];
+  groups?: DuplicateGroup[];
+  clusters?: RefactorCluster[];
 }> {
   // Apply smart defaults based on repository size for unset options
   const smartDefaults = await getSmartDefaults(options.rootDir || '.', options);
@@ -243,8 +269,8 @@ export async function analyzePatterns(
         dup.similarity > 0.95
           ? 'critical'
           : dup.similarity > 0.9
-          ? 'major'
-          : 'minor';
+            ? 'major'
+            : 'minor';
 
       return {
         type: 'duplicate-pattern' as const,
@@ -266,8 +292,12 @@ export async function analyzePatterns(
         high: ['critical', 'major'],
         medium: ['critical', 'major', 'minor'],
       };
-      const allowedSeverities = severityMap[severity as keyof typeof severityMap] || ['critical', 'major', 'minor'];
-      filteredIssues = issues.filter(issue => allowedSeverities.includes(issue.severity));
+      const allowedSeverities = severityMap[
+        severity as keyof typeof severityMap
+      ] || ['critical', 'major', 'minor'];
+      filteredIssues = issues.filter((issue) =>
+        allowedSeverities.includes(issue.severity)
+      );
     }
 
     const totalTokenCost = fileDuplicates.reduce(
@@ -295,7 +325,11 @@ export async function analyzePatterns(
 
   if (createClusters) {
     const allClusters = createRefactorClusters(duplicates);
-    clusters = filterClustersByImpact(allClusters, minClusterTokenCost, minClusterFiles);
+    clusters = filterClustersByImpact(
+      allClusters,
+      minClusterTokenCost,
+      minClusterFiles
+    );
     // Note: cluster filtering info is returned via clusters; do not log here.
   }
 
@@ -305,9 +339,7 @@ export async function analyzePatterns(
 /**
  * Generate a summary of pattern analysis
  */
-export function generateSummary(
-  results: AnalysisResult[]
-): PatternSummary {
+export function generateSummary(results: AnalysisResult[]): PatternSummary {
   const allIssues = results.flatMap((r) => r.issues);
   const totalTokenCost = results.reduce(
     (sum, r) => sum + (r.metrics.tokenCost || 0),
@@ -334,34 +366,30 @@ export function generateSummary(
   });
 
   // Get top duplicates
-  const topDuplicates = allIssues
-    .slice(0, 10)
-    .map((issue) => {
-      const similarityMatch = issue.message.match(/(\d+)% similar/);
-      const tokenMatch = issue.message.match(/\((\d+) tokens/);
-      const typeMatch = issue.message.match(/^(\S+(?:-\S+)*) pattern/);
-      const fileMatch = issue.message.match(/similar to (.+?) \(/);
+  const topDuplicates = allIssues.slice(0, 10).map((issue) => {
+    const similarityMatch = issue.message.match(/(\d+)% similar/);
+    const tokenMatch = issue.message.match(/\((\d+) tokens/);
+    const typeMatch = issue.message.match(/^(\S+(?:-\S+)*) pattern/);
+    const fileMatch = issue.message.match(/similar to (.+?) \(/);
 
-      return {
-        files: [
-          {
-            path: issue.location.file,
-            startLine: issue.location.line,
-            endLine: 0, // Not available from Issue
-          },
-          {
-            path: fileMatch?.[1] || 'unknown',
-            startLine: 0, // Not available from Issue
-            endLine: 0, // Not available from Issue
-          },
-        ],
-        similarity: similarityMatch
-          ? parseInt(similarityMatch[1]) / 100
-          : 0,
-        patternType: (typeMatch?.[1] as PatternType) || 'unknown',
-        tokenCost: tokenMatch ? parseInt(tokenMatch[1]) : 0,
-      };
-    });
+    return {
+      files: [
+        {
+          path: issue.location.file,
+          startLine: issue.location.line,
+          endLine: 0, // Not available from Issue
+        },
+        {
+          path: fileMatch?.[1] || 'unknown',
+          startLine: 0, // Not available from Issue
+          endLine: 0, // Not available from Issue
+        },
+      ],
+      similarity: similarityMatch ? parseInt(similarityMatch[1]) / 100 : 0,
+      patternType: (typeMatch?.[1] as PatternType) || 'unknown',
+      tokenCost: tokenMatch ? parseInt(tokenMatch[1]) : 0,
+    };
+  });
 
   return {
     totalPatterns: allIssues.length,
@@ -372,5 +400,9 @@ export function generateSummary(
 }
 
 export { detectDuplicatePatterns } from './detector';
-export { getSeverityLabel, filterBySeverity, calculateSeverity } from './context-rules';
+export {
+  getSeverityLabel,
+  filterBySeverity,
+  calculateSeverity,
+} from './context-rules';
 export { getSmartDefaults };
