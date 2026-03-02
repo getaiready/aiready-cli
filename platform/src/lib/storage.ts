@@ -218,7 +218,8 @@ export function calculateAiScore(data: AnalysisData): number {
   let totalWeight = 0;
 
   for (const [key, weight] of Object.entries(weights)) {
-    const score = (data.breakdown as any)[key]?.score;
+    const score = (data.breakdown?.[key as keyof typeof data.breakdown] as any)
+      ?.score;
     if (typeof score === 'number') {
       totalWeightedScore += score * weight;
       totalWeight += weight;
@@ -226,7 +227,7 @@ export function calculateAiScore(data: AnalysisData): number {
   }
 
   // Handle changeAmplification if present (dynamically add weight)
-  if (data.breakdown.changeAmplification?.score !== undefined) {
+  if (data.breakdown?.changeAmplification?.score !== undefined) {
     totalWeightedScore += data.breakdown.changeAmplification.score * 5;
     totalWeight += 5;
   }
@@ -251,16 +252,76 @@ export function extractSummary(data: AnalysisData) {
  * Extract breakdown for DynamoDB storage
  */
 export function extractBreakdown(data: AnalysisData) {
+  const b = data.breakdown || {};
   return {
-    semanticDuplicates: data.breakdown.semanticDuplicates.score || 0,
-    contextFragmentation: data.breakdown.contextFragmentation.score || 0,
-    namingConsistency: data.breakdown.namingConsistency.score || 0,
-    documentationHealth: data.breakdown.documentationHealth.score || 0,
-    dependencyHealth: data.breakdown.dependencyHealth?.score || 0,
-    aiSignalClarity: data.breakdown.aiSignalClarity?.score || 0,
-    agentGrounding: data.breakdown.agentGrounding?.score || 0,
-    testabilityIndex: data.breakdown.testabilityIndex?.score || 0,
-    changeAmplification: data.breakdown.changeAmplification?.score || 0,
+    semanticDuplicates: b.semanticDuplicates?.score || 0,
+    contextFragmentation: b.contextFragmentation?.score || 0,
+    namingConsistency: b.namingConsistency?.score || 0,
+    documentationHealth: b.documentationHealth?.score || 0,
+    dependencyHealth: b.dependencyHealth?.score || 0,
+    aiSignalClarity: b.aiSignalClarity?.score || 0,
+    agentGrounding: b.agentGrounding?.score || 0,
+    testabilityIndex: b.testabilityIndex?.score || 0,
+    changeAmplification: b.changeAmplification?.score || 0,
+  };
+}
+
+/**
+ * Normalize raw CLI report data into AnalysisData schema
+ */
+export function normalizeReport(raw: any): AnalysisData {
+  // If it's already in the target format, return as is
+  if (raw.metadata && raw.summary && raw.breakdown) {
+    return raw as AnalysisData;
+  }
+
+  const scoring = raw.scoring || {};
+  const summary = raw.summary || {};
+  const repo = raw.repository || {};
+
+  const breakdown: any = {};
+  const toolMappings: Record<string, string> = {
+    'pattern-detect': 'semanticDuplicates',
+    'context-analyzer': 'contextFragmentation',
+    consistency: 'namingConsistency',
+    'ai-signal-clarity': 'aiSignalClarity',
+    'agent-grounding': 'agentGrounding',
+    testability: 'testabilityIndex',
+    'doc-drift': 'documentationHealth',
+    'dependency-health': 'dependencyHealth',
+    'change-amplification': 'changeAmplification',
+  };
+
+  if (Array.isArray(scoring.breakdown)) {
+    for (const item of scoring.breakdown) {
+      const platformKey = toolMappings[item.toolName];
+      if (platformKey) {
+        breakdown[platformKey] = {
+          score: item.score || 0,
+          count: item.rawMetrics?.totalIssues || item.rawMetrics?.count || 0,
+          details: item.recommendations || [],
+        };
+      }
+    }
+  }
+
+  return {
+    metadata: {
+      repository: repo.name || 'unknown',
+      branch: repo.branch || 'main',
+      commit: repo.commit || 'unknown',
+      timestamp: scoring.timestamp || new Date().toISOString(),
+      toolVersion: repo.version || '0.1.0',
+    },
+    summary: {
+      aiReadinessScore: scoring.overall || 0,
+      totalFiles: summary.totalFiles || 0,
+      totalIssues: summary.totalIssues || 0,
+      criticalIssues: summary.criticalIssues || 0,
+      warnings: summary.warnings || 0,
+    },
+    breakdown,
+    rawOutput: raw,
   };
 }
 

@@ -9,6 +9,12 @@ const publicApiRoutes = ['/api/auth'];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const authHeader = request.headers.get('Authorization');
+
+  // Allow API requests with Bearer token
+  if (authHeader?.startsWith('Bearer ')) {
+    return NextResponse.next();
+  }
 
   // Allow public routes
   if (

@@ -1,1 +1,7 @@
-{"version":"0.2.0","organization":"AIReady","date":"February 2026","abstract":"Guidelines for writing AI-friendly codebases that AI coding assistants can understand and maintain effectively. Based on analysis of thousands of repositories and common AI model failure patterns. Covers pattern detection, AI signal clarity, context optimization, change amplification, agent grounding, consistency checking, documentation, testability, and dependency management.","references":["https://getaiready.dev","https://getaiready.dev/docs"]}
+{
+  "version": "0.2.2",
+  "organization": "AIReady",
+  "date": "February 2026",
+  "abstract": "Guidelines for writing AI-friendly codebases that AI coding assistants can understand and maintain effectively. Based on analysis of thousands of repositories and common AI model failure patterns. Covers pattern detection, AI signal clarity, context optimization, change amplification, agent grounding, consistency checking, documentation, testability, and dependency management.",
+  "references": ["https://getaiready.dev", "https://getaiready.dev/docs"]
+}

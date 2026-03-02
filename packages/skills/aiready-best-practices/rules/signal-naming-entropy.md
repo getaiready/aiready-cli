@@ -7,74 +7,22 @@ tags: signal, naming, entropy, ambiguity, clarity
 
 ## Avoid High-Entropy Naming
 
-**Impact: CRITICAL (AI cannot disambiguate intent)**
+**Impact: CRITICAL (Semantic hallucinaton risk)**
 
-High-entropy names - variables or functions with multiple possible semantic interpretations - confuse AI models. When a name like "data", "info", "handle", or "process" is used, AI cannot determine what concept it represents, leading to incorrect suggestions.
+High-entropy names—generic identifiers like `data`, `info`, or `handle`—lack distinct semantic meaning. AI models often misinterpret these names or "hallucinate" their contents based on generic training data rather than the actual local context, leading to subtle logic errors.
 
-AI models trained on millions of repos learn that ambiguous names correlate with low-quality code and often skip over or misinterpret such identifiers.
+### Core Principles
 
-**Incorrect (high-entropy names):**
+- **Specific over Generic:** Replace "junk" words with the specific entity or action (e.g., `userRecord` instead of `data`).
+- **Domain-Grounded Verbs:** Use clear actions from the business domain (e.g., `calculateTaxes`, `verifyEmail`) instead of generic wrappers.
+- **Self-Documenting Data Flow:** Variable names should describe the state of the data as it moves through a pipe (e.g., `rawInput` -> `normalizedResults`).
 
-```typescript
-// What does "data" contain at each stage?
-const data = fetchData();
-const processedData = transform(data);
-const finalData = validate(processedData);
+### Guidelines
 
-// Overloaded "handle" - what is it?
-function handle(item: any) { ... }
-// Is it: handle event? handle error? handle processing?
+- **Incorrect:** `const data = fetchData()` followed by `const processed = process(data)`.
+- **Correct:** `const userRecords = fetchUserRecords()` followed by `const activeUsers = filterActiveUsers(userRecords)`.
+- **Measurement:** High clarity means a model can predict the type and structure of a variable from its name alone.
 
-// Generic "info" - what info?
-interface UserInfo { ... }
-interface OrderInfo { ... }
-interface ConfigInfo { ... }
-// AI cannot determine what fields each contains
+**Detection tip:** Run `npx @aiready/ai-signal-clarity` to automatically identify clusters of high-entropy names.
 
-// Ambiguous abbreviations
-const x = getUsers();
-const y = process(x);
-const z = validate(y);
-// What is x, y, z at each stage?
-```
-
-**Correct (descriptive names):**
-
-```typescript
-// Clear data flow
-const rawUserRecords = fetchUserRecords();
-const normalizedUsers = normalizeUserRecords(rawUserRecords);
-const validUsers = filterActiveUsers(normalizedUsers);
-
-// Specific handlers
-function handleUserRegistration(event: RegistrationEvent) { ... }
-function handlePaymentProcessing(event: PaymentEvent) { ... }
-function handleError(error: Error, context: ErrorContext) { ... }
-
-// Semantic types with clear contents
-interface UserProfile {
-  id: string;
-  displayName: string;
-  email: string;
-}
-
-interface OrderDetails {
-  orderId: string;
-  lineItems: LineItem[];
-  totalAmount: Money;
-}
-
-interface SystemConfig {
-  maxRetries: number;
-  timeout: number;
-  features: FeatureFlags;
-}
-
-// Self-documenting variables
-const pendingInvoices = filterByStatus(invoices, 'pending');
-const overdueAccounts = filterByDaysOverdue(accounts, 30);
-```
-
-**Detection tip:** Run `npx @aiready/ai-signal-clarity` to automatically identify high-entropy naming patterns in your codebase.
-
-Reference: [AI Signal Clarity Docs](https://getaiready.dev/docs/ai-signal-clarity)
+Reference: [AI Signal Clarity Docs](https://getaiready.dev/docs)

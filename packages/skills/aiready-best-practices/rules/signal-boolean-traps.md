@@ -9,65 +9,20 @@ tags: signal, boolean, parameters, ambiguity, ai-signal
 
 **Impact: CRITICAL (High confusion potential)**
 
-Boolean parameters with unclear meaning cause AI assistants to incorrectly flip or interpret their intent. When AI sees `function process(includeDeleted = false)`, it may assume "includeDeleted" being true means "include deleted items" or it may flip the logic entirely.
+Boolean parameters with unclear meaning cause AI assistants to incorrectly interpret or invert logic. Multi-boolean patterns are especially problematic as AI cannot reliably predict which combination produces which result.
 
-Multi-boolean parameter patterns are especially problematic - AI cannot reliably predict which combination produces which result.
+### Core Principles
 
-**Incorrect (boolean trap):**
+- **Prefer Objects over Positional Booleans:** Use named properties in an options object to provide explicit context for each flag.
+- **Use Enums for State:** For mutually exclusive states, use enums instead of multiple boolean flags.
+- **Self-Documenting Intent:** Ensure the parameter name clearly indicates what `true` vs `false` means (e.g., `includeDeleted` is better than `statusCheck`).
 
-```typescript
-// What does the second boolean mean? AI will guess wrong 50% of time
-function fetchUsers(includeInactive: boolean, includeDeleted: boolean) {
-  // AI can't determine which combinations are valid
-}
+### Guidelines
 
-// Boolean flags that could be confused
-function render(options: boolean, useCache: boolean) {
-  // AI may suggest: render(true, false) when it means render({ options: true, useCache: false })
-}
+- **Incorrect:** `fetchUsers(true, false)` — The meaning of these flags is hidden and highly prone to AI hallucination or inversion.
+- **Correct:** `fetchUsers({ includeInactive: true, includeDeleted: false })` — Explicit naming provides "grounding" for the AI model.
+- **Correct (Enum):** `fetchUsers(UserFilter.ActiveOnly)` — Limits the possibility space to valid, named states.
 
-// Often inverted logic
-function validate(required: boolean, optional: boolean) {
-  // Is required=true meaning "field is required" or "require this check"?
-}
-```
+**Detection tip:** Run `npx @aiready/ai-signal-clarity` to automatically identify boolean trap patterns.
 
-**Correct (explicit options object):**
-
-```typescript
-// Clear intent with named properties
-interface FetchUsersOptions {
-  includeInactive: boolean;
-  includeDeleted: boolean;
-}
-
-function fetchUsers(options: FetchUsersOptions) {
-  const { includeInactive, includeDeleted } = options;
-  // AI can now understand each option independently
-}
-
-// Or use an enum for finite states
-enum UserFilter {
-  ActiveOnly = 'active',
-  All = 'all',
-  IncludingInactive = 'inactive'
-}
-
-function fetchUsers(filter: UserFilter) {
-  // AI understands exact possible values
-}
-
-// Use descriptive booleans in objects
-interface RenderOptions {
-  enableAnimations: boolean;  // Clear meaning
-  useCache: boolean;          // Clear meaning
-}
-
-function render(options: RenderOptions) {
-  // AI can suggest specific property updates
-}
-```
-
-**Detection tip:** Run `npx @aiready/ai-signal-clarity` to automatically identify boolean trap patterns in your codebase.
-
-Reference: [AI Signal Clarity Docs](https://getaiready.dev/docs/ai-signal-clarity)
+Reference: [AI Signal Clarity Docs](https://getaiready.dev/docs)

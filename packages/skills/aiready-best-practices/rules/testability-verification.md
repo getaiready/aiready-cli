@@ -7,111 +7,22 @@ tags: testability, verification, coverage, testing, ai-agent
 
 ## Maintain Verification Coverage
 
-**Impact: MEDIUM (AI cannot confirm changes without tests)**
+**Impact: MEDIUM (Verification blind spots)**
 
-Verification coverage measures how easily AI can confirm its changes work. Low test coverage or poor test quality forces AI into expensive trial-and-error loops, guessing at whether the code works rather than confidently knowing through test results.
+Verification coverage measures how effectively AI can confirm its changes work. Low test coverage forces AI into trial-and-error loops, guessing at correctness rather than proving it through results. This significantly increases the risk of regressions in AI-maintained codebases.
 
-AI agents specifically need:
-- Tests that cover the functionality they're modifying
-- Clear assertion patterns they can extend
-- Fast feedback on whether changes work
+### Core Principles
 
-**Incorrect (low verification):**
+- **Testable Interface Design:** Ensure functions have clear inputs/outputs that can be easily asserted in a test runner.
+- **Assertion-Rich Tests:** Avoid "smoke tests" that only check if code runs; use specific assertions that prove the business logic is correct.
+- **Fast Feedback Loops:** Keep unit tests highly performant so AI can run them after every major code block edit.
 
-```typescript
-// No tests exist for critical functionality
-// user-service.ts
-export function calculateLoyaltyPoints(order: Order): number {
-  const basePoints = order.total * 0.1;
-  const bonusPoints = order.items.length > 5 ? 50 : 0;
-  return Math.floor(basePoints + bonusPoints);
-}
+### Guidelines
 
-// AI modifies calculateLoyaltyPoints but has no way to verify
-// Must manually test or hope CI passes
+- **Incorrect:** Functions without matching test files or tests that lack meaningful assertions (`expect(true).toBe(true)`).
+- **Correct:** A dedicated `__tests__/` directory co-located with features, containing specific unit and integration tests.
+- **Measurement:** High coverage means an agent can modify a function and immediately know if they've broken its core logic or edge cases.
 
-// Poor test quality
-test('test1', () => {
-  expect(true).toBe(true);  // Fake test, no actual verification
-});
+**AI Strategy:** Agents should proactively search for or create tests before refactoring complex modules to ensure they have a "safety net".
 
-// Tests without assertions
-async function testUser() {
-  const user = await getUser('123');
-  console.log(user);  // No assertion, AI can't determine success
-}
-```
-
-**Correct (verification coverage):**
-
-```typescript
-// Clear, testable functions with documented behavior
-export function calculateLoyaltyPoints(order: Order): number {
-  /**
-   * Calculates loyalty points for an order
-   * @param order - The order to calculate points for
-   * @returns Total loyalty points earned
-   *
-   * Rules:
-   * - 1 point per $1 spent (basePoints = total * 0.1)
-   * - 50 bonus points if order has 5+ items
-   *
-   * @example
-   * const order = { total: 100, items: [{ price: 100 }] };
-   * expect(calculateLoyaltyPoints(order)).toBe(60); // 10 + 50 bonus
-   */
-  const basePoints = order.total * 0.1;
-  const bonusPoints = order.items.length >= 5 ? 50 : 0;
-  return Math.floor(basePoints + bonusPoints);
-}
-
-// Comprehensive tests with clear assertions
-describe('calculateLoyaltyPoints', () => {
-  it('should calculate 1 point per dollar spent', () => {
-    const order = createOrder({ total: 100, items: [itemA] });
-    expect(calculateLoyaltyPoints(order)).toBe(10);
-  });
-
-  it('should add 50 bonus points for 5+ items', () => {
-    const order = createOrder({
-      total: 100,
-      items: [itemA, itemB, itemC, itemD, itemE]
-    });
-    expect(calculateLoyaltyPoints(order)).toBe(60); // 10 + 50
-  });
-
-  it('should not add bonus for fewer than 5 items', () => {
-    const order = createOrder({
-      total: 100,
-      items: [itemA, itemB, itemC]
-    });
-    expect(calculateLoyaltyPoints(order)).toBe(10); // No bonus
-  });
-});
-
-// Fast feedback - unit tests run in <1 second
-// npm run test:unit (fast, no external dependencies)
-```
-
-**AI verification patterns:**
-
-1. **Test-driven**: AI should write tests first, then implement to pass
-2. **Golden master**: Compare output against known-good baseline
-3. **Property-based**: Test invariants rather than specific values
-4. **Smoke tests**: Quick sanity checks for core functionality
-
-**Recommended test structure:**
-
-```
-src/
-├── features/
-│   └── order/
-│       ├── order-service.ts
-│       └── __tests__/
-│           ├── order-service.unit.test.ts    # Fast, isolated
-│           └── order-service.integration.test.ts  # Full flow
-```
-
-**Detection tip:** Run `npx @aiready/testability` to analyze verification coverage and identify files that need tests for AI agent confidence.
-
-Reference: [Testability Docs](https://getaiready.dev/docs/testability)
+Reference: [Testability Docs](https://getaiready.dev/docs)

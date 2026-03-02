@@ -7,72 +7,22 @@ tags: consistency, naming, conventions, readability
 
 ## Follow Consistent Naming Conventions
 
-**Impact: MEDIUM (5-15% improvement in AI pattern recognition)**
+**Impact: MEDIUM (Pattern recognition consistency)**
 
-Inconsistent naming conventions confuse AI models about code intent and relationships. When similar concepts use different naming patterns, AI cannot reliably predict the correct pattern for new code, leading to inconsistent suggestions that mix multiple styles.
+Inconsistent naming conventions confuse AI models about code intent and relationships. When similar concepts use different naming patterns, AI cannot reliably predict the correct pattern for new code, leading to fragmented and hard-to-maintain suggestions.
 
-AI models are trained on millions of repositories and learn that consistent naming correlates with code quality. Inconsistent naming signals:
+### Core Principles
 
-- Lack of coordination between team members
-- Technical debt or legacy code
-- Unclear ownership or architecture
+- **Standardize Casing:** Establish and strictly follow casing rules for all identifier types (e.g., `camelCase` for functions, `PascalCase` for types).
+- **Uniform File Naming:** Use a consistent file naming scheme (e.g., `kebab-case.ts`) to help AI navigate the file system predictably.
+- **Predictable Prefixing:** Use consistent prefixes for specific roles (e.g., `_` for internal/private, `I` or `T` if required by project standards).
 
-**Incorrect (mixed naming patterns for similar concepts):**
+### Guidelines
 
-```typescript
-// Inconsistent naming for similar operations
-function getUserData() { ... }
-function fetch_user_profile() { ... }
-function GetUserSettings() { ... }
-function user_preferences() { ... }
+- **Incorrect:** Mixing `getUserData()` with `fetch_user_profile()` and `GetUserSettings()` in the same layer.
+- **Correct:** Consistent `camelCase` for all functions: `getUserData()`, `getUserProfile()`, `getUserSettings()`.
+- **Correct (Files):** Standardizing on `kebab-case.ts` (e.g., `user-service.ts`, `auth-repository.ts`).
 
-// Inconsistent naming for similar types
-interface UserData { ... }
-type user_profile = { ... }
-interface IUserSettings { ... }
-type UserPrefs = { ... }
+**Detection tip:** Run `npx @aiready/consistency` to identify naming pattern violations across your codebase.
 
-// Inconsistent file naming
-// UserService.ts
-// user-repository.ts
-// userController.ts
-// user_model.ts
-```
-
-AI suggests random patterns from the mix, creating more inconsistency.
-
-**Correct (consistent naming throughout):**
-
-```typescript
-// Consistent camelCase for functions
-function getUserData() { ... }
-function getUserProfile() { ... }
-function getUserSettings() { ... }
-function getUserPreferences() { ... }
-
-// Consistent PascalCase for types
-interface UserData { ... }
-interface UserProfile { ... }
-interface UserSettings { ... }
-interface UserPreferences { ... }
-
-// Consistent kebab-case for files
-// user-service.ts
-// user-repository.ts
-// user-controller.ts
-// user-model.ts
-```
-
-AI reliably predicts the correct pattern for new code.
-
-**Establish conventions for:**
-
-- Functions: `camelCase` (JavaScript/TypeScript) or `snake_case` (Python)
-- Classes/Types: `PascalCase`
-- Constants: `UPPER_SNAKE_CASE`
-- Files: `kebab-case.ts` or `PascalCase.tsx` (components)
-- Private fields: `_camelCase` or `#camelCase`
-
-**Detection tip:** Run `npx @aiready/consistency` to identify naming pattern violations.
-
-Reference: [Consistency Checking Docs](https://getaiready.dev/docs/consistency)
+Reference: [Consistency Checking Docs](https://getaiready.dev/docs)

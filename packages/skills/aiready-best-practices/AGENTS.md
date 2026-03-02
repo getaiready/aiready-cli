@@ -1,6 +1,6 @@
 # AIReady Best Practices
 
-**Version 0.2.0**  
+**Version 0.2.2**  
 AIReady  
 February 2026
 
@@ -20,646 +20,32 @@ Guidelines for writing AI-friendly codebases that AI coding assistants can under
 
 ## Table of Contents
 
-0. [Section 0](#0-section-0) (HIGH)
-   - 0.1 [Avoid Boolean Trap Parameters](#01-avoid-boolean-trap-parameters)
-   - 0.2 [Avoid Change Amplification Hotspots](#02-avoid-change-amplification-hotspots)
-   - 0.3 [Avoid High-Entropy Naming](#03-avoid-high-entropy-naming)
-   - 0.4 [Avoid Magic Literals](#04-avoid-magic-literals)
-   - 0.5 [Define Clear Context Boundaries](#05-define-clear-context-boundaries)
-   - 0.6 [Maintain Verification Coverage](#06-maintain-verification-coverage)
-   - 0.7 [Write Agent-Actionable READMEs](#07-write-agent-actionable-readmes)
-   - 0.8 [Write Pure Functions](#08-write-pure-functions)
-1. [Pattern Detection (patterns)](#1-pattern-detection-(patterns)) (CRITICAL)
+1. [Pattern Detection (patterns)](<#1-pattern-detection-(patterns)>) (CRITICAL)
    - 1.1 [Avoid Semantic Duplicate Patterns](#11-avoid-semantic-duplicate-patterns)
    - 1.2 [Unify Fragmented Interfaces](#12-unify-fragmented-interfaces)
-2. [Context Optimization (context)](#2-context-optimization-(context)) (HIGH)
+2. [Context Optimization (context)](<#2-context-optimization-(context)>) (HIGH)
    - 2.1 [Keep Import Chains Shallow](#21-keep-import-chains-shallow)
    - 2.2 [Maintain High Module Cohesion](#22-maintain-high-module-cohesion)
-   - 2.3 [Split Large Files (>500 lines)](#23-split-large-files-(>500-lines))
-3. [Consistency Checking (consistency)](#3-consistency-checking-(consistency)) (MEDIUM)
+   - 2.3 [Split Large Files (>500 lines)](<#23-split-large-files-(%3E500-lines)>)
+3. [Consistency Checking (consistency)](<#3-consistency-checking-(consistency)>) (MEDIUM)
    - 3.1 [Follow Consistent Naming Conventions](#31-follow-consistent-naming-conventions)
    - 3.2 [Use Consistent Error Handling Patterns](#32-use-consistent-error-handling-patterns)
-4. [Documentation (docs)](#4-documentation-(docs)) (MEDIUM)
-   - 4.1 [Keep Documentation in Sync with Code](#41-keep-documentation-in-sync-with-code)
-
----
-
-## 0. Section 0
-
-**Impact: HIGH**
-
----
-
-### 0.1 Avoid Boolean Trap Parameters
-
-**Impact: CRITICAL (High confusion potential - AI flips boolean intent incorrectly)**
-
-*Tags: signal, boolean, parameters, ambiguity, ai-signal*
-
-Boolean parameters with unclear meaning cause AI assistants to incorrectly flip or interpret their intent. When AI sees `function process(includeDeleted = false)`, it may assume "includeDeleted" being true means "include deleted items" or it may flip the logic entirely.
-
-Multi-boolean parameter patterns are especially problematic - AI cannot reliably predict which combination produces which result.
-
-**Incorrect:**
-
-```typescript
-// What does the second boolean mean? AI will guess wrong 50% of time
-function fetchUsers(includeInactive: boolean, includeDeleted: boolean) {
-  // AI can't determine which combinations are valid
-}
-
-// Boolean flags that could be confused
-function render(options: boolean, useCache: boolean) {
-  // AI may suggest: render(true, false) when it means render({ options: true, useCache: false })
-}
-
-// Often inverted logic
-function validate(required: boolean, optional: boolean) {
-  // Is required=true meaning "field is required" or "require this check"?
-}
-```
-
-**Correct:**
-
-```typescript
-// Clear intent with named properties
-interface FetchUsersOptions {
-  includeInactive: boolean;
-  includeDeleted: boolean;
-}
-
-function fetchUsers(options: FetchUsersOptions) {
-  const { includeInactive, includeDeleted } = options;
-  // AI can now understand each option independently
-}
-
-// Or use an enum for finite states
-enum UserFilter {
-  ActiveOnly = 'active',
-  All = 'all',
-  IncludingInactive = 'inactive'
-}
-
-function fetchUsers(filter: UserFilter) {
-  // AI understands exact possible values
-}
-
-// Use descriptive booleans in objects
-interface RenderOptions {
-  enableAnimations: boolean;  // Clear meaning
-  useCache: boolean;          // Clear meaning
-}
-
-function render(options: RenderOptions) {
-  // AI can suggest specific property updates
-}
-```
-
-Reference: [https://getaiready.dev/docs/ai-signal-clarity](https://getaiready.dev/docs/ai-signal-clarity)
-
-### 0.2 Avoid Change Amplification Hotspots
-
-**Impact: HIGH (High fan-in/fan-out files cause "edit explosion" for AI agents)**
-
-*Tags: amplification, coupling, fan-in, fan-out, hotspots, graph-metrics*
-
-Change amplification hotspots are files with high fan-in (many files depend on them) or high fan-out (they depend on many files). When AI modifies these files, the resulting cascade of breakages often exceeds the agent's context window or reasoning capacity.
-
-This is one of the leading causes of AI agent failure - a single change triggers a cascade of updates across the codebase.
-
-**Incorrect:**
-
-```typescript
-// utils/index.ts - HIGH FAN-OUT (depends on everything)
-// Imports from dozens of modules
-import { formatDate } from '../date/formatter';
-import { validateEmail } from '../validation/email';
-import { hashPassword } from '../auth/crypto';
-import { parseJson } from '../utils/json';
-// ... 50+ more imports
-
-// When AI changes anything here, it must understand all 50+ modules
-
-// models/base-entity.ts - HIGH FAN-IN (everyone depends on it)
-// Used by 100+ files across the codebase
-export class BaseEntity {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  
-  save() { /* ... */ }
-  delete() { /* ... */ }
-  validate() { /* ... */ }
-}
-
-// AI modifying this will cause 100+ files to potentially need updates
-
-// config/index.ts - Central configuration
-// Changing anything here affects the entire system
-export const config = {
-  database: { /* 50+ fields */ },
-  api: { /* 30+ fields */ },
-  features: { /* 40+ fields */ }
-};
-```
-
-**Correct:**
-
-```typescript
-// utils/date/index.ts - Focused export
-export { formatDate, parseDate } from './formatter';
-
-// utils/validation/email.ts - Single responsibility
-export function validateEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// domain/user/entities/User.ts - Bounded context
-// Only used within the user domain
-export class User {
-  id: string;
-  email: string;
-  
-  static create(props: UserProps): User { /* ... */ }
-}
-
-// domain/user/repositories/UserRepository.ts - Clear boundary
-// Only accessed through this interface
-export interface UserRepository {
-  findById(id: string): Promise<User | null>;
-  save(user: User): Promise<void>;
-  delete(id: string): Promise<void>;
-}
-
-// Feature flags as separate modules
-import { databaseConfig } from './config/database';
-import { apiConfig } from './config/api';
-import { featureFlags } from './config/features';
-
-export { databaseConfig, apiConfig, featureFlags };
-// Each can be modified independently
-```
-
-Reference: [https://getaiready.dev/docs/change-amplification](https://getaiready.dev/docs/change-amplification)
-
-### 0.3 Avoid High-Entropy Naming
-
-**Impact: CRITICAL (Names with multiple interpretations confuse AI models)**
-
-*Tags: signal, naming, entropy, ambiguity, clarity*
-
-High-entropy names - variables or functions with multiple possible semantic interpretations - confuse AI models. When a name like "data", "info", "handle", or "process" is used, AI cannot determine what concept it represents, leading to incorrect suggestions.
-
-AI models trained on millions of repos learn that ambiguous names correlate with low-quality code and often skip over or misinterpret such identifiers.
-
-**Incorrect:**
-
-```typescript
-// What does "data" contain at each stage?
-const data = fetchData();
-const processedData = transform(data);
-const finalData = validate(processedData);
-
-// Overloaded "handle" - what is it?
-function handle(item: any) { ... }
-// Is it: handle event? handle error? handle processing?
-
-// Generic "info" - what info?
-interface UserInfo { ... }
-interface OrderInfo { ... }
-interface ConfigInfo { ... }
-// AI cannot determine what fields each contains
-
-// Ambiguous abbreviations
-const x = getUsers();
-const y = process(x);
-const z = validate(y);
-// What is x, y, z at each stage?
-```
-
-**Correct:**
-
-```typescript
-// Clear data flow
-const rawUserRecords = fetchUserRecords();
-const normalizedUsers = normalizeUserRecords(rawUserRecords);
-const validUsers = filterActiveUsers(normalizedUsers);
-
-// Specific handlers
-function handleUserRegistration(event: RegistrationEvent) { ... }
-function handlePaymentProcessing(event: PaymentEvent) { ... }
-function handleError(error: Error, context: ErrorContext) { ... }
-
-// Semantic types with clear contents
-interface UserProfile {
-  id: string;
-  displayName: string;
-  email: string;
-}
-
-interface OrderDetails {
-  orderId: string;
-  lineItems: LineItem[];
-  totalAmount: Money;
-}
-
-interface SystemConfig {
-  maxRetries: number;
-  timeout: number;
-  features: FeatureFlags;
-}
-
-// Self-documenting variables
-const pendingInvoices = filterByStatus(invoices, 'pending');
-const overdueAccounts = filterByDaysOverdue(accounts, 30);
-```
-
-Reference: [https://getaiready.dev/docs/ai-signal-clarity](https://getaiready.dev/docs/ai-signal-clarity)
-
-### 0.4 Avoid Magic Literals
-
-**Impact: CRITICAL (Unnamed constants confuse AI about business rules)**
-
-*Tags: signal, magic, literals, constants, clarity*
-
-Magic literals - unnamed constants used directly in code - prevent AI from understanding business rules and domain constraints. When AI sees `if (status === 2)`, it has no idea what "2" means and cannot suggest valid alternatives.
-
-AI models struggle to:
-- Infer what values are valid
-- Suggest enum usage or constants
-- Understand the domain model through code
-
-**Incorrect:**
-
-```typescript
-// What does status=2 mean? AI has no context
-if (user.status === 2) {
-  activateUser(user);
-}
-
-// Magic numbers in calculations
-const fee = amount * 0.15 + 100;
-// AI can't explain where 0.15 or 100 comes from
-
-// Repeated magic values
-if (response.code === 200 && data.status === 200) {
-  // Two different "200" meanings?
-}
-
-// String literals scattered
-sendEmail('support@company.com');
-notify('admin');
-```
-
-**Correct:**
-
-```typescript
-// Clear enum for status
-enum UserStatus {
-  Pending = 0,
-  Active = 1,
-  Suspended = 2,
-  Deleted = 3
-}
-
-if (user.status === UserStatus.Active) {
-  activateUser(user);
-}
-
-// Business rule constants
-const TAX_RATE = 0.15;
-const BASE_FEE = 100;
-
-const fee = amount * TAX_RATE + BASE_FEE;
-// AI now understands the formula's components
-
-// Group related constants
-namespace ApiStatus {
-  export const Success = 200;
-  export const NotFound = 404;
-  export const ServerError = 500;
-}
-
-if (response.code === ApiStatus.Success) {
-  // Clear what success means
-}
-
-// Configurable values
-const EMAIL_CONFIG = {
-  support: 'support@company.com',
-  noreply: 'noreply@company.com'
-};
-```
-
-Reference: [https://getaiready.dev/docs/ai-signal-clarity](https://getaiready.dev/docs/ai-signal-clarity)
-
-### 0.5 Define Clear Context Boundaries
-
-**Impact: HIGH (Ambiguous boundaries prevent AI from understanding domain contexts)**
-
-*Tags: grounding, boundaries, domains, context, architecture*
-
-When domain boundaries are unclear or mixed, AI cannot determine which code to load for a given task. Code for multiple domains in the same file or module confuses AI about which rules apply, leading to incorrect suggestions that mix domain logic.
-
-Clear context boundaries help AI understand:
-- Which domain a piece of code belongs to
-- What business rules apply in each context
-- Where to find relevant code for a given feature
-
-**Incorrect:**
-
-```typescript
-// src/utils/mixed.ts - Three domains mixed together
-// What is this file's purpose? AI cannot tell.
-
-export function calculateOrderTotal(items: OrderItem[]) {
-  // Order domain logic
-}
-
-export function formatUserDisplayName(user: User) {
-  // User domain logic
-}
-
-export function validateProductSku(sku: string) {
-  // Product domain logic
-}
-
-// src/index.ts - Everything re-exported
-export * from './utils/mixed';
-// AI has no idea which domain to look in
-
-// Root-level chaos
-// src/helper.ts (what helper?)
-// src/util.ts (what util?)
-// src/tools.ts (what tools?)
-```
-
-**Correct:**
-
-```typescript
-// Domain-driven structure
-src/
-├── domain/
-│   ├── order/
-│   │   ├── entities/
-│   │   │   └── Order.ts
-│   │   ├── services/
-│   │   │   └── OrderService.ts
-│   │   └── index.ts              # Public API
-│   │
-│   ├── user/
-│   │   ├── entities/
-│   │   │   └── User.ts
-│   │   ├── services/
-│   │   │   └── UserService.ts
-│   │   └── index.ts
-│   │
-│   └── product/
-│       ├── entities/
-│       │   └── Product.ts
-│       ├── services/
-│       │   └── ProductService.ts
-│       └── index.ts
-│
-├── application/                   # Use cases
-│   ├── create-order.ts
-│   └── update-profile.ts
-│
-└── infrastructure/               # External integrations
-    ├── database/
-    └── api/
-```
-
-Reference: [https://getaiready.dev/docs/agent-grounding](https://getaiready.dev/docs/agent-grounding)
-
-### 0.6 Maintain Verification Coverage
-
-**Impact: MEDIUM (Low test coverage prevents AI from confirming its changes work)**
-
-*Tags: testability, verification, coverage, testing, ai-agent*
-
-Verification coverage measures how easily AI can confirm its changes work. Low test coverage or poor test quality forces AI into expensive trial-and-error loops, guessing at whether the code works rather than confidently knowing through test results.
-
-AI agents specifically need:
-- Tests that cover the functionality they're modifying
-- Clear assertion patterns they can extend
-- Fast feedback on whether changes work
-
-**Incorrect:**
-
-```typescript
-// No tests exist for critical functionality
-// user-service.ts
-export function calculateLoyaltyPoints(order: Order): number {
-  const basePoints = order.total * 0.1;
-  const bonusPoints = order.items.length > 5 ? 50 : 0;
-  return Math.floor(basePoints + bonusPoints);
-}
-
-// AI modifies calculateLoyaltyPoints but has no way to verify
-// Must manually test or hope CI passes
-
-// Poor test quality
-test('test1', () => {
-  expect(true).toBe(true);  // Fake test, no actual verification
-});
-
-// Tests without assertions
-async function testUser() {
-  const user = await getUser('123');
-  console.log(user);  // No assertion, AI can't determine success
-}
-```
-
-**Correct:**
-
-```typescript
-// Clear, testable functions with documented behavior
-export function calculateLoyaltyPoints(order: Order): number {
-  /**
-   * Calculates loyalty points for an order
-   * @param order - The order to calculate points for
-   * @returns Total loyalty points earned
-   *
-   * Rules:
-   * - 1 point per $1 spent (basePoints = total * 0.1)
-   * - 50 bonus points if order has 5+ items
-   *
-   * @example
-   * const order = { total: 100, items: [{ price: 100 }] };
-   * expect(calculateLoyaltyPoints(order)).toBe(60); // 10 + 50 bonus
-   */
-  const basePoints = order.total * 0.1;
-  const bonusPoints = order.items.length >= 5 ? 50 : 0;
-  return Math.floor(basePoints + bonusPoints);
-}
-
-// Comprehensive tests with clear assertions
-describe('calculateLoyaltyPoints', () => {
-  it('should calculate 1 point per dollar spent', () => {
-    const order = createOrder({ total: 100, items: [itemA] });
-    expect(calculateLoyaltyPoints(order)).toBe(10);
-  });
-
-  it('should add 50 bonus points for 5+ items', () => {
-    const order = createOrder({
-      total: 100,
-      items: [itemA, itemB, itemC, itemD, itemE]
-    });
-    expect(calculateLoyaltyPoints(order)).toBe(60); // 10 + 50
-  });
-
-  it('should not add bonus for fewer than 5 items', () => {
-    const order = createOrder({
-      total: 100,
-      items: [itemA, itemB, itemC]
-    });
-    expect(calculateLoyaltyPoints(order)).toBe(10); // No bonus
-  });
-});
-
-// Fast feedback - unit tests run in <1 second
-// npm run test:unit (fast, no external dependencies)
-```
-
-Reference: [https://getaiready.dev/docs/testability](https://getaiready.dev/docs/testability)
-
-### 0.7 Write Agent-Actionable READMEs
-
-**Impact: HIGH (Poor README quality reduces AI's understanding of project context)**
-
-*Tags: grounding, readme, documentation, context, agents*
-
-READMEs are often the first context AI loads when working on a repository. Poor-quality READMEs leave AI without the high-level understanding needed to make architectural decisions, understand business rules, or recognize domain boundaries.
-
-A good README for AI agents should include:
-- Project purpose and domain
-- Architecture overview with diagram
-- Key domain concepts and terminology
-- Entry points and common workflows
-- Testing and verification patterns
-
-**Incorrect:**
-
-```markdown
-# My Project
-
-A TypeScript project.
-
-## Install
-
-npm install
-
-## Test
-
-npm test
-```
-
-**Correct:**
-
-```markdown
-# Order Processing Service
-
-Domain: E-commerce Order Management
-
-## Purpose
-
-Handles order creation, validation, and fulfillment for the e-commerce platform. This service manages the complete order lifecycle from cart checkout to delivery confirmation.
-
-## Architecture
-```
-
-Reference: [https://getaiready.dev/docs/agent-grounding](https://getaiready.dev/docs/agent-grounding)
-
-### 0.8 Write Pure Functions
-
-**Impact: MEDIUM (Global state and side effects prevent AI from writing tests)**
-
-*Tags: testability, purity, side-effects, global-state, dependency-injection*
-
-Pure functions - those that always produce the same output for the same input and have no side effects - are essential for AI agent verification. When AI modifies code, it needs to verify the change works. Impure functions (global state, I/O, randomness) make verification extremely difficult and cause AI to enter expensive "fix-test-fail" retry loops.
-
-AI agents struggle most with:
-- Global state that affects function behavior
-- Side effects that cannot be mocked
-- Non-deterministic behavior
-
-**Incorrect:**
-
-```typescript
-// Global state - AI cannot predict behavior
-let currentUser: User | null = null;
-
-function getUserEmail() {
-  return currentUser?.email;  // Depends on global state
-}
-
-function processOrder(order: Order) {
-  currentUser = order.user;   // Modifies global state
-  sendEmail(order.user.email, 'Order processed');
-  order.status = 'processed'; // Side effect on input
-  return order;
-}
-
-// Hidden dependencies
-function calculateTotal(items: Item[]) {
-  const taxRate = getConfig().taxRate;  // Hidden global access
-  return items.reduce((sum, item) => sum + item.price, 0) * taxRate;
-}
-
-// Non-deterministic behavior
-function getRandomId(): string {
-  return Math.random().toString(36);  // Different each call
-}
-```
-
-**Correct:**
-
-```typescript
-// Explicit dependencies through parameters
-function getUserEmail(user: User): string {
-  return user.email;
-}
-
-// Pure transformation
-function processOrder(order: Order, config: Config): ProcessedOrder {
-  return {
-    ...order,
-    status: 'processed',
-    processedAt: new Date(),
-    total: calculateTotal(order.items, config.taxRate)
-  };
-}
-
-// Dependencies explicitly injected
-function calculateTotal(items: Item[], taxRate: number): number {
-  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-  return subtotal * (1 + taxRate);
-}
-
-// Deterministic with seed
-function generateId(counter: number): string {
-  return `id-${counter.toString(36)}`;
-}
-
-// Dependency injection pattern
-interface Services {
-  emailService: EmailService;
-  configService: ConfigService;
-}
-
-class OrderProcessor {
-  constructor(private services: Services) {}
-  
-  process(order: Order): ProcessedOrder {
-    // All dependencies are explicit and mockable
-    this.services.emailService.send(order.user.email, 'Processed');
-    return { ...order, status: 'processed' };
-  }
-}
-```
-
-Reference: [https://getaiready.dev/docs/testability](https://getaiready.dev/docs/testability)
+4. [AI Signal Clarity (signal)](<#4-ai-signal-clarity-(signal)>) (CRITICAL)
+   - 4.1 [Avoid Boolean Trap Parameters](#41-avoid-boolean-trap-parameters)
+   - 4.2 [Avoid High-Entropy Naming](#42-avoid-high-entropy-naming)
+   - 4.3 [Avoid Magic Literals](#43-avoid-magic-literals)
+5. [Change Amplification (amplification)](<#5-change-amplification-(amplification)>) (HIGH)
+   - 5.1 [Avoid Change Amplification Hotspots](#51-avoid-change-amplification-hotspots)
+6. [Agent Grounding (grounding)](<#6-agent-grounding-(grounding)>) (HIGH)
+   - 6.1 [Define Clear Context Boundaries](#61-define-clear-context-boundaries)
+   - 6.2 [Write Agent-Actionable READMEs](#62-write-agent-actionable-readmes)
+7. [Testability (testability)](<#7-testability-(testability)>) (MEDIUM)
+   - 7.1 [Maintain Verification Coverage](#71-maintain-verification-coverage)
+   - 7.2 [Write Pure Functions](#72-write-pure-functions)
+8. [Documentation (docs)](<#8-documentation-(docs)>) (MEDIUM)
+   - 8.1 [Keep Documentation in Sync with Code](#81-keep-documentation-in-sync-with-code)
+9. [Codebase Health Assessment (assessment)](<#9-codebase-health-assessment-(assessment)>) (HIGH)
+   - 9.1 [Run Unified Codebase Health Scan](#91-run-unified-codebase-health-scan)
 
 ---
 
@@ -675,125 +61,47 @@ Identifies semantic duplicate patterns and naming inconsistencies that waste AI 
 
 **Impact: CRITICAL (30-70% context window waste)**
 
-*Tags: patterns, duplicates, context-window, semantic-similarity*
+_Tags: patterns, duplicates, context-window, semantic-similarity_
 
-Semantic duplicates—components, functions, or modules that perform the same task with different names—waste AI context window tokens and confuse pattern recognition. AI models struggle to identify which implementation to use, leading to inconsistent suggestions and hallucinated variations.
+Multiple functions or components that perform the same task with different names (`fetchUser`, `getUserData`, `loadUserInfo`) waste AI context tokens and confuse pattern recognition. AI cannot determine the canonical pattern and will often create new, redundant variations.
 
-When AI encounters multiple implementations of the same concept, it:
+### Core Principles
 
-- Wastes tokens loading all variations into context
-- Cannot determine the canonical pattern
-- Suggests mixing patterns inappropriately
-- Creates new variations instead of reusing existing code
+- **Canonical Implementation:** Establish a single "source of truth" for every business operation.
+- **Pattern Reuse over Recreation:** Proactively search for existing implementations before creating new ones.
+- **Unified Naming:** Use consistent verbs for similar operations (e.g., always use `get` for retrieval, `update` for mutation).
 
-**Incorrect:**
+### Guidelines
 
-```typescript
-// getUserData.ts
-export async function getUserData(id: string) {
-  return fetch(`/api/users/${id}`).then((r) => r.json());
-}
+- **Incorrect:** Three different versions of an API fetcher scattered across the codebase.
+- **Correct:** A single module (e.g., `users.ts`) containing the canonical `getUser` function.
+- **Measurement:** AI recognizes and consistently reuses the existing pattern rather than hallucinating new ones.
 
-// fetchUser.ts
-export async function fetchUser(userId: string) {
-  const response = await fetch(`/api/users/${userId}`);
-  return response.json();
-}
+**Detection tip:** Run `npx @aiready/pattern-detect` to identify semantic duplicates and consolidate them.
 
-// loadUserInfo.ts
-export async function loadUserInfo(id: string) {
-  return await fetch(`/api/users/${id}`).then((res) => res.json());
-}
-```
-
-**Correct:**
-
-```typescript
-// users.ts
-export async function getUser(userId: string) {
-  const response = await fetch(`/api/users/${userId}`);
-  return response.json();
-}
-
-// All other files import from here
-import { getUser } from './users';
-```
-
-Reference: [https://getaiready.dev/docs/pattern-detect](https://getaiready.dev/docs/pattern-detect)
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
 
 ### 1.2 Unify Fragmented Interfaces
 
 **Impact: CRITICAL (40-80% reduction in AI confusion, prevents wrong type usage)**
 
-*Tags: patterns, interfaces, types, consistency*
+_Tags: patterns, interfaces, types, consistency_
 
-Multiple similar interfaces or types for the same concept confuse AI models and lead to incorrect implementations. When AI encounters 5 different user types (`User`, `UserData`, `UserInfo`, `UserProfile`, `UserDTO`), it cannot determine which to use and often mixes them incorrectly.
+Multiple similar interfaces for the same concept (`User`, `UserData`, `UserInfo`) confuse AI agents, leading to incorrect property access and mixed type usage. This is a primary driver of subtle type errors in AI-generated code.
 
-This is one of the most critical issues for AI comprehension because it directly causes type errors and logic bugs that are hard to detect.
+### Core Principles
 
-**Incorrect:**
+- **Single Domain Representative:** Define one canonical interface per concept and use it across the service.
+- **Extensional Specialization:** Use `extends` to create specialized DTOs or API shapes from the base domain entity.
+- **Composition over Duplication:** Compose complex types from stable primitives rather than redefining them in each module.
 
-```typescript
-// user.types.ts
-interface User {
-  id: string;
-  email: string;
-}
+### Guidelines
 
-// profile.types.ts
-interface UserProfile {
-  userId: string;
-  email: string;
-  name: string;
-}
+- **Incorrect:** Having 5 slightly different versions of the `User` object across API, DB, and UI layers.
+- **Correct (Extends):** `interface UserDTO extends User { createdAt: Date }`.
+- **Measurement:** High unification means a single change to a domain entity correctly propagates through its specialized variations.
 
-// api.types.ts
-interface UserData {
-  id: string;
-  emailAddress: string;
-  displayName: string;
-}
-
-// Three different interfaces for the same concept!
-// AI cannot determine which to use where
-function updateUser(user: User) {
-  /* ... */
-}
-function getProfile(userId: string): UserProfile {
-  /* ... */
-}
-function syncData(data: UserData) {
-  /* ... */
-}
-```
-
-**Correct:**
-
-```typescript
-// user.types.ts
-interface User {
-  id: string;
-  email: string;
-  name?: string; // Optional fields for different contexts
-}
-
-// Use a single source of truth
-function updateUser(user: User) {
-  /* ... */
-}
-function getProfile(userId: string): User {
-  /* ... */
-}
-function syncData(user: User) {
-  /* ... */
-}
-
-// For API-specific needs, extend rather than duplicate
-interface UserDTO extends User {
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+**Benefits:** Reduces type-related bugs by 40-80% by providing clear "source of truth" grounding for the AI agent.
 
 Reference: [https://refactoring.guru/extract-interface](https://refactoring.guru/extract-interface)
 
@@ -811,270 +119,73 @@ Optimizes code organization for AI context windows. Addresses import depth, file
 
 **Impact: HIGH (10-30% reduction in context depth)**
 
-*Tags: context, imports, dependency-depth, circular-imports*
+_Tags: context, imports, dependency-depth, circular-imports_
 
-Deep import chains force AI models to load many intermediate files to understand a single function, quickly exceeding context window limits. When AI needs to trace through 5+ levels of imports, it often loses context of the original goal and provides incomplete or incorrect suggestions.
+Deep import chains force AI models to load many intermediate files to trace logic, quickly exceeding context window limits. When AI must trace through 5+ levels of imports, it often loses the original goal's context and provides incomplete or hallucinated suggestions.
 
-Each level of import depth exponentially increases the context needed:
+### Core Principles
 
-- Level 1: Direct dependencies (good)
-- Level 2-3: Transitive dependencies (acceptable)
-- Level 4+: Deep chains (problematic for AI)
+- **Flatten Dependency Trees:** Use barrel exports (`index.ts`) and clear module boundaries to reduce the level of transitives.
+- **Prefer Direct Imports:** In deep architectures, use path aliases (e.g., `@/lib/utils`) to keep import paths shallow and predictable.
+- **Co-locate Related Logic:** Reduce the need for deep cross-module imports by keeping tightly coupled logic in the same or adjacent directories.
 
-**Incorrect:**
+### Guidelines
 
-```typescript
-// app.ts
-import { processData } from './features/processor';
+- **Level 1 (Direct):** Ideal. AI understands the dependency immediately.
+- **Level 2-3 (Transitive):** Acceptable. Manageable for most modern models.
+- **Level 4+ (Deep):** Problematic. Triggers "context fatigue" and increases error rates.
+- **Best Practice:** Use barrel exports to flatten paths: `import { x } from '@/lib'` instead of `import { x } from '../../lib/a/b/c/x'`.
 
-// features/processor.ts
-import { transform } from './utils/transformer';
+**Detection tip:** Run `npx @aiready/context-analyzer --max-depth 3` to identify deep or circular import chains.
 
-// features/utils/transformer.ts
-import { validate } from '../../../lib/validation/validator';
-
-// lib/validation/validator.ts
-import { checkSchema } from './schema/checker';
-
-// lib/validation/schema/checker.ts
-import { rules } from '../../../config/rules/validation-rules';
-```
-
-**Correct:**
-
-```typescript
-// app.ts
-import { processData } from './features/processor';
-
-// features/processor.ts
-import { transform, validate } from '@/lib/utils';
-
-// lib/utils/index.ts (barrel export)
-export { transform } from './transformer';
-export { validate } from './validator';
-export { checkSchema } from './schema';
-```
-
-Reference: [https://getaiready.dev/docs/context-analyzer](https://getaiready.dev/docs/context-analyzer)
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
 
 ### 2.2 Maintain High Module Cohesion
 
 **Impact: HIGH (25-40% reduction in context pollution, improves AI file selection)**
 
-*Tags: context, cohesion, organization, modules*
+_Tags: context, cohesion, organization, modules_
 
-Low cohesion forces AI to load multiple unrelated files to understand one feature. When a file contains unrelated functions (authentication + date formatting + validation), AI must read the entire file even when only needing one function.
+Low cohesion forces AI to process unrelated code when focusing on a specific feature. When "util" files bundle authentication, formatting, and validation, AI must load the entire file, wasting its context budget and increasing the risk of hallucination.
 
-High cohesion means related code stays together. AI can load the minimal context needed.
+### Core Principles
 
-**Incorrect:**
+- **Single Responsibility Files:** Each file should focus on a single domain or functional area (e.g., `auth/password.ts` vs a generic `utils.ts`).
+- **Feature-Based Grouping:** Group code by what it _does_ for the user, not its technical type (e.g., `domain/user/` vs `services/`).
+- **Minimize "Junk Drawer" Utils:** Move generic utilities into specific, named sub-modules once they exceed 2-3 related functions.
 
-```typescript
-// utils.ts - Everything dumped together
-export function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
+### Guidelines
 
-export function formatDate(date: Date) {
-  return date.toISOString();
-}
+- **Incorrect:** A 500-line `utils.ts` containing everything from date formatting to database connection logic.
+- **Correct:** Modular structure like `auth/token.ts`, `validation/email.ts`, and `utils/date.ts`.
+- **Measurement:** High cohesion means all functions in a file share the same data types or serve the same business feature.
 
-export function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
+**Benefits for AI:** Reduces context waste by 25-40% and ensures the agent loads only the minimal relevant code for a task.
 
-export function generateToken(userId: string) {
-  return jwt.sign({ userId }, SECRET);
-}
-
-// AI must load ALL of this just to understand password hashing!
-// Context cost: 150+ lines for 10 lines of relevant code
-```
-
-**Correct:**
-
-```typescript
-// auth/password.ts
-export function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
-
-export function verifyPassword(password: string, hash: string) {
-  return bcrypt.compare(password, hash);
-}
-
-// auth/token.ts
-export function generateToken(userId: string) {
-  return jwt.sign({ userId }, SECRET);
-}
-
-export function verifyToken(token: string) {
-  return jwt.verify(token, SECRET);
-}
-
-// validation/email.ts
-export function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// utils/date.ts
-export function formatDate(date: Date) {
-  return date.toISOString();
-}
-
-// AI loads only auth/password.ts for password operations
-// Context cost: 15 lines instead of 150+
-```
-
-Reference: [https://en.wikipedia.org/wiki/Cohesion_(computer_science)](https://en.wikipedia.org/wiki/Cohesion_(computer_science))
+Reference: [https://en.wikipedia.org/wiki/Cohesion\_(computer_science)](<https://en.wikipedia.org/wiki/Cohesion_(computer_science)>)
 
 ### 2.3 Split Large Files (>500 lines)
 
 **Impact: HIGH (30-50% reduction in context window usage)**
 
-*Tags: context, file-size, refactoring, modules*
+_Tags: context, file-size, refactoring, modules_
 
-Files over 500 lines often exceed AI context windows or force loading unnecessary code. When AI needs to understand one function in a 2000-line file, it must process the entire file, wasting 90%+ of its context budget.
+Files exceeding 500 lines often force AI models to process unnecessary code, wasting 90%+ of their context budget for a single operation. This leads to incomplete reasoning and inaccurate suggestions as the model's focus is diluted.
 
-Split large files by feature, responsibility, or data type.
+### Core Principles
 
-**Incorrect:**
+- **Context Optimization:** Keep source files small so they fit entirely within an AI's highly-attentive context window.
+- **Responsibility-Based Splitting:** Move distinct feature sets into separate files (e.g., `ProfileService` should not live with `AuthService`).
+- **Incremental Extraction:** Proactively split files once they cross the 500-line threshold to maintain modularity.
 
-```typescript
-// user-service.ts (2000+ lines)
-class UserService {
-  // Profile management (300 lines)
-  async getProfile(userId: string) {
-    /* ... */
-  }
-  async updateProfile(userId: string, data: any) {
-    /* ... */
-  }
-  async uploadAvatar(userId: string, file: File) {
-    /* ... */
-  }
+### Guidelines
 
-  // Authentication (400 lines)
-  async login(email: string, password: string) {
-    /* ... */
-  }
-  async logout(userId: string) {
-    /* ... */
-  }
-  async resetPassword(email: string) {
-    /* ... */
-  }
-  async verifyEmail(token: string) {
-    /* ... */
-  }
+- **Ideal (< 200 lines):** Fits easily in a single context window with high precision.
+- **Acceptable (200-500 lines):** Manageable if cohesion is very high.
+- **Problematic (> 500 lines):** Should be split to avoid context pollution.
+- **Critical (> 1000 lines):** Always split; too large for effective AI assistance and often indicates architectural "god objects".
 
-  // Permissions (350 lines)
-  async hasPermission(userId: string, resource: string) {
-    /* ... */
-  }
-  async grantPermission(userId: string, permission: string) {
-    /* ... */
-  }
-  async revokePermission(userId: string, permission: string) {
-    /* ... */
-  }
-
-  // Notifications (300 lines)
-  async sendNotification(userId: string, message: string) {
-    /* ... */
-  }
-  async getNotifications(userId: string) {
-    /* ... */
-  }
-  async markAsRead(notificationId: string) {
-    /* ... */
-  }
-
-  // Analytics (350 lines)
-  async trackUserEvent(userId: string, event: string) {
-    /* ... */
-  }
-  async getUserStats(userId: string) {
-    /* ... */
-  }
-
-  // ... 300 more lines
-}
-
-// AI needs 2000 lines context just to understand profile updates!
-```
-
-**Correct:**
-
-```typescript
-// user/profile-service.ts (150 lines)
-export class ProfileService {
-  async get(userId: string) {
-    /* ... */
-  }
-  async update(userId: string, data: ProfileData) {
-    /* ... */
-  }
-  async uploadAvatar(userId: string, file: File) {
-    /* ... */
-  }
-}
-
-// user/auth-service.ts (200 lines)
-export class AuthService {
-  async login(email: string, password: string) {
-    /* ... */
-  }
-  async logout(userId: string) {
-    /* ... */
-  }
-  async resetPassword(email: string) {
-    /* ... */
-  }
-  async verifyEmail(token: string) {
-    /* ... */
-  }
-}
-
-// user/permission-service.ts (180 lines)
-export class PermissionService {
-  async check(userId: string, resource: string) {
-    /* ... */
-  }
-  async grant(userId: string, permission: string) {
-    /* ... */
-  }
-  async revoke(userId: string, permission: string) {
-    /* ... */
-  }
-}
-
-// user/notification-service.ts (160 lines)
-export class NotificationService {
-  async send(userId: string, message: string) {
-    /* ... */
-  }
-  async list(userId: string) {
-    /* ... */
-  }
-  async markRead(notificationId: string) {
-    /* ... */
-  }
-}
-
-// user/analytics-service.ts (170 lines)
-export class AnalyticsService {
-  async trackEvent(userId: string, event: string) {
-    /* ... */
-  }
-  async getStats(userId: string) {
-    /* ... */
-  }
-}
-
-// AI loads only 150 lines for profile operations
-// Context savings: 1850 lines (92% reduction)
-```
+**Workflow:** When a file grows too large, extract logical classes or function groups into separate files in a feature-specific directory. Use `index.ts` to maintain a clean public API.
 
 Reference: [https://refactoring.guru/extract-class](https://refactoring.guru/extract-class)
 
@@ -1092,154 +203,288 @@ Ensures naming conventions, error handling patterns, and API designs are consist
 
 **Impact: MEDIUM (5-15% improvement in AI pattern recognition)**
 
-*Tags: consistency, naming, conventions, readability*
+_Tags: consistency, naming, conventions, readability_
 
-Inconsistent naming conventions confuse AI models about code intent and relationships. When similar concepts use different naming patterns, AI cannot reliably predict the correct pattern for new code, leading to inconsistent suggestions that mix multiple styles.
+Inconsistent naming conventions confuse AI models about code intent and relationships. When similar concepts use different naming patterns, AI cannot reliably predict the correct pattern for new code, leading to fragmented and hard-to-maintain suggestions.
 
-AI models are trained on millions of repositories and learn that consistent naming correlates with code quality. Inconsistent naming signals:
+### Core Principles
 
-- Lack of coordination between team members
-- Technical debt or legacy code
-- Unclear ownership or architecture
+- **Standardize Casing:** Establish and strictly follow casing rules for all identifier types (e.g., `camelCase` for functions, `PascalCase` for types).
+- **Uniform File Naming:** Use a consistent file naming scheme (e.g., `kebab-case.ts`) to help AI navigate the file system predictably.
+- **Predictable Prefixing:** Use consistent prefixes for specific roles (e.g., `_` for internal/private, `I` or `T` if required by project standards).
 
-**Incorrect:**
+### Guidelines
 
-```typescript
-// Inconsistent naming for similar operations
-function getUserData() { ... }
-function fetch_user_profile() { ... }
-function GetUserSettings() { ... }
-function user_preferences() { ... }
+- **Incorrect:** Mixing `getUserData()` with `fetch_user_profile()` and `GetUserSettings()` in the same layer.
+- **Correct:** Consistent `camelCase` for all functions: `getUserData()`, `getUserProfile()`, `getUserSettings()`.
+- **Correct (Files):** Standardizing on `kebab-case.ts` (e.g., `user-service.ts`, `auth-repository.ts`).
 
-// Inconsistent naming for similar types
-interface UserData { ... }
-type user_profile = { ... }
-interface IUserSettings { ... }
-type UserPrefs = { ... }
+**Detection tip:** Run `npx @aiready/consistency` to identify naming pattern violations across your codebase.
 
-// Inconsistent file naming
-// UserService.ts
-// user-repository.ts
-// userController.ts
-// user_model.ts
-```
-
-**Correct:**
-
-```typescript
-// Consistent camelCase for functions
-function getUserData() { ... }
-function getUserProfile() { ... }
-function getUserSettings() { ... }
-function getUserPreferences() { ... }
-
-// Consistent PascalCase for types
-interface UserData { ... }
-interface UserProfile { ... }
-interface UserSettings { ... }
-interface UserPreferences { ... }
-
-// Consistent kebab-case for files
-// user-service.ts
-// user-repository.ts
-// user-controller.ts
-// user-model.ts
-```
-
-Reference: [https://getaiready.dev/docs/consistency](https://getaiready.dev/docs/consistency)
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
 
 ### 3.2 Use Consistent Error Handling Patterns
 
 **Impact: MEDIUM (15-25% improvement in AI error handling suggestions)**
 
-*Tags: consistency, errors, patterns, exceptions*
+_Tags: consistency, errors, patterns, exceptions_
 
-Mixed error patterns confuse AI models. When your codebase uses throw, try-catch, error callbacks, Result types, and null returns interchangeably, AI cannot predict the correct pattern and suggests inconsistent error handling.
+Mixed error patterns (e.g., mixing `throw`, `Result` objects, and `null` returns) prevent AI models from predicting the correct handling strategy. This leads to inconsistent implementations where errors are partially caught or completely ignored.
 
-Choose one primary pattern and use it consistently.
+### Core Principles
 
-**Incorrect:**
+- **Unified Error Strategy:** Choose one primary pattern (Result Objects vs. Exceptions) and use it across the entire codebase.
+- **Explicit Failure States:** Favor `Result` types for business logic failures to force the AI agent to handle the error case explicitly.
+- **Avoid Semantic Nulls:** Don't return `null` or `undefined` to indicate failure; use typed errors or Result objects for clarity.
 
-```typescript
-// File 1: throws exceptions
-function parseUserData(data: string): User {
-  if (!data) throw new Error('Invalid data');
-  return JSON.parse(data);
-}
+### Guidelines
 
-// File 2: returns null
-function getUserById(id: string): User | null {
-  const user = database.get(id);
-  return user ?? null;
-}
+- **Incorrect:** Mixing `throw new Error()` in one file with `return null` in another for the same semantic operation (e.g., "User not found").
+- **Correct (Result Pattern):** `async function getUser(id): Result<User, Error>` — Explicit success/failure branches.
+- **Correct (Exceptions):** Dedicated `AppError` class used consistently with `try-catch` blocks.
 
-// File 3: uses error callbacks
-function fetchUser(
-  id: string,
-  callback: (error: Error | null, user?: User) => void
-) {
-  // ...
-}
-
-// File 4: returns Result type
-function validateUser(user: User): Result<User, ValidationError> {
-  // ...
-}
-
-// AI cannot determine which pattern to use when suggesting code!
-```
-
-**Correct:**
-
-```typescript
-// shared/result.ts
-export type Result<T, E = Error> =
-  | { success: true; data: T }
-  | { success: false; error: E };
-
-export function ok<T>(data: T): Result<T> {
-  return { success: true, data };
-}
-
-export function err<E>(error: E): Result<never, E> {
-  return { success: false, error };
-}
-
-// All functions use the same pattern
-function parseUserData(data: string): Result<User> {
-  if (!data) return err(new Error('Invalid data'));
-  try {
-    return ok(JSON.parse(data));
-  } catch (e) {
-    return err(new Error('Parse failed'));
-  }
-}
-
-function getUserById(id: string): Result<User> {
-  const user = database.get(id);
-  if (!user) return err(new Error('User not found'));
-  return ok(user);
-}
-
-function validateUser(user: User): Result<User, ValidationError> {
-  if (!user.email) return err({ field: 'email', message: 'Required' });
-  return ok(user);
-}
-
-// Usage is consistent everywhere
-const result = getUserById('123');
-if (result.success) {
-  console.log(result.data.name);
-} else {
-  console.error(result.error.message);
-}
-```
+**Benefits:** Ensures the AI agent consistently suggests and implements the project's chosen error pattern, reducing unhandled exceptions by 15-25%.
 
 Reference: [https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates)
 
 ---
 
-## 4. Documentation (docs)
+## 4. AI Signal Clarity (signal)
+
+**Impact: CRITICAL**
+
+Maximizes the semantic "signal" code provides to AI models. Eliminates ambiguous booleans, magic literals, and high-entropy naming that cause models to hallucinate or misinterpret logic.
+
+---
+
+### 4.1 Avoid Boolean Trap Parameters
+
+**Impact: CRITICAL (High confusion potential - AI flips boolean intent incorrectly)**
+
+_Tags: signal, boolean, parameters, ambiguity, ai-signal_
+
+Boolean parameters with unclear meaning cause AI assistants to incorrectly interpret or invert logic. Multi-boolean patterns are especially problematic as AI cannot reliably predict which combination produces which result.
+
+### Core Principles
+
+- **Prefer Objects over Positional Booleans:** Use named properties in an options object to provide explicit context for each flag.
+- **Use Enums for State:** For mutually exclusive states, use enums instead of multiple boolean flags.
+- **Self-Documenting Intent:** Ensure the parameter name clearly indicates what `true` vs `false` means (e.g., `includeDeleted` is better than `statusCheck`).
+
+### Guidelines
+
+- **Incorrect:** `fetchUsers(true, false)` — The meaning of these flags is hidden and highly prone to AI hallucination or inversion.
+- **Correct:** `fetchUsers({ includeInactive: true, includeDeleted: false })` — Explicit naming provides "grounding" for the AI model.
+- **Correct (Enum):** `fetchUsers(UserFilter.ActiveOnly)` — Limits the possibility space to valid, named states.
+
+**Detection tip:** Run `npx @aiready/ai-signal-clarity` to automatically identify boolean trap patterns.
+
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
+
+### 4.2 Avoid High-Entropy Naming
+
+**Impact: CRITICAL (Names with multiple interpretations confuse AI models)**
+
+_Tags: signal, naming, entropy, ambiguity, clarity_
+
+High-entropy names—generic identifiers like `data`, `info`, or `handle`—lack distinct semantic meaning. AI models often misinterpret these names or "hallucinate" their contents based on generic training data rather than the actual local context, leading to subtle logic errors.
+
+### Core Principles
+
+- **Specific over Generic:** Replace "junk" words with the specific entity or action (e.g., `userRecord` instead of `data`).
+- **Domain-Grounded Verbs:** Use clear actions from the business domain (e.g., `calculateTaxes`, `verifyEmail`) instead of generic wrappers.
+- **Self-Documenting Data Flow:** Variable names should describe the state of the data as it moves through a pipe (e.g., `rawInput` -> `normalizedResults`).
+
+### Guidelines
+
+- **Incorrect:** `const data = fetchData()` followed by `const processed = process(data)`.
+- **Correct:** `const userRecords = fetchUserRecords()` followed by `const activeUsers = filterActiveUsers(userRecords)`.
+- **Measurement:** High clarity means a model can predict the type and structure of a variable from its name alone.
+
+**Detection tip:** Run `npx @aiready/ai-signal-clarity` to automatically identify clusters of high-entropy names.
+
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
+
+### 4.3 Avoid Magic Literals
+
+**Impact: CRITICAL (Unnamed constants confuse AI about business rules)**
+
+_Tags: signal, magic, literals, constants, clarity_
+
+Magic literals—unnamed constants used directly in logic—prevent AI from understanding the "why" behind business rules. When AI sees `if (status === 2)`, it lacks the semantic grounding to suggest valid alternatives or explain the intent of the check.
+
+### Core Principles
+
+- **Named Constants for Rules:** Every number or string with specific domain meaning must be held in a named constant or enum.
+- **Grouped Domain Values:** Use Enums or Namespaces to group related constants (e.g., `UserStatus`, `ApiStatus`).
+- **Centralized Configuration:** Move environment-specific or configurable literals into a central config object.
+
+### Guidelines
+
+- **Incorrect:** `if (user.status === 2)` — Unclear what "2" represents.
+- **Correct:** `if (user.status === UserStatus.Active)` — Explicitly states the intent.
+- **Incorrect:** Calculation with unnamed coefficients (e.g., `amount * 0.15 + 100`).
+- **Correct:** `amount * TAX_RATE + BASE_FEE` — Provides clear semantic labels for the model.
+
+**Detection tip:** Run `npx @aiready/ai-signal-clarity` to identify magic literal clusters that need extraction.
+
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
+
+---
+
+## 5. Change Amplification (amplification)
+
+**Impact: HIGH**
+
+Identifies "hotspots" where a single code change triggers a cascade of breakages. Reducing amplification ensures AI edits stay within context window limits and don't overwhelm the agent's reasoning.
+
+---
+
+### 5.1 Avoid Change Amplification Hotspots
+
+**Impact: HIGH (High fan-in/fan-out files cause "edit explosion" for AI agents)**
+
+_Tags: amplification, coupling, fan-in, fan-out, hotspots, graph-metrics_
+
+Change amplification hotspots are files with extreme dependency counts (high fan-in/fan-out). When an AI modifies these files, it often triggers a cascade of breakages that exceeds the agent's context window or reasoning capacity, leading to failed edits and regression loops.
+
+### Core Principles
+
+- **Interface Segregation:** Use specific interfaces to hide implementation details from high fan-in modules, limiting the impact of internal changes.
+- **Bounded Contexts:** Group related code into modules that AI can reason about independently without loading the entire project.
+- **Modular Configuration:** Avoid massive central config objects; split configuration into feature-specific modules to localize edits.
+
+### Guidelines
+
+- **Avoid Generic "God Files":** `utils/index.ts` files that export 50+ unrelated functions create high fan-out and confuse agent focus.
+- **Minimize Global Coupling:** Changes to a base entity (e.g., `BaseEntity`) that force updates in 100+ files are dangerous for automated agents.
+- **Rationale:** Reducing the number of "affected files" per edit allows agents to operate with higher precision and shorter feedback loops.
+
+**Refactoring tip:** Extract domain boundaries (e.g., `user/`, `order/`) so the AI only needs to load modules relevant to the current business feature.
+
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
+
+---
+
+## 6. Agent Grounding (grounding)
+
+**Impact: HIGH**
+
+Provides the architectural and domain context necessary for AI agents to reason effectively. High-quality READMEs and clear domain boundaries ensure the agent is "grounded" in the correct project semantics.
+
+---
+
+### 6.1 Define Clear Context Boundaries
+
+**Impact: HIGH (Ambiguous boundaries prevent AI from understanding domain contexts)**
+
+_Tags: grounding, boundaries, domains, context, architecture_
+
+Amorphous domain boundaries confuse AI about which rules apply to a given task. Mixing multiple domains in a single file or directory prevents effectively grounding the agent in the correct business context.
+
+### Core Principles
+
+- **Directory-as-Domain:** Use a directory structure that mirrors business domains (e.g., `domain/order/` vs `domain/user/`).
+- **Explicit Public Contracts:** Use `index.ts` (barrel exports) to define exactly what a domain exposes to the rest of the system.
+- **Avoid Semantic Overlap:** Don't mix authentication utilities with business logic or infrastructure concerns in the same module.
+
+### Guidelines
+
+- **Incorrect:** `src/utils/mixed.ts` containing `calculateOrderTotal` and `validateProductSku`.
+- **Correct:** Domain-driven directories with internal `entities/` and `services/`, and an `index.ts` defining the public API.
+- **Rationale:** Clear boundaries allow the agent to load _only_ order-relevant code when performing order-related tasks.
+
+**Detection tip:** Run `npx @aiready/agent-grounding` to analyze context boundaries and directory semantics.
+
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
+
+### 6.2 Write Agent-Actionable READMEs
+
+**Impact: HIGH (Poor README quality reduces AI's understanding of project context)**
+
+_Tags: grounding, readme, documentation, context, agents_
+
+READMEs are the primary entry point for AI agents. A poor README forces an agent to scan every file in the repository to infer architecture and intent, often leading to incorrect mental models and high token costs.
+
+### Core Principles
+
+- **Purpose & Domain First:** Explicitly state the problem space (e.g., "Order Processing Service") at the top.
+- **Architectural Grounding:** Provide a high-level overview of how data flows and which modules own which responsibilities.
+- **Verification Manifest:** List the exact commands needed to verify changes (e.g., `npm test`).
+
+### Guidelines
+
+- **Avoid Minimalist READMEs:** Titles and installation steps only are insufficient for AI architectural reasoning.
+- **Include Domain Glossary:** Define core terms (e.g., "Fulfillment", "Sourcing") to ensure the agent uses correct domain language.
+- **Table of Services:** Provide a quick-reference table of key modules and their responsibilities.
+
+**Key AI Elements:** Domain statement, architecture overview, concept glossary, service map, and verification commands.
+
+**Detection tip:** Run `npx @aiready/agent-grounding` to analyze README quality and directory semantics.
+
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
+
+---
+
+## 7. Testability (testability)
+
+**Impact: MEDIUM**
+
+Ensures code is designed for automated verification by AI agents. Pure functions and clear verification coverage allow agents to confidently prove their changes work without expensive trial-and-error loops.
+
+---
+
+### 7.1 Maintain Verification Coverage
+
+**Impact: MEDIUM (Low test coverage prevents AI from confirming its changes work)**
+
+_Tags: testability, verification, coverage, testing, ai-agent_
+
+Verification coverage measures how effectively AI can confirm its changes work. Low test coverage forces AI into trial-and-error loops, guessing at correctness rather than proving it through results. This significantly increases the risk of regressions in AI-maintained codebases.
+
+### Core Principles
+
+- **Testable Interface Design:** Ensure functions have clear inputs/outputs that can be easily asserted in a test runner.
+- **Assertion-Rich Tests:** Avoid "smoke tests" that only check if code runs; use specific assertions that prove the business logic is correct.
+- **Fast Feedback Loops:** Keep unit tests highly performant so AI can run them after every major code block edit.
+
+### Guidelines
+
+- **Incorrect:** Functions without matching test files or tests that lack meaningful assertions (`expect(true).toBe(true)`).
+- **Correct:** A dedicated `__tests__/` directory co-located with features, containing specific unit and integration tests.
+- **Measurement:** High coverage means an agent can modify a function and immediately know if they've broken its core logic or edge cases.
+
+**AI Strategy:** Agents should proactively search for or create tests before refactoring complex modules to ensure they have a "safety net".
+
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
+
+### 7.2 Write Pure Functions
+
+**Impact: MEDIUM (Global state and side effects prevent AI from writing tests)**
+
+_Tags: testability, purity, side-effects, global-state, dependency-injection_
+
+Impure functions (those relying on global state, side effects, or I/O) are difficult for AI agents to verify in isolation. When agents cannot easily prove their changes work through simple unit tests, they enter expensive "fix-test-fail" loops.
+
+### Core Principles
+
+- **Explicit Dependencies:** Pass ALL required data as parameters rather than reaching for global state or hidden singletons.
+- **Deterministic Outcomes:** For any given input, the function should always produce the same output and no observable side effects.
+- **Dependency Injection:** Inject external services (DB, API) through interfaces so they can be easily mocked during AI-led verification.
+
+### Guidelines
+
+- **Incorrect:** Functions accessing `currentUser` globals or updating shared state directly.
+- **Correct (Pure):** `processOrder(order, user, config) => Result` — Everything is explicit and local.
+- **Testing Benefit:** Pure functions allow AI to write fast, independent tests that provide immediate feedback on code correctness.
+
+**Detection tip:** Run `npx @aiready/testability` to identify impure patterns that trigger AI verification retries.
+
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
+
+---
+
+## 8. Documentation (docs)
 
 **Impact: MEDIUM**
 
@@ -1247,105 +492,62 @@ Keeps documentation synchronized with code changes. Outdated documentation misle
 
 ---
 
-### 4.1 Keep Documentation in Sync with Code
+### 8.1 Keep Documentation in Sync with Code
 
 **Impact: MEDIUM (20-30% reduction in AI suggestion errors from stale docs)**
 
-*Tags: documentation, maintenance, comments, sync*
+_Tags: documentation, maintenance, comments, sync_
 
-Outdated documentation misleads AI models. When function signatures change but JSDoc comments don't update, AI suggests code based on old documentation, causing type errors and logic bugs.
+Outdated documentation misleads AI models. When function signatures or business logic change without matching updates to JSDoc/comments, AI suggests code based on stale information, causing type errors and logic bugs.
 
-Keep docs close to code and update them together.
+### Core Principles
 
-**Incorrect:**
+- **Single Truth Source:** Update documentation in the same commit/change-block as the code it describes.
+- **Type-Aware Docs:** Use JSDoc or TSDoc that can be validated against the code's types.
+- **Minimal, High-Signal Comments:** Favor self-documenting code; use comments only for complex logic, business rationale, or non-obvious side effects.
 
-```typescript
-/**
- * Fetch user by email
- * @param email - User email address
- * @returns User object
- */
-function getUser(id: string, options?: FetchOptions): Promise<User | null> {
-  // Function signature changed but docs didn't!
-  // AI will suggest: getUser('user@example.com')
-  // Actual usage: getUser('user-123', { includeDeleted: false })
-  return database.users.findOne({ id, ...options });
-}
+### Guidelines
 
-/**
- * Calculate total price
- * @param items - Array of items
- * @returns Total price
- */
-function calculateTotal(
-  items: CartItem[],
-  taxRate: number,
-  discount?: Discount
-): Money {
-  // Added taxRate and discount but docs don't mention them
-  // AI won't know these parameters exist
-}
+- **Incorrect:** JSDoc describing a parameter `email` when the function signature now uses `userId`.
+- **Correct:** Accurate `@param` and `@returns` tags that match the current TypeScript signature.
+- **Correct:** Using `@deprecated` to warn agents about obsolete paths and provide a clear `@see` alternative.
 
-// Comments that lie
-const MAX_RETRIES = 5; // Maximum retry attempts (actually 5, not 3!)
-// This function is deprecated (but it's still used everywhere)
-function legacyAuth() {
-  /* ... */
-}
-```
-
-**Correct:**
-
-```typescript
-/**
- * Fetch user by ID with optional fetch configurations
- * @param id - User ID (UUID format)
- * @param options - Optional fetch configuration
- * @param options.includeDeleted - Include soft-deleted users
- * @param options.relations - Related entities to include
- * @returns User object if found, null otherwise
- * @throws {DatabaseError} If database connection fails
- *
- * @example
- * const user = await getUser('user-123')
- * const userWithPosts = await getUser('user-123', { relations: ['posts'] })
- */
-function getUser(id: string, options?: FetchOptions): Promise<User | null> {
-  return database.users.findOne({ id, ...options });
-}
-
-/**
- * Calculate total price including tax and discounts
- * @param items - Cart items to calculate
- * @param taxRate - Tax rate as decimal (e.g., 0.08 for 8%)
- * @param discount - Optional discount to apply
- * @returns Total price after tax and discounts
- *
- * @example
- * const total = calculateTotal(items, 0.08)
- * const discounted = calculateTotal(items, 0.08, { type: 'percentage', value: 10 })
- */
-function calculateTotal(
-  items: CartItem[],
-  taxRate: number,
-  discount?: Discount
-): Money {
-  // Implementation
-}
-
-// Accurate comments
-const MAX_RETRIES = 5; // Maximum retry attempts before giving up
-
-/**
- * @deprecated Use authenticateWithJWT instead. Will be removed in v2.0
- * @see authenticateWithJWT
- */
-function legacyAuth() {
-  /* ... */
-}
-```
+**Workflow Tip:** Remove "TODO" comments older than 30 days—they create noise and confusion for AI agents trying to prioritize work.
 
 Reference: [https://jsdoc.app/](https://jsdoc.app/)
+
+---
+
+## 9. Codebase Health Assessment (assessment)
+
+**Impact: HIGH**
+
+Provides agents with a unified methodology for measuring codebase health and "AI-readiness". Regular scans identify critical technical debt and context fragmentation that can lead to agent failure.
+
+---
+
+### 9.1 Run Unified Codebase Health Scan
+
+**Impact: HIGH (Predicts and prevents AI agent failures)**
+
+_Tags: assessment, health, scan, ai-readiness, unified_
+
+AI agents should assess codebase health before starting complex tasks or after major refactors. The `aiready scan` command builds a "ground truth" map of technical debt that might interfere with an agent's reasoning.
+
+### Core Principles
+
+- **Scan on Onboarding:** Run a full scan before making changes to any unfamiliar modules.
+- **Pre-Flight Scans:** Perform a scan before starting high-complexity features to identify potential "context explosions" early.
+- **Post-Verification Scans:** Validate that refactors actually improved health metrics (reduced entropy, flattened depth).
+
+### Guidelines
+
+- **Recommended Tool:** Use `npx @aiready/cli scan .` to ensure the latest rules are applied without global installation overhead.
+- **Interpretation:** High similarity (Patterns) or deep chains (Context) are primary indicators that the agent's task may fail due to context window limits.
+
+**Detection tip:** Proactively run a scan if you find yourself loading more than 5 files to understand a single function.
+
+Reference: [https://getaiready.dev/docs](https://getaiready.dev/docs)
 
 ---
 

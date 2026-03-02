@@ -7,77 +7,23 @@ tags: signal, magic, literals, constants, clarity
 
 ## Avoid Magic Literals
 
-**Impact: CRITICAL (AI cannot infer business rules)**
+**Impact: CRITICAL (Business rule opacity)**
 
-Magic literals - unnamed constants used directly in code - prevent AI from understanding business rules and domain constraints. When AI sees `if (status === 2)`, it has no idea what "2" means and cannot suggest valid alternatives.
+Magic literals—unnamed constants used directly in logic—prevent AI from understanding the "why" behind business rules. When AI sees `if (status === 2)`, it lacks the semantic grounding to suggest valid alternatives or explain the intent of the check.
 
-AI models struggle to:
-- Infer what values are valid
-- Suggest enum usage or constants
-- Understand the domain model through code
+### Core Principles
 
-**Incorrect (magic literals):**
+- **Named Constants for Rules:** Every number or string with specific domain meaning must be held in a named constant or enum.
+- **Grouped Domain Values:** Use Enums or Namespaces to group related constants (e.g., `UserStatus`, `ApiStatus`).
+- **Centralized Configuration:** Move environment-specific or configurable literals into a central config object.
 
-```typescript
-// What does status=2 mean? AI has no context
-if (user.status === 2) {
-  activateUser(user);
-}
+### Guidelines
 
-// Magic numbers in calculations
-const fee = amount * 0.15 + 100;
-// AI can't explain where 0.15 or 100 comes from
+- **Incorrect:** `if (user.status === 2)` — Unclear what "2" represents.
+- **Correct:** `if (user.status === UserStatus.Active)` — Explicitly states the intent.
+- **Incorrect:** Calculation with unnamed coefficients (e.g., `amount * 0.15 + 100`).
+- **Correct:** `amount * TAX_RATE + BASE_FEE` — Provides clear semantic labels for the model.
 
-// Repeated magic values
-if (response.code === 200 && data.status === 200) {
-  // Two different "200" meanings?
-}
+**Detection tip:** Run `npx @aiready/ai-signal-clarity` to identify magic literal clusters that need extraction.
 
-// String literals scattered
-sendEmail('support@company.com');
-notify('admin');
-```
-
-**Correct (named constants):**
-
-```typescript
-// Clear enum for status
-enum UserStatus {
-  Pending = 0,
-  Active = 1,
-  Suspended = 2,
-  Deleted = 3
-}
-
-if (user.status === UserStatus.Active) {
-  activateUser(user);
-}
-
-// Business rule constants
-const TAX_RATE = 0.15;
-const BASE_FEE = 100;
-
-const fee = amount * TAX_RATE + BASE_FEE;
-// AI now understands the formula's components
-
-// Group related constants
-namespace ApiStatus {
-  export const Success = 200;
-  export const NotFound = 404;
-  export const ServerError = 500;
-}
-
-if (response.code === ApiStatus.Success) {
-  // Clear what success means
-}
-
-// Configurable values
-const EMAIL_CONFIG = {
-  support: 'support@company.com',
-  noreply: 'noreply@company.com'
-};
-```
-
-**Detection tip:** Run `npx @aiready/ai-signal-clarity` to automatically identify magic literal patterns in your codebase.
-
-Reference: [AI Signal Clarity Docs](https://getaiready.dev/docs/ai-signal-clarity)
+Reference: [AI Signal Clarity Docs](https://getaiready.dev/docs)

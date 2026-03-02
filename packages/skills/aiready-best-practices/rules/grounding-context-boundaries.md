@@ -7,90 +7,22 @@ tags: grounding, boundaries, domains, context, architecture
 
 ## Define Clear Context Boundaries
 
-**Impact: HIGH (AI cannot retrieve relevant context)**
+**Impact: HIGH (Retrieval failure risk)**
 
-When domain boundaries are unclear or mixed, AI cannot determine which code to load for a given task. Code for multiple domains in the same file or module confuses AI about which rules apply, leading to incorrect suggestions that mix domain logic.
+Amorphous domain boundaries confuse AI about which rules apply to a given task. Mixing multiple domains in a single file or directory prevents effectively grounding the agent in the correct business context.
 
-Clear context boundaries help AI understand:
-- Which domain a piece of code belongs to
-- What business rules apply in each context
-- Where to find relevant code for a given feature
+### Core Principles
 
-**Incorrect (mixed boundaries):**
+- **Directory-as-Domain:** Use a directory structure that mirrors business domains (e.g., `domain/order/` vs `domain/user/`).
+- **Explicit Public Contracts:** Use `index.ts` (barrel exports) to define exactly what a domain exposes to the rest of the system.
+- **Avoid Semantic Overlap:** Don't mix authentication utilities with business logic or infrastructure concerns in the same module.
 
-```typescript
-// src/utils/mixed.ts - Three domains mixed together
-// What is this file's purpose? AI cannot tell.
+### Guidelines
 
-export function calculateOrderTotal(items: OrderItem[]) {
-  // Order domain logic
-}
+- **Incorrect:** `src/utils/mixed.ts` containing `calculateOrderTotal` and `validateProductSku`.
+- **Correct:** Domain-driven directories with internal `entities/` and `services/`, and an `index.ts` defining the public API.
+- **Rationale:** Clear boundaries allow the agent to load _only_ order-relevant code when performing order-related tasks.
 
-export function formatUserDisplayName(user: User) {
-  // User domain logic
-}
+**Detection tip:** Run `npx @aiready/agent-grounding` to analyze context boundaries and directory semantics.
 
-export function validateProductSku(sku: string) {
-  // Product domain logic
-}
-
-// src/index.ts - Everything re-exported
-export * from './utils/mixed';
-// AI has no idea which domain to look in
-
-// Root-level chaos
-// src/helper.ts (what helper?)
-// src/util.ts (what util?)
-// src/tools.ts (what tools?)
-```
-
-**Correct (clear boundaries):**
-
-```typescript
-// Domain-driven structure
-src/
-├── domain/
-│   ├── order/
-│   │   ├── entities/
-│   │   │   └── Order.ts
-│   │   ├── services/
-│   │   │   └── OrderService.ts
-│   │   └── index.ts              # Public API
-│   │
-│   ├── user/
-│   │   ├── entities/
-│   │   │   └── User.ts
-│   │   ├── services/
-│   │   │   └── UserService.ts
-│   │   └── index.ts
-│   │
-│   └── product/
-│       ├── entities/
-│       │   └── Product.ts
-│       ├── services/
-│       │   └── ProductService.ts
-│       └── index.ts
-│
-├── application/                   # Use cases
-│   ├── create-order.ts
-│   └── update-profile.ts
-│
-└── infrastructure/               # External integrations
-    ├── database/
-    └── api/
-```
-
-**Domain index files provide clear contracts:**
-
-```typescript
-// domain/order/index.ts
-export { Order, OrderItem, OrderStatus } from './entities/Order';
-export { OrderService } from './services/OrderService';
-export type { CreateOrderInput, OrderSummary } from './types';
-
-// AI knows exactly where to find order-related code
-```
-
-**Detection tip:** Run `npx @aiready/agent-grounding` to analyze context boundaries and directory semantics in your codebase.
-
-Reference: [Agent Grounding Docs](https://getaiready.dev/docs/agent-grounding)
+Reference: [Agent Grounding Docs](https://getaiready.dev/docs)

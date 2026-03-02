@@ -1,0 +1,118 @@
+{
+  "ETag": "ETVPDKIKX0DER",
+  "DistributionConfig": {
+    "CallerReference": "terraform-20260228071154847100000001",
+    "Aliases": {
+      "Quantity": 1,
+      "Items": ["dev.platform.getaiready.dev"]
+    },
+    "DefaultRootObject": "",
+    "Origins": {
+      "Quantity": 1,
+      "Items": [
+        {
+          "Id": "default",
+          "DomainName": "placeholder.sst.dev",
+          "OriginPath": "",
+          "CustomHeaders": {
+            "Quantity": 0
+          },
+          "CustomOriginConfig": {
+            "HTTPPort": 80,
+            "HTTPSPort": 443,
+            "OriginProtocolPolicy": "http-only",
+            "OriginSslProtocols": {
+              "Quantity": 1,
+              "Items": ["TLSv1.2"]
+            },
+            "OriginReadTimeout": 20,
+            "OriginKeepaliveTimeout": 5
+          },
+          "ConnectionAttempts": 3,
+          "ConnectionTimeout": 10,
+          "OriginShield": {
+            "Enabled": false
+          },
+          "OriginAccessControlId": ""
+        }
+      ]
+    },
+    "OriginGroups": {
+      "Quantity": 0
+    },
+    "DefaultCacheBehavior": {
+      "TargetOriginId": "default",
+      "TrustedSigners": {
+        "Enabled": false,
+        "Quantity": 0
+      },
+      "TrustedKeyGroups": {
+        "Enabled": false,
+        "Quantity": 0
+      },
+      "ViewerProtocolPolicy": "redirect-to-https",
+      "AllowedMethods": {
+        "Quantity": 7,
+        "Items": ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"],
+        "CachedMethods": {
+          "Quantity": 2,
+          "Items": ["HEAD", "GET"]
+        }
+      },
+      "SmoothStreaming": false,
+      "Compress": true,
+      "LambdaFunctionAssociations": {
+        "Quantity": 0
+      },
+      "FunctionAssociations": {
+        "Quantity": 1,
+        "Items": [
+          {
+            "FunctionARN": "arn:aws:cloudfront::316759592139:function/aiready-platform-dev-DashboardCloudfrontFunctionRequest-mahcvckc",
+            "EventType": "viewer-request"
+          }
+        ]
+      },
+      "FieldLevelEncryptionId": "",
+      "CachePolicyId": "a13798bc-ea4b-47e4-9ebc-12cfe1b4e5b1",
+      "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac",
+      "GrpcConfig": {
+        "Enabled": false
+      }
+    },
+    "CacheBehaviors": {
+      "Quantity": 0
+    },
+    "CustomErrorResponses": {
+      "Quantity": 0
+    },
+    "Comment": "Dashboard app",
+    "Logging": {
+      "Enabled": false,
+      "IncludeCookies": false,
+      "Bucket": "",
+      "Prefix": ""
+    },
+    "PriceClass": "PriceClass_All",
+    "Enabled": true,
+    "ViewerCertificate": {
+      "CloudFrontDefaultCertificate": false,
+      "ACMCertificateArn": "arn:aws:acm:us-east-1:316759592139:certificate/12db378a-cc69-4ef1-afe9-4632510ceaaf",
+      "SSLSupportMethod": "sni-only",
+      "MinimumProtocolVersion": "TLSv1.2_2021",
+      "Certificate": "arn:aws:acm:us-east-1:316759592139:certificate/12db378a-cc69-4ef1-afe9-4632510ceaaf",
+      "CertificateSource": "acm"
+    },
+    "Restrictions": {
+      "GeoRestriction": {
+        "RestrictionType": "none",
+        "Quantity": 0
+      }
+    },
+    "WebACLId": "",
+    "HttpVersion": "http2",
+    "IsIPV6Enabled": false,
+    "ContinuousDeploymentPolicyId": "",
+    "Staging": false
+  }
+}

@@ -8,84 +8,22 @@ references: https://refactoring.guru/extract-interface
 
 ## Unify Fragmented Interfaces
 
-**Impact: CRITICAL (40-80% reduction in AI confusion)**
+**Impact: CRITICAL (Type logic fragmentation)**
 
-Multiple similar interfaces or types for the same concept confuse AI models and lead to incorrect implementations. When AI encounters 5 different user types (`User`, `UserData`, `UserInfo`, `UserProfile`, `UserDTO`), it cannot determine which to use and often mixes them incorrectly.
+Multiple similar interfaces for the same concept (`User`, `UserData`, `UserInfo`) confuse AI agents, leading to incorrect property access and mixed type usage. This is a primary driver of subtle type errors in AI-generated code.
 
-This is one of the most critical issues for AI comprehension because it directly causes type errors and logic bugs that are hard to detect.
+### Core Principles
 
-**Incorrect (fragmented interfaces):**
+- **Single Domain Representative:** Define one canonical interface per concept and use it across the service.
+- **Extensional Specialization:** Use `extends` to create specialized DTOs or API shapes from the base domain entity.
+- **Composition over Duplication:** Compose complex types from stable primitives rather than redefining them in each module.
 
-```typescript
-// user.types.ts
-interface User {
-  id: string;
-  email: string;
-}
+### Guidelines
 
-// profile.types.ts
-interface UserProfile {
-  userId: string;
-  email: string;
-  name: string;
-}
+- **Incorrect:** Having 5 slightly different versions of the `User` object across API, DB, and UI layers.
+- **Correct (Extends):** `interface UserDTO extends User { createdAt: Date }`.
+- **Measurement:** High unification means a single change to a domain entity correctly propagates through its specialized variations.
 
-// api.types.ts
-interface UserData {
-  id: string;
-  emailAddress: string;
-  displayName: string;
-}
-
-// Three different interfaces for the same concept!
-// AI cannot determine which to use where
-function updateUser(user: User) {
-  /* ... */
-}
-function getProfile(userId: string): UserProfile {
-  /* ... */
-}
-function syncData(data: UserData) {
-  /* ... */
-}
-```
-
-**Correct (unified interface):**
-
-```typescript
-// user.types.ts
-interface User {
-  id: string;
-  email: string;
-  name?: string; // Optional fields for different contexts
-}
-
-// Use a single source of truth
-function updateUser(user: User) {
-  /* ... */
-}
-function getProfile(userId: string): User {
-  /* ... */
-}
-function syncData(user: User) {
-  /* ... */
-}
-
-// For API-specific needs, extend rather than duplicate
-interface UserDTO extends User {
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
-
-When consolidating interfaces:
-
-1. Identify the canonical type (usually the domain entity)
-2. Make fields optional if they vary by context
-3. Use `extends` for specialized versions
-4. Update all usages to reference the unified type
-5. Document which fields are required in which contexts
-
-AI models will correctly apply types when there's one clear interface per concept, reducing type errors by 40-80%.
+**Benefits:** Reduces type-related bugs by 40-80% by providing clear "source of truth" grounding for the AI agent.
 
 Reference: [Refactoring: Extract Interface](https://refactoring.guru/extract-interface)

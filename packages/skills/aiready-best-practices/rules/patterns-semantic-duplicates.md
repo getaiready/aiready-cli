@@ -7,54 +7,22 @@ tags: patterns, duplicates, context-window, semantic-similarity
 
 ## Avoid Semantic Duplicate Patterns
 
-**Impact: CRITICAL (30-70% context window waste)**
+**Impact: CRITICAL (Context window waste)**
 
-Semantic duplicates—components, functions, or modules that perform the same task with different names—waste AI context window tokens and confuse pattern recognition. AI models struggle to identify which implementation to use, leading to inconsistent suggestions and hallucinated variations.
+Multiple functions or components that perform the same task with different names (`fetchUser`, `getUserData`, `loadUserInfo`) waste AI context tokens and confuse pattern recognition. AI cannot determine the canonical pattern and will often create new, redundant variations.
 
-When AI encounters multiple implementations of the same concept, it:
+### Core Principles
 
-- Wastes tokens loading all variations into context
-- Cannot determine the canonical pattern
-- Suggests mixing patterns inappropriately
-- Creates new variations instead of reusing existing code
+- **Canonical Implementation:** Establish a single "source of truth" for every business operation.
+- **Pattern Reuse over Recreation:** Proactively search for existing implementations before creating new ones.
+- **Unified Naming:** Use consistent verbs for similar operations (e.g., always use `get` for retrieval, `update` for mutation).
 
-**Incorrect (multiple implementations of same concept):**
+### Guidelines
 
-```typescript
-// getUserData.ts
-export async function getUserData(id: string) {
-  return fetch(`/api/users/${id}`).then((r) => r.json());
-}
+- **Incorrect:** Three different versions of an API fetcher scattered across the codebase.
+- **Correct:** A single module (e.g., `users.ts`) containing the canonical `getUser` function.
+- **Measurement:** AI recognizes and consistently reuses the existing pattern rather than hallucinating new ones.
 
-// fetchUser.ts
-export async function fetchUser(userId: string) {
-  const response = await fetch(`/api/users/${userId}`);
-  return response.json();
-}
+**Detection tip:** Run `npx @aiready/pattern-detect` to identify semantic duplicates and consolidate them.
 
-// loadUserInfo.ts
-export async function loadUserInfo(id: string) {
-  return await fetch(`/api/users/${id}`).then((res) => res.json());
-}
-```
-
-AI sees three similar functions and cannot determine which to use, often creating a fourth variation.
-
-**Correct (single, consistent implementation):**
-
-```typescript
-// users.ts
-export async function getUser(userId: string) {
-  const response = await fetch(`/api/users/${userId}`);
-  return response.json();
-}
-
-// All other files import from here
-import { getUser } from './users';
-```
-
-AI recognizes the canonical implementation and consistently suggests using `getUser`.
-
-**Detection tip:** Run `npx @aiready/pattern-detect` to automatically identify semantic duplicates in your codebase.
-
-Reference: [Pattern Detection Docs](https://getaiready.dev/docs/pattern-detect)
+Reference: [Pattern Detection Docs](https://getaiready.dev/docs)

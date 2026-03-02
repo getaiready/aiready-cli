@@ -8,82 +8,22 @@ references: https://en.wikipedia.org/wiki/Cohesion_(computer_science)
 
 ## Maintain High Module Cohesion
 
-**Impact: HIGH (25-40% reduction in context pollution)**
+**Impact: HIGH (Context pollution risk)**
 
-Low cohesion forces AI to load multiple unrelated files to understand one feature. When a file contains unrelated functions (authentication + date formatting + validation), AI must read the entire file even when only needing one function.
+Low cohesion forces AI to process unrelated code when focusing on a specific feature. When "util" files bundle authentication, formatting, and validation, AI must load the entire file, wasting its context budget and increasing the risk of hallucination.
 
-High cohesion means related code stays together. AI can load the minimal context needed.
+### Core Principles
 
-**Incorrect (low cohesion - mixed concerns):**
+- **Single Responsibility Files:** Each file should focus on a single domain or functional area (e.g., `auth/password.ts` vs a generic `utils.ts`).
+- **Feature-Based Grouping:** Group code by what it _does_ for the user, not its technical type (e.g., `domain/user/` vs `services/`).
+- **Minimize "Junk Drawer" Utils:** Move generic utilities into specific, named sub-modules once they exceed 2-3 related functions.
 
-```typescript
-// utils.ts - Everything dumped together
-export function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
+### Guidelines
 
-export function formatDate(date: Date) {
-  return date.toISOString();
-}
+- **Incorrect:** A 500-line `utils.ts` containing everything from date formatting to database connection logic.
+- **Correct:** Modular structure like `auth/token.ts`, `validation/email.ts`, and `utils/date.ts`.
+- **Measurement:** High cohesion means all functions in a file share the same data types or serve the same business feature.
 
-export function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-export function generateToken(userId: string) {
-  return jwt.sign({ userId }, SECRET);
-}
-
-// AI must load ALL of this just to understand password hashing!
-// Context cost: 150+ lines for 10 lines of relevant code
-```
-
-**Correct (high cohesion - grouped by concern):**
-
-```typescript
-// auth/password.ts
-export function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
-
-export function verifyPassword(password: string, hash: string) {
-  return bcrypt.compare(password, hash);
-}
-
-// auth/token.ts
-export function generateToken(userId: string) {
-  return jwt.sign({ userId }, SECRET);
-}
-
-export function verifyToken(token: string) {
-  return jwt.verify(token, SECRET);
-}
-
-// validation/email.ts
-export function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// utils/date.ts
-export function formatDate(date: Date) {
-  return date.toISOString();
-}
-
-// AI loads only auth/password.ts for password operations
-// Context cost: 15 lines instead of 150+
-```
-
-Cohesion metrics:
-
-- **High**: All functions in a file share the same data or serve the same feature
-- **Medium**: Functions loosely related (e.g., all string utilities)
-- **Low**: Functions have no relationship (avoid this)
-
-Benefits for AI:
-
-- 25-40% less context loaded per query
-- AI correctly selects relevant files
-- Reduces cross-file navigation
-- Makes refactoring suggestions more accurate
+**Benefits for AI:** Reduces context waste by 25-40% and ensures the agent loads only the minimal relevant code for a task.
 
 Reference: [Cohesion (computer science)](<https://en.wikipedia.org/wiki/Cohesion_(computer_science)>)

@@ -35,8 +35,13 @@ export const SKILL_CONFIG: SkillConfig = {
     patterns: 1, // CRITICAL - Pattern Detection
     context: 2, // HIGH - Context Optimization
     consistency: 3, // MEDIUM - Consistency Checking
-    docs: 4, // MEDIUM - Documentation
-    deps: 5, // LOW - Dependencies
+    signal: 4, // CRITICAL - AI Signal Clarity
+    amplification: 5, // HIGH - Change Amplification
+    grounding: 6, // HIGH - Agent Grounding
+    testability: 7, // MEDIUM - Testability
+    docs: 8, // MEDIUM - Documentation
+    assessment: 9, // HIGH - Codebase Health Assessment
+    deps: 10, // LOW - Dependencies
   },
 };
 

@@ -75,7 +75,8 @@ export default $config({
         GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || '',
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
-        AUTH_SECRET: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || '',
+        AUTH_SECRET:
+          process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || '',
         AUTH_TRUST_HOST: 'true',
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
         STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
@@ -110,15 +111,38 @@ export default $config({
       };
     }
 
+    // Queue for background analysis requests
+    const scanQueue = new sst.aws.Queue('ScanQueue', {
+      visibilityTimeout: '15 minutes',
+    });
+
+    // Lambda worker for scanning repositories
+    const scanWorker = new sst.aws.Function('ScanWorker', {
+      handler: 'src/worker/index.handler',
+      timeout: '15 minutes',
+      memory: '2048 MB',
+      nodejs: {
+        install: ['isomorphic-git', 'http'],
+      },
+      link: [table, bucket, scanQueue],
+      environment: {
+        S3_BUCKET: bucket.name,
+        DYNAMO_TABLE: table.name,
+      },
+    });
+
+    scanQueue.subscribe(scanWorker.arn);
+
     const site = new sst.aws.Nextjs('Dashboard', {
       ...siteConfig,
-      link: [table, bucket],
+      link: [table, bucket, scanQueue],
     });
 
     return {
       site: site.url,
       bucketName: bucket.name,
       tableName: table.name,
+      scanQueueUrl: scanQueue.url,
     };
   },
 });

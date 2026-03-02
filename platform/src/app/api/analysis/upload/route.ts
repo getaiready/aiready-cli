@@ -13,6 +13,7 @@ import {
   calculateAiScore,
   extractSummary,
   extractBreakdown,
+  normalizeReport,
   AnalysisData,
 } from '@/lib/storage';
 import { planLimits } from '@/lib/plans';
@@ -23,7 +24,11 @@ import { randomUUID } from 'crypto';
 async function getRunsThisMonth(userId: string): Promise<number> {
   // Get current month's start date
   const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const monthStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1
+  ).toISOString();
 
   // Query all user's repos and count analyses this month
   const repos = await listUserRepositories(userId);
@@ -53,30 +58,42 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Fallback to session
+    // 2. Fallback to session (only for browser requests)
     if (!userId) {
-      const session = await auth();
-      userId = session?.user?.id;
+      const authHeader = request.headers.get('Authorization');
+      const isApiKeyRequest = authHeader?.startsWith('Bearer ');
+
+      if (!isApiKeyRequest) {
+        const session = await auth();
+        userId = session?.user?.id;
+      }
     }
 
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized. Please provide a valid API key.' },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
-    const { repoId, data } = body as { repoId: string; data: AnalysisData };
+    const { repoId, data: rawData } = body as { repoId: string; data: any };
 
-    if (!data) {
+    if (!rawData) {
       return NextResponse.json(
         { error: 'Analysis data is required' },
         { status: 400 }
       );
     }
 
+    // Normalize data from CLI format if needed
+    const data = normalizeReport(rawData);
+
     let targetRepoId = repoId;
 
     // 3. Infer repoId from Git URL if not provided
-    const incomingRepoUrl = data.metadata?.repository || (data as any).repository?.url;
+    const incomingRepoUrl =
+      data.metadata?.repository || (data as any).repository?.url;
     if (!targetRepoId && incomingRepoUrl) {
       const userRepos = await listUserRepositories(userId);
       const normalizedUrl = incomingRepoUrl.replace(/\.git$/, '');

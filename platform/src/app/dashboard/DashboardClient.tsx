@@ -43,6 +43,7 @@ export default function DashboardClient({
   const [addRepoError, setAddRepoError] = useState<string | null>(null);
   const [addRepoLoading, setAddRepoLoading] = useState(false);
   const [uploadingRepoId, setUploadingRepoId] = useState<string | null>(null);
+  const [scanningRepoId, setScanningRepoId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
@@ -188,6 +189,32 @@ export default function DashboardClient({
     };
 
     input.click();
+  }
+
+  async function handleScanRepo(repoId: string) {
+    setScanningRepoId(repoId);
+    setUploadError(null);
+
+    try {
+      const res = await fetch('/api/analysis/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repoId }),
+      });
+
+      const result = await res.json();
+      if (!res.ok) {
+        setUploadError(result.error || 'Failed to trigger scan');
+        return;
+      }
+
+      // Show a success message or update UI to indicate scan is in progress
+      alert('Scan triggered! Results will appear here in a few minutes.');
+    } catch {
+      setUploadError('Network error while triggering scan');
+    } finally {
+      setScanningRepoId(null);
+    }
   }
 
   return (
@@ -421,7 +448,9 @@ export default function DashboardClient({
                     repo={repo}
                     index={index}
                     uploading={uploadingRepoId === repo.id}
+                    scanning={scanningRepoId === repo.id}
                     onUpload={() => handleUploadAnalysis(repo.id)}
+                    onScan={() => handleScanRepo(repo.id)}
                     onDelete={() => handleDeleteRepo(repo.id)}
                   />
                 ))}
@@ -501,15 +530,25 @@ export default function DashboardClient({
                 <tbody className="divide-y divide-slate-700/30">
                   {apiKeys.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-8 text-center text-slate-500 italic">
+                      <td
+                        colSpan={4}
+                        className="px-6 py-8 text-center text-slate-500 italic"
+                      >
                         No API keys yet.
                       </td>
                     </tr>
                   ) : (
                     apiKeys.map((key) => (
-                      <tr key={key.id} className="hover:bg-slate-800/20 transition-colors">
-                        <td className="px-6 py-4 text-white font-medium">{key.name}</td>
-                        <td className="px-6 py-4 font-mono text-cyan-400">{key.prefix}</td>
+                      <tr
+                        key={key.id}
+                        className="hover:bg-slate-800/20 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-white font-medium">
+                          {key.name}
+                        </td>
+                        <td className="px-6 py-4 font-mono text-cyan-400">
+                          {key.prefix}
+                        </td>
                         <td className="px-6 py-4 text-slate-400">
                           {new Date(key.createdAt).toLocaleDateString()}
                         </td>
@@ -545,13 +584,18 @@ export default function DashboardClient({
               animate={{ scale: 1, y: 0 }}
               className="glass-card rounded-2xl p-8 max-w-md w-full border border-cyan-500/30 shadow-[0_0_50px_-12px_rgba(6,182,212,0.5)]"
             >
-              <h3 className="text-xl font-bold text-white mb-2">New API Key Created</h3>
+              <h3 className="text-xl font-bold text-white mb-2">
+                New API Key Created
+              </h3>
               <p className="text-slate-400 text-sm mb-6">
-                Please copy your API key now. For security reasons, it will only be shown once.
+                Please copy your API key now. For security reasons, it will only
+                be shown once.
               </p>
-              
+
               <div className="bg-black/40 border border-cyan-500/20 rounded-xl p-4 flex items-center justify-between gap-3 mb-8">
-                <code className="text-cyan-400 font-mono text-lg break-all">{newlyCreatedKey}</code>
+                <code className="text-cyan-400 font-mono text-lg break-all">
+                  {newlyCreatedKey}
+                </code>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(newlyCreatedKey);
@@ -559,8 +603,18 @@ export default function DashboardClient({
                   }}
                   className="bg-cyan-500/10 hover:bg-cyan-500/20 p-2 rounded-lg text-cyan-400 border border-cyan-500/20"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                    />
                   </svg>
                 </button>
               </div>
@@ -709,13 +763,17 @@ function RepoCard({
   repo,
   index,
   uploading,
+  scanning,
   onUpload,
+  onScan,
   onDelete,
 }: {
   repo: RepoWithAnalysis;
   index: number;
   uploading: boolean;
+  scanning: boolean;
   onUpload: () => void;
+  onScan: () => void;
   onDelete: () => void;
 }) {
   const score = repo.aiScore;
@@ -805,15 +863,20 @@ function RepoCard({
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          onClick={onScan}
+          disabled={scanning}
+          className="flex-1 px-3 py-2.5 bg-indigo-500/10 text-indigo-400 text-xs font-medium rounded-lg hover:bg-indigo-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-indigo-500/30"
+        >
+          {scanning ? 'Scanning...' : 'Scan Now'}
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={onUpload}
           disabled={uploading}
-          className="flex-1 px-3 py-2.5 bg-cyan-500/10 text-cyan-400 text-xs font-medium rounded-lg hover:bg-cyan-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-cyan-500/30"
+          className="px-3 py-2.5 bg-cyan-500/10 text-cyan-400 text-xs font-medium rounded-lg hover:bg-cyan-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-cyan-500/30"
         >
-          {uploading
-            ? 'Uploading...'
-            : analysis
-              ? 'Update Analysis'
-              : 'Upload Analysis'}
+          {uploading ? 'Uploading...' : 'Upload JSON'}
         </motion.button>
         <button
           onClick={onDelete}

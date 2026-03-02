@@ -63,13 +63,16 @@ export async function parseRuleFile(
     ? impactDescMatch[1].trim()
     : undefined;
 
-  // Parse explanation (text before first code block or "**Incorrect")
-  const explanationMatch = bodyContent.match(
-    /##\s+.+?\n\n([\s\S]*?)(?=\n\n\*\*Incorrect|```)/m
-  );
-  const explanation = explanationMatch
-    ? explanationMatch[1].trim().replace(/\*\*Impact:.*?\n/g, '')
-    : '';
+  // Parse explanation
+  // We want everything after the title and impact description, up to the old-style examples or references
+  const explanation = bodyContent
+    .split('\n')
+    // Skip the first heading and any impact lines
+    .filter((line) => !line.match(/^##\s+/) && !line.match(/^\*\*Impact:/))
+    .join('\n')
+    // Stop at old-style examples or references section
+    .split(/\n\n\*\*Incorrect|\n\nReference:|\n\n\s*---\s*\n/)[0]
+    .trim();
 
   // Parse code examples
   const examples: Rule['examples'] = [];

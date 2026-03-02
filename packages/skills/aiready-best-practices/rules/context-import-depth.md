@@ -7,61 +7,23 @@ tags: context, imports, dependency-depth, circular-imports
 
 ## Keep Import Chains Shallow
 
-**Impact: HIGH (10-30% reduction in context depth)**
+**Impact: HIGH (Context depth risk)**
 
-Deep import chains force AI models to load many intermediate files to understand a single function, quickly exceeding context window limits. When AI needs to trace through 5+ levels of imports, it often loses context of the original goal and provides incomplete or incorrect suggestions.
+Deep import chains force AI models to load many intermediate files to trace logic, quickly exceeding context window limits. When AI must trace through 5+ levels of imports, it often loses the original goal's context and provides incomplete or hallucinated suggestions.
 
-Each level of import depth exponentially increases the context needed:
+### Core Principles
 
-- Level 1: Direct dependencies (good)
-- Level 2-3: Transitive dependencies (acceptable)
-- Level 4+: Deep chains (problematic for AI)
+- **Flatten Dependency Trees:** Use barrel exports (`index.ts`) and clear module boundaries to reduce the level of transitives.
+- **Prefer Direct Imports:** In deep architectures, use path aliases (e.g., `@/lib/utils`) to keep import paths shallow and predictable.
+- **Co-locate Related Logic:** Reduce the need for deep cross-module imports by keeping tightly coupled logic in the same or adjacent directories.
 
-**Incorrect (deep import chain):**
+### Guidelines
 
-```typescript
-// app.ts
-import { processData } from './features/processor';
+- **Level 1 (Direct):** Ideal. AI understands the dependency immediately.
+- **Level 2-3 (Transitive):** Acceptable. Manageable for most modern models.
+- **Level 4+ (Deep):** Problematic. Triggers "context fatigue" and increases error rates.
+- **Best Practice:** Use barrel exports to flatten paths: `import { x } from '@/lib'` instead of `import { x } from '../../lib/a/b/c/x'`.
 
-// features/processor.ts
-import { transform } from './utils/transformer';
+**Detection tip:** Run `npx @aiready/context-analyzer --max-depth 3` to identify deep or circular import chains.
 
-// features/utils/transformer.ts
-import { validate } from '../../../lib/validation/validator';
-
-// lib/validation/validator.ts
-import { checkSchema } from './schema/checker';
-
-// lib/validation/schema/checker.ts
-import { rules } from '../../../config/rules/validation-rules';
-```
-
-AI must load 6 files to understand `processData`, often losing context.
-
-**Correct (shallow, well-organized imports):**
-
-```typescript
-// app.ts
-import { processData } from './features/processor';
-
-// features/processor.ts
-import { transform, validate } from '@/lib/utils';
-
-// lib/utils/index.ts (barrel export)
-export { transform } from './transformer';
-export { validate } from './validator';
-export { checkSchema } from './schema';
-```
-
-AI can quickly understand the dependency tree with clear boundaries.
-
-**Best practices:**
-
-- Use barrel exports (`index.ts`) to flatten import paths
-- Keep max import depth at 3 levels
-- Co-locate related code to reduce cross-cutting concerns
-- Use `@/` path aliases to avoid relative path chains
-
-**Detection tip:** Run `npx @aiready/context-analyzer --max-depth 3` to find deep import chains.
-
-Reference: [Context Analysis Docs](https://getaiready.dev/docs/context-analyzer)
+Reference: [Context Analysis Docs](https://getaiready.dev/docs)
