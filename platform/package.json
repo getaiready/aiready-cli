@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "type-check": "tsc --noEmit",
+    "test": "vitest",
     "deploy": "sst deploy --stage dev",
     "deploy:prod": "sst deploy --stage prod",
     "remove": "sst remove --stage dev",
