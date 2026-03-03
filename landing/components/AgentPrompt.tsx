@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Bot } from 'lucide-react';
 
 interface AgentPromptProps {
   variant?: 'basic' | 'detailed' | 'fix' | 'consulting';
@@ -93,14 +94,6 @@ const promptTitles = {
   consulting: 'Consulting Audit',
 };
 
-const agentIcons = [
-  { name: 'Cline', emoji: '🤖' },
-  { name: 'Claude Code', emoji: '🔮' },
-  { name: 'Cursor', emoji: '⚡' },
-  { name: 'Copilot', emoji: '🚀' },
-  { name: 'ChatGPT', emoji: '💬' },
-];
-
 export default function AgentPrompt({
   variant = 'basic',
   className = '',
@@ -171,7 +164,7 @@ export default function AgentPrompt({
         {/* Prompt content with typing animation */}
         <div className="space-y-1 min-h-[200px]">
           <div className="flex items-start gap-2 mb-2">
-            <span className="text-purple-400 text-xl">🤖</span>
+            <Bot className="w-5 h-5 text-purple-400 mt-1" />
             <span className="text-purple-400 font-mono text-sm">
               {promptTitles[variant]} Prompt
             </span>
@@ -226,30 +219,6 @@ export default function AgentPrompt({
             ease: 'easeInOut',
           }}
         />
-      </motion.div>
-
-      {/* Agent compatibility badges */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
-        className="flex items-center justify-center gap-2 mt-4 flex-wrap"
-      >
-        <span className="text-xs text-slate-500 font-medium">
-          Compatible with:
-        </span>
-        {agentIcons.map((agent, index) => (
-          <motion.span
-            key={agent.name}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.5 + index * 0.1 }}
-            className="px-3 py-1 bg-slate-800 text-slate-300 rounded-full text-xs font-medium border border-slate-700 flex items-center gap-1"
-          >
-            <span>{agent.emoji}</span>
-            {agent.name}
-          </motion.span>
-        ))}
       </motion.div>
     </motion.div>
   );

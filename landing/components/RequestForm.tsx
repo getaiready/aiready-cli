@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { BarChart3, Sparkles, Rocket, ArrowLeft, Loader2 } from 'lucide-react';
 
 export default function RequestForm() {
   const [email, setEmail] = useState('');
@@ -69,9 +70,9 @@ export default function RequestForm() {
             whileInView={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             viewport={{ once: true }}
-            className="inline-block mb-4 text-5xl"
+            className="inline-block mb-4"
           >
-            📊
+            <BarChart3 className="w-12 h-12 text-blue-600" />
           </motion.div>
           <h3 className="text-3xl font-black text-slate-900 mb-3">
             Get Your Free{' '}
@@ -93,7 +94,7 @@ export default function RequestForm() {
           className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6 mb-8"
         >
           <div className="flex items-start gap-3">
-            <span className="text-blue-600 text-2xl">✨</span>
+            <Sparkles className="w-6 h-6 text-blue-600 shrink-0" />
             <div>
               <h4 className="font-bold text-blue-900 mb-2">What you'll get:</h4>
               <ul className="text-sm text-blue-800 space-y-2">
@@ -144,19 +145,17 @@ export default function RequestForm() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring' }}
-              className="text-7xl mb-6"
+              className="text-center mb-6"
             >
-              🚀
+              <Rocket className="w-16 h-16 text-blue-600 mx-auto" />
             </motion.div>
             <h3 className="text-3xl font-black text-slate-900 mb-4">
               Request Received!
             </h3>
             <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-6 text-green-800 mb-8 max-w-md mx-auto">
-              <p className="text-lg font-medium leading-relaxed">
-                {message}
-              </p>
+              <p className="text-lg font-medium leading-relaxed">{message}</p>
             </div>
-            <button
+            <motion.button
               onClick={() => {
                 setStatus('idle');
                 setMessage('');
@@ -166,8 +165,8 @@ export default function RequestForm() {
               }}
               className="text-blue-600 font-bold hover:text-blue-800 transition-colors flex items-center justify-center gap-2 mx-auto"
             >
-              <span>←</span> Submit another request
-            </button>
+              <ArrowLeft className="w-4 h-4" /> Submit another request
+            </motion.button>
           </motion.div>
         ) : (
           <form onSubmit={onSubmit} className="space-y-6">
@@ -242,16 +241,7 @@ export default function RequestForm() {
               >
                 {status === 'loading' ? (
                   <span className="flex items-center justify-center gap-2">
-                    <motion.span
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity,
-                        ease: 'linear',
-                      }}
-                    >
-                      ⏳
-                    </motion.span>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Submitting...
                   </span>
                 ) : (

@@ -2,23 +2,24 @@
 
 import { motion } from 'framer-motion';
 import ParallaxSection from './ParallaxSection';
+import { BarChart3, Handshake, Rocket } from 'lucide-react';
 
 export function ConsultantsSection() {
   const items = [
     {
-      icon: '📊',
+      icon: <BarChart3 className="w-8 h-8" />,
       title: 'Professional Audits',
       desc: 'Generate PDF or JSON reports to provide clear, data-backed ROI for potential AI initiatives.',
       color: 'from-blue-600 to-indigo-600',
     },
     {
-      icon: '🤝',
+      icon: <Handshake className="w-8 h-8" />,
       title: 'Transition Advisory',
       desc: 'Use metrics like Context Fragmentation to guide teams during architectural transitions.',
       color: 'from-indigo-600 to-purple-600',
     },
     {
-      icon: '🚀',
+      icon: <Rocket className="w-8 h-8" />,
       title: 'Remediation Roadmap',
       desc: 'Focus effort where it matters most: eliminating token waste and deep import chains.',
       color: 'from-purple-600 to-pink-600',
@@ -61,7 +62,7 @@ export function ConsultantsSection() {
                   className="relative group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:bg-white/[0.08] transition-all"
                 >
                   <div
-                    className={`w-14 h-14 rounded-xl mb-4 flex items-center justify-center text-2xl shadow-lg bg-gradient-to-r ${item.color}`}
+                    className={`w-14 h-14 rounded-xl mb-4 flex items-center justify-center text-white shadow-lg bg-gradient-to-r ${item.color}`}
                   >
                     {item.icon}
                   </div>

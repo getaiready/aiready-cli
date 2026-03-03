@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import ParallaxSection from './ParallaxSection';
+import { Wrench, Bot } from 'lucide-react';
 
 export function NotAnotherLinter() {
   return (
@@ -36,7 +37,9 @@ export function NotAnotherLinter() {
               viewport={{ once: true }}
               className="bg-white p-8 rounded-2xl border-2 border-slate-200 shadow-lg"
             >
-              <div className="text-4xl mb-4">🔧</div>
+              <div className="mb-4">
+                <Wrench className="w-10 h-10 text-slate-400" />
+              </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-4">
                 Traditional Linters
               </h3>
@@ -67,7 +70,9 @@ export function NotAnotherLinter() {
               viewport={{ once: true }}
               className="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-2xl border-2 border-blue-300 shadow-lg"
             >
-              <div className="text-4xl mb-4">🤖</div>
+              <div className="mb-4">
+                <Bot className="w-10 h-10 text-purple-500" />
+              </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-4">
                 AIReady
               </h3>

@@ -3,6 +3,7 @@
 import Script from 'next/script';
 import { motion } from 'framer-motion';
 import ParallaxSection from './ParallaxSection';
+import { Lightbulb } from 'lucide-react';
 
 const faqs = [
   {
@@ -95,7 +96,7 @@ export function FAQ() {
                     className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl border border-slate-200 hover:border-blue-300 transition-all shadow-lg hover:shadow-xl"
                   >
                     <h3 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
-                      <span className="text-2xl">💡</span>
+                      <Lightbulb className="w-5 h-5 text-blue-500" />
                       {faq.question}
                     </h3>
                     <p className="text-slate-600 leading-relaxed">

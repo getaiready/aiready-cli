@@ -1,149 +1,54 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
 import ParallaxSection from './ParallaxSection';
-import AgentPrompt from './AgentPrompt';
-import { Terminal, Bot, Code2, CheckCircle2 } from 'lucide-react';
+import { Bot, Code2, ArrowRight } from 'lucide-react';
 
 export function CTA() {
-  const [showAgent, setShowAgent] = useState(false);
   return (
-    <section className="container mx-auto px-4 py-20">
+    <section className="container mx-auto px-4 py-24 mb-12">
       <ParallaxSection offset={10}>
         <motion.div
-          id="get-started"
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto relative scroll-mt-32 md:scroll-mt-40 lg:scroll-mt-48"
+          className="bg-slate-900 rounded-3xl p-12 text-center border border-slate-800 shadow-2xl relative overflow-hidden"
         >
-          {/* Animated background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-3xl blur-2xl opacity-20 animate-pulse" />
+          {/* Subtle background glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-1/2 bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
 
-          <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-3xl p-1 shadow-2xl">
-            <div className="bg-slate-900 rounded-[22px] p-12 text-center">
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                viewport={{ once: true }}
-                className="text-4xl md:text-5xl font-black text-white mb-4"
-              >
-                See Why AI Struggles with Your Code
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                viewport={{ once: true }}
-                className="text-slate-300 mb-6 text-xl"
-              >
-                Find AI confusion points in 5 minutes. Local. Safe. Free
-                forever.
-                <br />
-                <span className="text-blue-300 text-base">
-                  Need help? Request a personalized audit or consulting session.
-                </span>
-              </motion.p>
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-6 relative">
+            Ready to Unlock Your <br />
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              AI Potential?
+            </span>
+          </h2>
 
-              {/* Toggle buttons */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 }}
-                viewport={{ once: true }}
-                className="flex justify-center gap-2 mb-6"
-              >
-                <button
-                  onClick={() => setShowAgent(false)}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${
-                    !showAgent
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-slate-800 text-slate-400 hover:text-slate-300'
-                  }`}
-                >
-                  <Terminal className="w-4 h-4" />
-                  CLI Command
-                </button>
-                <button
-                  onClick={() => setShowAgent(true)}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${
-                    showAgent
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-slate-800 text-slate-400 hover:text-slate-300'
-                  }`}
-                >
-                  <Bot className="w-4 h-4" />
-                  AI Agent Prompt
-                </button>
-                <a
-                  href="https://marketplace.visualstudio.com/items?itemName=pengcao.aiready"
-                  target="_blank"
-                  className="px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-blue-600/20 text-blue-300 border border-blue-500/30 hover:bg-blue-600/30 flex items-center gap-2"
-                >
-                  <Code2 className="w-4 h-4" />
-                  VS Code Extension
-                </a>
-              </motion.div>
+          <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto relative">
+            Join elite engineering teams using AIReady to ship faster, reduce
+            context costs, and build future-proof codebases.
+          </p>
 
-              {/* CLI Command */}
-              {!showAgent && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-slate-800 rounded-2xl p-6 text-left mb-6 border border-slate-700"
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-3 h-3 rounded-full bg-red-500" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                    <div className="w-3 h-3 rounded-full bg-green-500" />
-                  </div>
-                  <code className="text-green-400 font-mono text-lg">
-                    npx @aiready/cli scan
-                  </code>
-                </motion.div>
-              )}
-
-              {/* Agent Prompt */}
-              {showAgent && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="mb-6"
-                >
-                  <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
-                    <AgentPrompt variant="basic" />
-                  </div>
-                </motion.div>
-              )}
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                viewport={{ once: true }}
-                className="text-sm text-slate-400 flex justify-center items-center gap-6"
-              >
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-green-400" /> Free
-                  forever
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-green-400" /> Open
-                  source
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-green-400" /> No credit
-                  card required
-                </span>
-              </motion.p>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center relative">
+            <motion.a
+              href="#"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg inline-flex items-center justify-center gap-2 group"
+            >
+              Get Started for Free
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </motion.a>
+            <motion.a
+              href="mailto:hello@getaiready.dev"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-4 bg-slate-800 text-white font-bold rounded-xl border border-slate-700 shadow-lg inline-flex items-center justify-center gap-2"
+            >
+              <Bot className="w-5 h-5 text-blue-400" />
+              Book an AI Audit
+            </motion.a>
           </div>
         </motion.div>
       </ParallaxSection>

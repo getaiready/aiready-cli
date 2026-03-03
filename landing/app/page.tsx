@@ -121,7 +121,7 @@ export default function HomePage() {
         <CTA />
 
         {/* Request Report Form */}
-        <section className="container mx-auto px-4 py-20">
+        <section id="audit-form" className="container mx-auto px-4 py-20">
           <ParallaxSection offset={10}>
             <RequestForm />
           </ParallaxSection>

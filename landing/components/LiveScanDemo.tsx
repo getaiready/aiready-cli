@@ -151,7 +151,7 @@ export default function LiveScanDemo() {
         () => {
           setVisibleIssues((prev) => [...prev, issue]);
         },
-        500 + index * 600
+        300 + index * 200
       );
     });
 
