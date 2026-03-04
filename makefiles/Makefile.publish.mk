@@ -314,12 +314,11 @@ publish-landing: ## Publish landing page to GitHub. Usage: make publish-landing 
 # Push to monorepo and all spoke repos
 sync: ## Push monorepo to origin and sync all spokes to their public repos. Use FORCE=true to sync all.
 	@$(call log_step,Detecting changes to sync...)
-	@# Capture changed files relative to origin BEFORE pushing
-	@if [ "$(FORCE)" = "true" ]; then \
+	if [ "$(FORCE)" = "true" ]; then \
 		CHANGED_FILES="FORCE_ALL"; \
 		$(call log_info,Force sync enabled. All repositories will be synced.); \
 	else \
-		CHANGED_FILES="$$(git diff --name-only origin/$(TARGET_BRANCH) HEAD 2>/dev/null || echo "FORCE_ALL")"; \
+		CHANGED_FILES="$$(git diff --name-only origin/$(TARGET_BRANCH) 2>/dev/null || echo "FORCE_ALL")"; \
 		if [ "$$CHANGED_FILES" = "FORCE_ALL" ]; then \
 			$(call log_warning,Could not detect changes reliably. Falling back to full sync.); \
 		elif [ -z "$$CHANGED_FILES" ]; then \
@@ -329,23 +328,20 @@ sync: ## Push monorepo to origin and sync all spokes to their public repos. Use 
 			$(call log_info,Detected changes:); \
 			echo "$$CHANGED_FILES" | sed 's/^/  - /'; \
 		fi; \
-	fi;
-	$(call log_step,Pushing to monorepo...)
-	@git push origin $(TARGET_BRANCH)
-	@$(call log_success,Pushed to monorepo)
-	$(call log_step,Syncing relevant repositories...)
-	@synced_count=0; \
+	fi; \
+	$(call log_step,Pushing to monorepo...); \
+	git push origin $(TARGET_BRANCH); \
+	$(call log_success,Pushed to monorepo); \
+	$(call log_step,Syncing relevant repositories...); \
+	synced_count=0; \
 	for spoke in $(ALL_SPOKES); do \
 		if [ -f "$(REPO_ROOT)/packages/$$spoke/package.json" ]; then \
 			should_sync=false; \
 			if [ "$$CHANGED_FILES" = "FORCE_ALL" ]; then \
 				should_sync=true; \
-			else \
-				case "$$CHANGED_FILES" in \
-					*"packages/$$spoke/"*) should_sync=true;; \
-				esac; \
+			elif echo "$$CHANGED_FILES" | grep -q "packages/$$spoke/"; then \
+				should_sync=true; \
 			fi; \
-			\
 			if [ "$$should_sync" = "true" ]; then \
 				$(call log_info,Syncing $$spoke...); \
 				$(MAKE) publish SPOKE=$$spoke OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)' || true; \
@@ -353,22 +349,18 @@ sync: ## Push monorepo to origin and sync all spokes to their public repos. Use 
 			fi; \
 		fi; \
 	done; \
-	\
 	should_sync_landing=false; \
 	if [ "$$CHANGED_FILES" = "FORCE_ALL" ]; then \
 		should_sync_landing=true; \
-	else \
-		case "$$CHANGED_FILES" in \
-			*"landing/"*) should_sync_landing=true;; \
-		esac; \
+	elif echo "$$CHANGED_FILES" | grep -q "landing/"; then \
+		should_sync_landing=true; \
 	fi; \
 	if [ "$$should_sync_landing" = "true" ]; then \
 		$(call log_step,Syncing landing page repository...); \
 		$(MAKE) publish-landing OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)' || true; \
 		synced_count=$$((synced_count + 1)); \
 	fi; \
-	\
-	if [ $$synced_count -eq 0 ] && [ "$$CHANGED_FILES" != "FORCE_ALL" ] && [ -n "$$CHANGED_FILES" ] && [ "$$CHANGED_FILES" != "$$(printf '\n')" ]; then \
+	if [ $$synced_count -eq 0 ] && [ "$$CHANGED_FILES" != "FORCE_ALL" ] && [ -n "$$CHANGED_FILES" ]; then \
 		$(call log_info,Changes detected but no spoke or landing repo matches. Skipping spoke sync.); \
 	fi; \
 	$(call log_success,Sync process completed ($$synced_count repos synced))
