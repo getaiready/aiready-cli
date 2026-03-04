@@ -43,12 +43,14 @@ export async function detectDuplicatePatterns(
 
   const allBlocks: CodeBlock[] = files.flatMap((file) =>
     extractCodeBlocks(file.content, minLines)
-      .filter((block) => block.content && block.content.trim().length > 0)
+      .filter(
+        (block) => block && block.content && block.content.trim().length > 0
+      )
       .map((block) => ({
         ...block,
         file: file.file,
         normalized: normalizeCode(block.content),
-        tokenCost: estimateTokens(block.content),
+        tokenCost: block.content ? estimateTokens(block.content) : 0,
       }))
   );
 
@@ -68,7 +70,7 @@ export async function detectDuplicatePatterns(
         file: p.file,
         normalized: normalizeCode(p.code),
         patternType: p.type as PatternType,
-        tokenCost: estimateTokens(p.code),
+        tokenCost: p.code ? estimateTokens(p.code) : 0,
         linesOfCode: p.endLine - p.startLine + 1,
       }))
     );
@@ -110,9 +112,11 @@ export async function detectDuplicatePatterns(
       const sim = jaccardSimilarity(blockTokens[i], blockTokens[j]);
       if (sim >= minSimilarity) {
         const severity = calculateSeverity(
+          block1.file,
+          block2.file,
+          block1.content,
           sim,
-          block1.tokenCost,
-          block1.patternType
+          block1.linesOfCode
         );
 
         const dup: DuplicatePattern = {

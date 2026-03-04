@@ -102,18 +102,20 @@ export function extractCodeBlocks(
     }
 
     if (inFunction && braceDepth === 0 && currentBlock.length >= minLines) {
-      const blockContent = currentBlock.join('\n');
-      const loc = currentBlock.filter(
-        (l) => l.trim() && !l.trim().startsWith('//')
-      ).length;
+      const blockContent = currentBlock.join('\n').trim();
+      if (blockContent) {
+        const loc = currentBlock.filter(
+          (l) => l.trim() && !l.trim().startsWith('//')
+        ).length;
 
-      blocks.push({
-        content: blockContent,
-        startLine: blockStart + 1,
-        endLine: i + 1,
-        patternType: categorizePattern(blockContent),
-        linesOfCode: loc,
-      });
+        blocks.push({
+          content: blockContent,
+          startLine: blockStart + 1,
+          endLine: i + 1,
+          patternType: categorizePattern(blockContent),
+          linesOfCode: loc,
+        });
+      }
 
       currentBlock = [];
       inFunction = false;
