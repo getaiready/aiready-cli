@@ -76,6 +76,7 @@ secrets/
 
 # Testing
 .nyc_output/
+**/test-results/
 
 # Temporary files
 *.tmp
