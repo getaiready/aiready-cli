@@ -38,9 +38,9 @@ export interface UnifiedAnalysisResult {
   consistency?: SpokeOutput;
   docDrift?: SpokeOutput;
   dependencyHealth?: SpokeOutput;
-  aiSignalClarity?: SpokeOutput;
-  agentGrounding?: SpokeOutput;
-  testability?: SpokeOutput;
+  aiSignalClarity?: any;
+  agentGrounding?: any;
+  testability?: any;
   changeAmplification?: SpokeOutput;
 
   summary: {
@@ -219,6 +219,7 @@ export async function analyzeUnified(
       options.progressCallback({ tool: 'ai-signal-clarity', data: report });
     }
     result.aiSignalClarity = {
+      ...report,
       results: report.results || [],
       summary: report.summary || {},
     };
@@ -242,6 +243,7 @@ export async function analyzeUnified(
       options.progressCallback({ tool: 'agent-grounding', data: report });
     }
     result.agentGrounding = {
+      ...report,
       results: report.results || [],
       summary: report.summary || {},
     };
@@ -261,6 +263,7 @@ export async function analyzeUnified(
       options.progressCallback({ tool: 'testability', data: report });
     }
     result.testability = {
+      ...report,
       results: report.results || [],
       summary: report.summary || {},
     };

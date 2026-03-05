@@ -27,9 +27,9 @@ export default function CodebaseMap({ repos, initialRepoId }: Props) {
   >({
     critical: true,
     major: true,
-    minor: false,
-    info: false,
-    healthy: false,
+    minor: true,
+    info: true,
+    healthy: true,
   });
 
   useEffect(() => {
