@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { RocketIcon, ChartIcon, TrendingUpIcon, RobotIcon } from './Icons';
+import { Mail } from 'lucide-react';
 
 interface NavItemProps {
   href: string;
@@ -49,6 +50,7 @@ export default function Sidebar({ overallScore }: Props) {
     { href: '/trends', label: 'Trends Explorer', icon: TrendingUpIcon },
     { href: '/map', label: 'Codebase Map', icon: RobotIcon },
     { href: '/metrics', label: 'Methodology', icon: ChartIcon },
+    { href: '/contact', label: 'Contact Us', icon: Mail },
   ];
 
   return (

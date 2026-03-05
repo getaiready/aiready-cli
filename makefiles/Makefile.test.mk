@@ -3,12 +3,12 @@
 ###############################################################################
 include makefiles/Makefile.shared.mk
 
-.PHONY: test test-core test-pattern-detect test-watch test-coverage test-verify-cli test-landing-e2e test-platform-e2e test-platform test-landing test-platform-e2e-local test-landing-e2e-local
+.PHONY: test test-core test-pattern-detect test-watch test-coverage test-verify-cli test-contract test-integration test-landing-e2e test-platform-e2e test-platform test-landing test-platform-e2e-local test-landing-e2e-local
 
 test: ## Run tests for all packages (noninteractive)
 	@$(call log_step,Running tests for all packages (noninteractive)...) 
 	@if command -v turbo >/dev/null 2>&1; then \
-		CI=1 turbo run test; \
+		CI=1 turbo run test test-contract; \
 	else \
 		CI=1 $(PNPM) --no-interactive $(SILENT_PNPM) test; \
 	fi
@@ -42,6 +42,20 @@ test-platform: ## Run unit tests for platform
 	@$(call log_info,Running tests for @aiready/platform...)
 	@cd platform && $(PNPM) test
 	@$(call log_success,Platform unit tests passed)
+
+test-contract: ## Run Spoke-to-Hub contract tests (Tier 1)
+	@$(call log_step,Running Tier 1 Contract Tests...)
+	@if command -v turbo >/dev/null 2>&1; then \
+		CI=1 turbo run test:contract; \
+	else \
+		$(PNPM) -r exec -- vitest run contract.test.ts --passWithNoTests; \
+	fi
+	@$(call log_success,Tier 1 Contract Tests passed)
+
+test-integration: ## Run monorepo integration tests (Tier 2)
+	@$(call log_step,Running Tier 2 Integration Tests...)
+	@$(PNPM) --filter @aiready/integration-tests test
+	@$(call log_success,Tier 2 Integration Tests passed)
 
 test-verify-cli: ## Run a smoke scan and verify CLI output
 	@$(call log_step,Running CLI smoke test...)

@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { TrendingUpIcon } from '@/components/Icons';
 import PlatformShell from '@/components/PlatformShell';
 import { Team, TeamMember } from '@/lib/db';
+import WaitingListModal from '@/components/WaitingListModal';
 
 interface Props {
   user?: {
@@ -51,7 +53,7 @@ const plans = [
       'Email support',
     ],
     cta: 'Join Waitlist',
-    href: 'mailto:team@getaiready.dev?subject=Join%20Pro%20Waitlist',
+    href: '#',
     featured: true,
     available: false,
   },
@@ -71,7 +73,7 @@ const plans = [
       'Priority email support',
     ],
     cta: 'Join Waitlist',
-    href: 'mailto:team@getaiready.dev?subject=Join%20Team%20Waitlist',
+    href: '#',
     featured: false,
     available: false,
   },
@@ -90,7 +92,7 @@ const plans = [
       'SLA support',
     ],
     cta: 'Contact Us',
-    href: 'mailto:enterprise@getaiready.dev?subject=Enterprise%20Inquiry',
+    href: '/contact',
     featured: false,
     available: false,
   },
@@ -101,6 +103,8 @@ export default function PricingClient({
   teams = [],
   overallScore,
 }: Props) {
+  const [waitlistPlan, setWaitlistPlan] = useState<string | null>(null);
+
   return (
     <PlatformShell
       user={user ? (user as any) : null}
@@ -215,16 +219,29 @@ export default function PricingClient({
                   ))}
                 </div>
 
-                <Link
-                  href={plan.href}
-                  className={`w-full text-center py-3 rounded-xl font-bold transition-all ${
-                    plan.featured
-                      ? 'bg-cyan-500 hover:bg-cyan-400 text-white shadow-lg shadow-cyan-500/20'
-                      : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
+                {plan.cta === 'Join Waitlist' ? (
+                  <button
+                    onClick={() => setWaitlistPlan(plan.name)}
+                    className={`w-full text-center py-3 rounded-xl font-bold transition-all ${
+                      plan.featured
+                        ? 'bg-cyan-500 hover:bg-cyan-400 text-white shadow-lg shadow-cyan-500/20'
+                        : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
+                    }`}
+                  >
+                    {plan.cta}
+                  </button>
+                ) : (
+                  <Link
+                    href={plan.href}
+                    className={`w-full text-center py-3 rounded-xl font-bold transition-all ${
+                      plan.featured
+                        ? 'bg-cyan-500 hover:bg-cyan-400 text-white shadow-lg shadow-cyan-500/20'
+                        : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+                )}
               </motion.div>
             ))}
           </div>
@@ -244,6 +261,12 @@ export default function PricingClient({
           </motion.div>
         </div>
       </div>
+
+      <WaitingListModal
+        isOpen={!!waitlistPlan}
+        onClose={() => setWaitlistPlan(null)}
+        planName={waitlistPlan || ''}
+      />
     </PlatformShell>
   );
 }

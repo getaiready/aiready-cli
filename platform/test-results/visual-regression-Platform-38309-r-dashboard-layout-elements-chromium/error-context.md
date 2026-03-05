@@ -1,0 +1,45 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+    - main [ref=e2]:
+        - generic [ref=e5]:
+            - generic [ref=e6]:
+                - heading "Welcome to AIReady" [level=1] [ref=e7]
+                - paragraph [ref=e8]: Sign in to track your codebase AI readiness
+            - generic [ref=e9]:
+                - generic [ref=e10]:
+                    - button "Continue with GitHub" [ref=e11] [cursor=pointer]:
+                        - img [ref=e12]
+                        - text: Continue with GitHub
+                    - button "Continue with Google" [ref=e14] [cursor=pointer]:
+                        - img [ref=e15]
+                        - text: Continue with Google
+                - paragraph [ref=e20]:
+                    - text: By signing in, you agree to our
+                    - link "Terms of Service" [ref=e21] [cursor=pointer]:
+                        - /url: /terms
+                    - text: and
+                    - link "Privacy Policy" [ref=e22] [cursor=pointer]:
+                        - /url: /privacy
+            - paragraph [ref=e24]:
+                - text: New to AIReady?
+                - link "Learn more" [ref=e25] [cursor=pointer]:
+                    - /url: https://getaiready.dev
+            - generic [ref=e26]:
+                - generic [ref=e27]:
+                    - img [ref=e29]
+                    - generic [ref=e31]: Track Trends
+                - generic [ref=e32]:
+                    - img [ref=e34]
+                    - generic [ref=e36]: Benchmark
+                - generic [ref=e37]:
+                    - img [ref=e39]
+                    - generic [ref=e41]: AI Insights
+    - region "Notifications alt+T"
+    - button [ref=e43]:
+        - img [ref=e45]
+    - button "Open Next.js Dev Tools" [ref=e52] [cursor=pointer]:
+        - img [ref=e53]
+    - alert [ref=e56]
+```

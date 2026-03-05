@@ -308,12 +308,22 @@ release-all: ## Release all spokes: TYPE=patch|minor|major (excludes landing)
 		exit 1; \
 	}; \
 	$(call log_success,Build complete); \
-	$(call log_step,Phase 4: Testing workspace ONCE...); \
+	$(call log_step,Phase 4: Testing workspace (Unit + Contract)...); \
 	$(MAKE) -C $(ROOT_DIR) test || { \
 		$(call log_error,Tests failed. Aborting release-all.); \
 		exit 1; \
 	}; \
-	@$(call log_success,All tests passed); \
+	$(call log_step,Phase 4.1: Running Tier 2 Integration Tests...); \
+	$(MAKE) -C $(ROOT_DIR) test-integration || { \
+		$(call log_error,Integration tests failed. Aborting release-all.); \
+		exit 1; \
+	}; \
+	$(call log_step,Phase 4.2: Running Tier 3 Local E2E Tests...); \
+	$(MAKE) -C $(ROOT_DIR) test-platform-e2e-local || { \
+		$(call log_error,Platform E2E tests failed locally. Aborting release-all.); \
+		exit 1; \
+	}; \
+	@$(call log_success,All 3 Tiers of contract testing passed); \
 	$(call log_step,Phase 4.5: Performing final CLI smoke test...); \
 	$(MAKE) -C $(ROOT_DIR) test-verify-cli || { \
 		$(call log_error,CLI smoke test failed. Aborting release-all.); \

@@ -9,6 +9,7 @@ import {
   aiMetaTags,
   PLATFORM_BASE_URL,
 } from '@/lib/seo-schema';
+import FeedbackWidget from '@/components/FeedbackWidget';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -99,6 +100,7 @@ export default function RootLayout({
       <body className={inter.className}>
         {children}
         <Toaster position="bottom-right" theme="dark" richColors />
+        <FeedbackWidget />
       </body>
     </html>
   );

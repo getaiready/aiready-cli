@@ -27,8 +27,6 @@ test.describe('Platform SEO Metadata', () => {
 
   test('metrics page has correct specific SEO tags', async ({ page }) => {
     await page.goto('/metrics');
-    console.log('Current URL:', page.url());
-    console.log('Current Title:', await page.title());
 
     await expect(page).toHaveTitle(/AI Readiness Metrics & Methodology/);
 
