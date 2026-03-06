@@ -124,37 +124,36 @@ async function getSmartDefaults(
   // Estimate size by doing a quick file scan and counting potential blocks
   const { scanFiles } = await import('@aiready/core');
   const files = await scanFiles(scanOptions);
-  const estimatedBlocks = files.length * 3; // Rough estimate: ~3 blocks per file
+  const fileCount = files.length;
+
+  // More realistic block estimation: ~5 blocks per file for typical JS/TS repos
+  const estimatedBlocks = fileCount * 5;
 
   // Reverse computation: calculate optimal parameters to target ~30 second completion
-  // Based on empirical performance: ~100,000 block-candidate comparisons per second
+  // Based on O(N^2) Jaccard similarity performance: ~50,000 comparisons per second
 
-  // maxCandidatesPerBlock: scale inversely with repo size to maintain ~30s target
-  const maxCandidatesPerBlock = Math.max(
-    5,
-    Math.min(50, Math.floor(50000 / estimatedBlocks))
-  );
-
-  // minSimilarity: increase with repo size to reduce noise in large repos
-  const minSimilarity = Math.min(0.75, 0.5 + (estimatedBlocks / 10000) * 0.25);
-
-  // minLines: increase with repo size to focus on substantial duplications
+  // minLines: increase AGGRESSIVELY with repo size to reduce block count (N)
+  // This is the most effective lever for O(N^2) speed
   const minLines = Math.max(
     6,
-    Math.min(12, 6 + Math.floor(estimatedBlocks / 2000))
+    Math.min(20, 6 + Math.floor(estimatedBlocks / 1000) * 2)
   );
 
-  // minSharedTokens: increase with repo size for better pre-filtering
-  const minSharedTokens = Math.max(
-    10,
-    Math.min(20, 10 + Math.floor(estimatedBlocks / 2000))
-  );
+  // minSimilarity: increase with repo size to reduce noise and potentially prune comparisons
+  const minSimilarity = Math.min(0.85, 0.5 + (estimatedBlocks / 5000) * 0.3);
 
   // batchSize: larger for better I/O efficiency in bigger repos
   const batchSize = estimatedBlocks > 1000 ? 200 : 100;
 
   // severity: focus on high-impact issues in very large repos
-  const severity = estimatedBlocks > 5000 ? 'high' : 'all';
+  const severity = estimatedBlocks > 3000 ? 'high' : 'all';
+
+  // maxCandidatesPerBlock: scale inversely with repo size to maintain ~30s target
+  // Note: detector.ts must implement this limit for it to have effect
+  const maxCandidatesPerBlock = Math.max(
+    5,
+    Math.min(100, Math.floor(1000000 / estimatedBlocks))
+  );
 
   const defaults: PatternDetectOptions = {
     rootDir: directory,
@@ -162,7 +161,7 @@ async function getSmartDefaults(
     minLines,
     batchSize,
     approx: true,
-    minSharedTokens,
+    minSharedTokens: 10,
     maxCandidatesPerBlock,
     streamResults: false,
     severity,

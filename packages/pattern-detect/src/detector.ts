@@ -118,23 +118,24 @@ function inferPatternType(keyword: string, name: string): PatternType {
 }
 
 /**
- * Calculate Jaccard similarity between two token sets
+ * Calculate Jaccard similarity between two strings
+ * Splitting by non-alphanumeric to be more robust
  */
-function calculateJaccardSimilarity(
-  setA: Set<string>,
-  setB: Set<string>
-): number {
-  if (setA.size === 0 || setB.size === 0) return 0;
+function calculateSimilarity(a: string, b: string): number {
+  if (a === b) return 1.0;
 
-  let intersectionSize = 0;
-  for (const item of setA) {
-    if (setB.has(item)) {
-      intersectionSize++;
-    }
-  }
+  const tokensA = a.split(/[^a-zA-Z0-9]+/).filter((t) => t.length > 0);
+  const tokensB = b.split(/[^a-zA-Z0-9]+/).filter((t) => t.length > 0);
 
-  const unionSize = setA.size + setB.size - intersectionSize;
-  return intersectionSize / unionSize;
+  if (tokensA.length === 0 || tokensB.length === 0) return 0;
+
+  const setA = new Set(tokensA);
+  const setB = new Set(tokensB);
+
+  const intersection = new Set([...setA].filter((x) => setB.has(x)));
+  const union = new Set([...setA, ...setB]);
+
+  return intersection.size / union.size;
 }
 
 /**
@@ -144,17 +145,9 @@ export async function detectDuplicatePatterns(
   fileContents: FileContent[],
   options: DetectionOptions
 ): Promise<DuplicatePattern[]> {
-  const {
-    minSimilarity,
-    minLines,
-    streamResults,
-    onProgress,
-    maxCandidatesPerBlock,
-    minSharedTokens,
-  } = options;
+  const { minSimilarity, minLines, streamResults, onProgress } = options;
   const allBlocks: CodeBlock[] = [];
 
-  // 1. Extract and pre-process blocks
   for (const { file, content } of fileContents) {
     const blocks = extractBlocks(file, content);
     allBlocks.push(
@@ -162,75 +155,43 @@ export async function detectDuplicatePatterns(
     );
   }
 
+  const duplicates: DuplicatePattern[] = [];
   const totalBlocks = allBlocks.length;
+  let comparisons = 0;
+  const totalComparisons = (totalBlocks * (totalBlocks - 1)) / 2;
+
   if (onProgress) {
     onProgress(
       0,
-      totalBlocks,
-      `Indexed ${totalBlocks} code blocks. Starting analysis...`
+      totalComparisons,
+      `Starting duplicate detection on ${totalBlocks} blocks...`
     );
   }
 
-  // 2. Pre-tokenize and normalize all blocks
-  const tokenizedBlocks = allBlocks.map((b) => {
-    const norm = normalizeCode(b.code);
-    const tokens = norm.split(/[^a-zA-Z0-9]+/).filter((t) => t.length > 0);
-    return {
-      ...b,
-      tokenSet: new Set(tokens),
-      tokensArray: tokens,
-    };
-  });
-
-  // 3. Build token index for fast candidate retrieval
-  const tokenIndex = new Map<string, number[]>();
-  tokenizedBlocks.forEach((b, idx) => {
-    b.tokenSet.forEach((token) => {
-      if (!tokenIndex.has(token)) {
-        tokenIndex.set(token, []);
-      }
-      tokenIndex.get(token)!.push(idx);
-    });
-  });
-
-  const duplicates: DuplicatePattern[] = [];
-  const processedPairs = new Set<string>();
-
-  // 4. Find candidates and compare
-  for (let i = 0; i < totalBlocks; i++) {
-    // Yield to the event loop regularly
+  for (let i = 0; i < allBlocks.length; i++) {
+    // Yield to the event loop every 50 blocks to prevent blocking for too long
     if (i % 50 === 0 && i > 0) {
       await new Promise((resolve) => setImmediate(resolve));
       if (onProgress) {
-        onProgress(i, totalBlocks, `Analyzing blocks (${i}/${totalBlocks})...`);
+        onProgress(
+          comparisons,
+          totalComparisons,
+          `Analyzing blocks (${i}/${totalBlocks})...`
+        );
       }
     }
 
-    const b1 = tokenizedBlocks[i];
-    const candidates = new Map<number, number>(); // index -> shared token count
+    const b1 = allBlocks[i];
+    const norm1 = normalizeCode(b1.code);
 
-    // Use index to find candidates with shared tokens
-    for (const token of b1.tokenSet) {
-      const matches = tokenIndex.get(token) || [];
-      for (const matchIdx of matches) {
-        if (matchIdx <= i) continue; // Only compare with blocks later in the list
-        if (tokenizedBlocks[matchIdx].file === b1.file) continue; // Skip same file
+    for (let j = i + 1; j < allBlocks.length; j++) {
+      comparisons++;
+      const b2 = allBlocks[j];
 
-        candidates.set(matchIdx, (candidates.get(matchIdx) || 0) + 1);
-      }
-    }
+      if (b1.file === b2.file) continue;
 
-    // Filter and sort candidates by shared token count
-    const sortedCandidates = Array.from(candidates.entries())
-      .filter(([_, count]) => count >= minSharedTokens)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, maxCandidatesPerBlock);
-
-    for (const [j, sharedCount] of sortedCandidates) {
-      const b2 = tokenizedBlocks[j];
-
-      // Calculate full Jaccard similarity
-      const sim = calculateJaccardSimilarity(b1.tokenSet, b2.tokenSet);
+      const norm2 = normalizeCode(b2.code);
+      const sim = calculateSimilarity(norm1, norm2);
 
       if (sim >= minSimilarity) {
         const { severity, reason, suggestion, matchedRule } = calculateSeverity(
@@ -270,9 +231,9 @@ export async function detectDuplicatePatterns(
 
   if (onProgress) {
     onProgress(
-      totalBlocks,
-      totalBlocks,
-      `Analysis complete. Found ${duplicates.length} patterns.`
+      totalComparisons,
+      totalComparisons,
+      `Duplicate detection complete. Found ${duplicates.length} patterns.`
     );
   }
 
