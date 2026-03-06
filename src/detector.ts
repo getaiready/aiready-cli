@@ -145,7 +145,7 @@ export async function detectDuplicatePatterns(
   fileContents: FileContent[],
   options: DetectionOptions
 ): Promise<DuplicatePattern[]> {
-  const { minSimilarity, minLines, streamResults } = options;
+  const { minSimilarity, minLines, streamResults, onProgress } = options;
   const allBlocks: CodeBlock[] = [];
 
   for (const { file, content } of fileContents) {
@@ -156,9 +156,33 @@ export async function detectDuplicatePatterns(
   }
 
   const duplicates: DuplicatePattern[] = [];
+  const totalBlocks = allBlocks.length;
+  let comparisons = 0;
+  const totalComparisons = (totalBlocks * (totalBlocks - 1)) / 2;
+
+  if (onProgress) {
+    onProgress(
+      0,
+      totalComparisons,
+      `Starting duplicate detection on ${totalBlocks} blocks...`
+    );
+  }
 
   for (let i = 0; i < allBlocks.length; i++) {
+    // Yield to the event loop every 50 blocks to prevent blocking for too long
+    if (i % 50 === 0 && i > 0) {
+      await new Promise((resolve) => setImmediate(resolve));
+      if (onProgress) {
+        onProgress(
+          comparisons,
+          totalComparisons,
+          `Analyzing blocks (${i}/${totalBlocks})...`
+        );
+      }
+    }
+
     for (let j = i + 1; j < allBlocks.length; j++) {
+      comparisons++;
       const b1 = allBlocks[i];
       const b2 = allBlocks[j];
 
@@ -203,6 +227,14 @@ export async function detectDuplicatePatterns(
           );
       }
     }
+  }
+
+  if (onProgress) {
+    onProgress(
+      totalComparisons,
+      totalComparisons,
+      `Duplicate detection complete. Found ${duplicates.length} patterns.`
+    );
   }
 
   return duplicates.sort((a, b) => b.similarity - a.similarity);
