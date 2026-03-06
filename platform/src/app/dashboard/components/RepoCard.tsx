@@ -114,6 +114,8 @@ export function RepoCard({
             .map(([key, val]) => (
               <BreakdownItem
                 key={key}
+                repoId={repo.id}
+                toolKey={key}
                 label={formatBreakdownKey(key)}
                 value={typeof val === 'number' ? val : (val as any)?.score}
               />
@@ -272,11 +274,20 @@ function IconButton({
   );
 }
 
-function BreakdownItem({ label, value }: { label: string; value: number }) {
-  const metricId = label.toLowerCase().replace(/\s+/g, '-');
+function BreakdownItem({
+  repoId,
+  toolKey,
+  label,
+  value,
+}: {
+  repoId: string;
+  toolKey: string;
+  label: string;
+  value: number;
+}) {
   return (
     <Link
-      href={`/metrics#${metricId}`}
+      href={`/dashboard/repo/${repoId}?category=${toolKey}`}
       className="bg-slate-800/50 rounded-lg px-2 py-1.5 border border-slate-700/50 hover:bg-slate-700/50 transition-colors block"
     >
       <div className={`text-xs font-bold ${scoreColor(value)}`}>{value}</div>

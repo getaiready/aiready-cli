@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import PlatformShell from '@/components/PlatformShell';
 import { AlertCircleIcon } from '@/components/Icons';
 import type { Repository, Team, TeamMember } from '@/lib/db';
@@ -8,6 +9,8 @@ import type { AnalysisData } from '@/lib/storage';
 import { RepoHeader } from './components/RepoHeader';
 import { RepoDimensions } from './components/RepoDimensions';
 import { IssueFeed } from './components/IssueFeed';
+import { MethodologyPanel } from '@/components/MethodologyPanel';
+import { metrics } from '@/app/metrics/constants';
 
 interface Props {
   repo: Repository;
@@ -21,14 +24,14 @@ interface Props {
   overallScore: number | null;
 }
 
-export default function RepoDetailClient({
-  repo,
-  user,
-  teams,
-  overallScore,
-}: Props) {
+function RepoDetailContent({ repo, user, teams, overallScore }: Props) {
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('category');
+
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
-  const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [selectedTool, setSelectedTool] = useState<string | null>(
+    initialCategory
+  );
   const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -186,6 +189,14 @@ export default function RepoDetailClient({
     info: 'text-slate-400 border-slate-500/30 bg-slate-500/10',
   };
 
+  const selectedMetric = metrics.find((m) => {
+    // Map camelCase tool names to kebab-case metric IDs
+    const mappedId = selectedTool
+      ?.replace(/([a-z])([A-Z])/g, '$1-$2')
+      .toLowerCase();
+    return m.id === mappedId;
+  });
+
   return (
     <PlatformShell
       user={user}
@@ -219,37 +230,84 @@ export default function RepoDetailClient({
           </div>
         ) : (
           analysis && (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              <RepoDimensions
-                analysis={analysis}
-                selectedTool={selectedTool}
-                onSelectTool={setSelectedTool}
-                toolLabels={toolLabels}
-                totalIssues={allIssues.length}
-              />
+            <div className="space-y-8">
+              {/* Methodology Panel for selected tool */}
+              {selectedMetric && (
+                <div className="glass-card rounded-3xl p-8 border border-cyan-500/20 bg-cyan-500/5 shadow-2xl shadow-cyan-500/5">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 rounded-2xl bg-slate-800 border border-slate-700 shadow-inner">
+                      {selectedMetric.icon}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">
+                        {selectedMetric.name} Methodology
+                      </h3>
+                      <p className="text-slate-400 text-sm">
+                        {selectedMetric.description}
+                      </p>
+                    </div>
+                  </div>
+                  <MethodologyPanel metric={selectedMetric} />
+                </div>
+              )}
 
-              <IssueFeed
-                issues={paginatedIssues}
-                allIssues={filteredIssues}
-                expandedIssues={expandedIssues}
-                onToggleIssue={toggleIssue}
-                onExpandAll={() => setExpandedIssues(new Set(allIssues.keys()))}
-                onCollapseAll={() => setExpandedIssues(new Set())}
-                filter={filter}
-                onFilterChange={(sev) =>
-                  setFilter((f) => ({ ...f, severity: sev || undefined }))
-                }
-                toolLabels={toolLabels}
-                severityColors={severityColors}
-                currentPage={currentPage}
-                onLoadMore={() => setCurrentPage((p) => p + 1)}
-                hasMore={hasMore}
-                itemsPerPage={ITEMS_PER_PAGE}
-              />
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <RepoDimensions
+                  analysis={analysis}
+                  selectedTool={selectedTool}
+                  onSelectTool={setSelectedTool}
+                  toolLabels={toolLabels}
+                  totalIssues={allIssues.length}
+                />
+
+                <IssueFeed
+                  issues={paginatedIssues}
+                  allIssues={filteredIssues}
+                  expandedIssues={expandedIssues}
+                  onToggleIssue={toggleIssue}
+                  onExpandAll={() =>
+                    setExpandedIssues(new Set(allIssues.keys()))
+                  }
+                  onCollapseAll={() => setExpandedIssues(new Set())}
+                  filter={filter}
+                  onFilterChange={(sev) =>
+                    setFilter((f) => ({ ...f, severity: sev || undefined }))
+                  }
+                  toolLabels={toolLabels}
+                  severityColors={severityColors}
+                  currentPage={currentPage}
+                  onLoadMore={() => setCurrentPage((p) => p + 1)}
+                  hasMore={hasMore}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                />
+              </div>
             </div>
           )
         )}
       </div>
     </PlatformShell>
+  );
+}
+
+export default function RepoDetailClient(props: Props) {
+  return (
+    <Suspense
+      fallback={
+        <PlatformShell
+          user={props.user}
+          teams={props.teams}
+          overallScore={props.overallScore}
+          activePage="repo"
+        >
+          <div className="p-4 sm:p-6 lg:p-8 space-y-8 text-white">
+            <div className="py-20 flex flex-col items-center justify-center gap-4">
+              <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
+            </div>
+          </div>
+        </PlatformShell>
+      }
+    >
+      <RepoDetailContent {...props} />
+    </Suspense>
   );
 }
