@@ -14,6 +14,7 @@ export function useDashboardData(
   const [pendingScanRepoIds, setPendingScanRepoIds] = useState<string[]>([]);
   const [uploadingRepoId, setUploadingRepoId] = useState<string | null>(null);
   const [scanningRepoId, setScanningRepoId] = useState<string | null>(null);
+  const [deletingRepoId, setDeletingRepoId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -192,14 +193,17 @@ export function useDashboardData(
   }
 
   async function handleDeleteRepo(repoId: string) {
-    if (!confirm('Delete this repository and all its analyses?')) return;
-
-    const res = await fetch(`/api/repos?id=${repoId}`, { method: 'DELETE' });
-    if (res.ok) {
-      setRepos((prev) => prev.filter((r) => r.id !== repoId));
-      toast.success('Repository deleted');
-    } else {
-      toast.error('Failed to delete repository');
+    setDeletingRepoId(repoId);
+    try {
+      const res = await fetch(`/api/repos?id=${repoId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setRepos((prev) => prev.filter((r) => r.id !== repoId));
+        toast.success('Repository deleted');
+      } else {
+        toast.error('Failed to delete repository');
+      }
+    } finally {
+      setDeletingRepoId(null);
     }
   }
 
@@ -209,6 +213,7 @@ export function useDashboardData(
     pendingScanRepoIds,
     uploadingRepoId,
     scanningRepoId,
+    deletingRepoId,
     uploadError,
     setUploadError,
     handleScanRepo,

@@ -8,6 +8,7 @@ import { ProfileSection } from './components/ProfileSection';
 import { IntegrationsSection } from './components/IntegrationsSection';
 import { ApiAccessSection } from './components/ApiAccessSection';
 import { NewKeyModal } from './components/NewKeyModal';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface Props {
   user: {
@@ -27,6 +28,11 @@ export default function SettingsClient({ user, teams, overallScore }: Props) {
   const [newKeyName, setNewKeyName] = useState('');
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
   const [keysLoading, setKeysLoading] = useState(false);
+  const [keyToDelete, setKeyToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchApiKeys();
@@ -67,17 +73,23 @@ export default function SettingsClient({ user, teams, overallScore }: Props) {
     }
   }
 
-  async function handleDeleteKey(id: string) {
-    if (!confirm('Delete this API key?')) return;
+  async function confirmDeleteKey() {
+    if (!keyToDelete) return;
+    setDeletingKeyId(keyToDelete.id);
     try {
-      const res = await fetch(`/api/keys?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/keys?id=${keyToDelete.id}`, {
+        method: 'DELETE',
+      });
       if (res.ok) {
-        setApiKeys((prev) => prev.filter((k) => k.id !== id));
+        setApiKeys((prev) => prev.filter((k) => k.id !== keyToDelete.id));
         toast.success('API key deleted');
       }
     } catch (err) {
       console.error('Failed to delete API key:', err);
       toast.error('Failed to delete API key');
+    } finally {
+      setDeletingKeyId(null);
+      setKeyToDelete(null);
     }
   }
 
@@ -96,7 +108,10 @@ export default function SettingsClient({ user, teams, overallScore }: Props) {
           newKeyName={newKeyName}
           setNewKeyName={setNewKeyName}
           onCreateKey={handleCreateKey}
-          onDeleteKey={handleDeleteKey}
+          onDeleteKey={(id) => {
+            const key = apiKeys.find((k) => k.id === id);
+            if (key) setKeyToDelete({ id: key.id, name: key.name });
+          }}
           loading={keysLoading}
         />
       </div>
@@ -104,6 +119,17 @@ export default function SettingsClient({ user, teams, overallScore }: Props) {
       <NewKeyModal
         apiKey={newlyCreatedKey}
         onClose={() => setNewlyCreatedKey(null)}
+      />
+
+      <ConfirmationModal
+        isOpen={!!keyToDelete}
+        onClose={() => setKeyToDelete(null)}
+        onConfirm={confirmDeleteKey}
+        title="Delete API Key"
+        message={`Are you sure you want to delete the API key "${keyToDelete?.name}"? Any applications using this key will immediately lose access.`}
+        confirmText="Delete Key"
+        isLoading={!!deletingKeyId}
+        variant="danger"
       />
     </PlatformShell>
   );
