@@ -88,7 +88,7 @@ export function useDashboardData(
           ) {
             finishedIds.push(id);
             toast.success(`Scan complete for ${newRepo.name}!`, {
-              description: `New AI Score: ${newRepo.aiScore || 'N/A'}`,
+              description: `New AI Score: ${newRepo.aiScore ?? 'N/A'}`,
             });
           } else if (newRepo?.lastError && !oldRepo?.lastError) {
             failedIds.push(id);

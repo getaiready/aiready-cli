@@ -13,6 +13,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -146,6 +147,37 @@ export async function listRepositoryAnalyses(
 }
 
 /**
+ * Delete all assets for a repository from S3
+ */
+export async function deleteRepositoryAssets(
+  userId: string,
+  repoId: string
+): Promise<void> {
+  const BUCKET_NAME = getBucketName();
+  const keys = await listRepositoryAnalyses(userId, repoId);
+
+  if (keys.length === 0) return;
+
+  // S3 DeleteObjects can handle up to 1000 keys at once
+  // For safety and simplicity, we'll chunk if needed, though repos rarely have > 1000 analyses
+  const chunks = [];
+  for (let i = 0; i < keys.length; i += 1000) {
+    chunks.push(keys.slice(i, i + 1000));
+  }
+
+  for (const chunk of chunks) {
+    await s3.send(
+      new DeleteObjectsCommand({
+        Bucket: BUCKET_NAME,
+        Delete: {
+          Objects: chunk.map((key) => ({ Key: key })),
+        },
+      })
+    );
+  }
+}
+
+/**
  * Generate a presigned URL for downloading analysis
  */
 export async function getAnalysisDownloadUrl(
@@ -164,7 +196,7 @@ export async function getAnalysisDownloadUrl(
 /**
  * Calculate AI Readiness Score from analysis data
  */
-export function calculateAiScore(data: AnalysisData): number {
+export function calculateAiScore(data: Partial<AnalysisData>): number {
   // Use scores from breakdown directly
   const b = data.breakdown || {};
 
@@ -458,6 +490,12 @@ export function normalizeReport(
     }
   });
 
+  // Calculate overall score if missing or zero
+  let aiReadinessScore = scoring.overall || 0;
+  if (aiReadinessScore === 0) {
+    aiReadinessScore = calculateAiScore({ breakdown });
+  }
+
   return {
     metadata: {
       repository: repo.name || 'unknown',
@@ -467,7 +505,7 @@ export function normalizeReport(
       toolVersion: repo.version || '0.1.0',
     },
     summary: {
-      aiReadinessScore: scoring.overall || 0,
+      aiReadinessScore,
       totalFiles: summary.totalFiles || 0,
       totalIssues: summary.totalIssues || 0,
       criticalIssues: summary.criticalIssues || 0,
