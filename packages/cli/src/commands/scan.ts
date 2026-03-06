@@ -156,10 +156,18 @@ export async function scanAction(directory: string, options: ScanOptions) {
     );
 
     // Dynamic progress callback
-    const progressCallback = (event: { tool: string; data: any }) => {
-      console.log(chalk.cyan(`\n--- ${event.tool.toUpperCase()} RESULTS ---`));
+    const progressCallback = (event: any) => {
+      // Handle progress messages
+      if (event.message) {
+        process.stdout.write(`\r\x1b[K   [${event.tool}] ${event.message}`);
+        return;
+      }
+
+      // Handle tool completion
+      process.stdout.write('\n'); // Clear the progress line
+      console.log(chalk.cyan(`--- ${event.tool.toUpperCase()} RESULTS ---`));
       const res = event.data;
-      if (res.summary) {
+      if (res && res.summary) {
         if (res.summary.totalIssues !== undefined)
           console.log(`  Issues found: ${chalk.bold(res.summary.totalIssues)}`);
         if (res.summary.score !== undefined)
