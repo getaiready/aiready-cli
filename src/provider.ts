@@ -5,6 +5,7 @@ import {
   ScanOptions,
   ToolScoringOutput,
   SpokeOutputSchema,
+  GLOBAL_SCAN_OPTIONS,
 } from '@aiready/core';
 import { analyzePatterns, PatternDetectOptions } from './index';
 import { calculatePatternScore } from './scoring';
@@ -28,10 +29,12 @@ export const PatternDetectProvider: ToolProvider = {
           (sum, r) => sum + r.issues.length,
           0
         ),
-        duplicates: results.duplicates,
-        groups: results.groups,
         clusters: results.clusters,
-        config: results.config,
+        config: Object.fromEntries(
+          Object.entries(results.config).filter(
+            ([key]) => !GLOBAL_SCAN_OPTIONS.includes(key) || key === 'rootDir'
+          )
+        ),
       },
       metadata: {
         toolName: ToolName.PatternDetect,
