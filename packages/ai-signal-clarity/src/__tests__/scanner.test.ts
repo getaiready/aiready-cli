@@ -22,7 +22,7 @@ describe('AI Signal Clarity Scanner', () => {
   }
 
   describe('Magic Literals', () => {
-    it('should detect top-level unnamed string and number constants', () => {
+    it('should detect top-level unnamed string and number constants', async () => {
       const file = createTestFile(
         'magic-literals.ts',
         `
@@ -36,7 +36,10 @@ describe('AI Signal Clarity Scanner', () => {
       `
       );
 
-      const result = scanFile(file, { rootDir: tmpDir, minSeverity: 'info' });
+      const result = await scanFile(file, {
+        rootDir: tmpDir,
+        minSeverity: 'info',
+      });
       const issues = result.issues.filter(
         (i) => i.category === 'magic-literal'
       );
@@ -50,7 +53,7 @@ describe('AI Signal Clarity Scanner', () => {
       expect(result.signals.magicLiterals).toBeGreaterThanOrEqual(3);
     });
 
-    it('should currently count assigned literals as magic unless improved', () => {
+    it('should currently count assigned literals as magic unless improved', async () => {
       const file = createTestFile(
         'named-constants.ts',
         `
@@ -67,7 +70,10 @@ describe('AI Signal Clarity Scanner', () => {
       `
       );
 
-      const result = scanFile(file, { rootDir: tmpDir, minSeverity: 'info' });
+      const result = await scanFile(file, {
+        rootDir: tmpDir,
+        minSeverity: 'info',
+      });
       const issues = result.issues.filter(
         (i) => i.category === 'magic-literal'
       );
@@ -79,7 +85,7 @@ describe('AI Signal Clarity Scanner', () => {
   });
 
   describe('Boolean Traps', () => {
-    it('should detect positional booleans in function calls', () => {
+    it('should detect positional booleans in function calls', async () => {
       const file = createTestFile(
         'boolean-traps.ts',
         `
@@ -90,14 +96,17 @@ describe('AI Signal Clarity Scanner', () => {
       `
       );
 
-      const result = scanFile(file, { rootDir: tmpDir, minSeverity: 'info' });
+      const result = await scanFile(file, {
+        rootDir: tmpDir,
+        minSeverity: 'info',
+      });
       const issues = result.issues.filter((i) => i.category === 'boolean-trap');
 
       expect(issues.length).toBe(1);
       expect(result.signals.booleanTraps).toBe(1);
     });
 
-    it('should ignore boolean literals in assignments and returns', () => {
+    it('should ignore boolean literals in assignments and returns', async () => {
       const file = createTestFile(
         'boolean-ok.ts',
         `
@@ -113,7 +122,10 @@ describe('AI Signal Clarity Scanner', () => {
       `
       );
 
-      const result = scanFile(file, { rootDir: tmpDir, minSeverity: 'info' });
+      const result = await scanFile(file, {
+        rootDir: tmpDir,
+        minSeverity: 'info',
+      });
       const issues = result.issues.filter((i) => i.category === 'boolean-trap');
 
       expect(issues.length).toBe(0);
@@ -122,7 +134,7 @@ describe('AI Signal Clarity Scanner', () => {
   });
 
   describe('Ambiguous Names', () => {
-    it('should detect single-letter variables and generic names', () => {
+    it('should detect single-letter variables and generic names', async () => {
       const file = createTestFile(
         'ambiguous.ts',
         `
@@ -135,7 +147,10 @@ describe('AI Signal Clarity Scanner', () => {
       `
       );
 
-      const result = scanFile(file, { rootDir: tmpDir, minSeverity: 'info' });
+      const result = await scanFile(file, {
+        rootDir: tmpDir,
+        minSeverity: 'info',
+      });
       const issues = result.issues.filter(
         (i) => i.category === 'ambiguous-name'
       );
@@ -147,7 +162,7 @@ describe('AI Signal Clarity Scanner', () => {
   });
 
   describe('Deep Callbacks', () => {
-    it('should detect callbacks nested more than 2 levels deep', () => {
+    it('should detect callbacks nested more than 2 levels deep', async () => {
       const file = createTestFile(
         'callbacks.ts',
         `
@@ -169,7 +184,10 @@ describe('AI Signal Clarity Scanner', () => {
       `
       );
 
-      const result = scanFile(file, { rootDir: tmpDir, minSeverity: 'info' });
+      const result = await scanFile(file, {
+        rootDir: tmpDir,
+        minSeverity: 'info',
+      });
       const issues = result.issues.filter(
         (i) => i.category === 'deep-callback'
       );

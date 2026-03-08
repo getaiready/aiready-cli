@@ -191,8 +191,11 @@ export async function scanFile(
       let maxCallbackDepth = 0;
 
       const visitNode = (node: any) => {
+        if (!node) return;
+
         // --- Magic Literals ---
         if (options.checkMagicLiterals !== false) {
+          // Tree-sitter (Python, Java, etc.)
           if (node.type === 'number') {
             const val = parseFloat(node.text);
             if (!isNaN(val) && isMagicNumber(val)) {
@@ -226,10 +229,44 @@ export async function scanFile(
               });
             }
           }
+          // ESTree (TypeScript, JavaScript)
+          else if (node.type === 'Literal') {
+            if (typeof node.value === 'number' && isMagicNumber(node.value)) {
+              signals.magicLiterals++;
+              issues.push({
+                type: IssueType.MagicLiteral,
+                category: 'magic-literal',
+                severity: Severity.Minor,
+                message: `Magic number ${node.value} — AI will invent wrong semantics. Extract to a named constant.`,
+                location: {
+                  file: filePath,
+                  line: node.loc?.start.line || 1,
+                  column: node.loc?.start.column,
+                },
+                suggestion: `const MEANINGFUL_NAME = ${node.value};`,
+              });
+            } else if (
+              typeof node.value === 'string' &&
+              isMagicString(node.value)
+            ) {
+              signals.magicLiterals++;
+              issues.push({
+                type: IssueType.MagicLiteral,
+                category: 'magic-literal',
+                severity: Severity.Info,
+                message: `Magic string "${node.value}" — intent is ambiguous to AI. Consider a named constant.`,
+                location: {
+                  file: filePath,
+                  line: node.loc?.start.line || 1,
+                },
+              });
+            }
+          }
         }
 
         // --- Boolean Traps ---
         if (options.checkBooleanTraps !== false) {
+          // Tree-sitter
           if (node.type === 'argument_list') {
             const hasBool = node.namedChildren?.some(
               (c: any) =>
@@ -247,7 +284,29 @@ export async function scanFile(
                 message: `Boolean trap: positional boolean argument at call site. AI inverts intent ~30% of the time.`,
                 location: {
                   file: filePath,
-                  line: node.startPosition.row + 1,
+                  line: (node.startPosition?.row || 0) + 1,
+                },
+                suggestion:
+                  'Replace boolean arg with a named options object or separate functions.',
+              });
+            }
+          }
+          // ESTree
+          else if (node.type === 'CallExpression') {
+            const hasBool = node.arguments.some(
+              (arg: any) =>
+                arg.type === 'Literal' && typeof arg.value === 'boolean'
+            );
+            if (hasBool) {
+              signals.booleanTraps++;
+              issues.push({
+                type: IssueType.BooleanTrap,
+                category: 'boolean-trap',
+                severity: Severity.Major,
+                message: `Boolean trap: positional boolean argument at call site. AI inverts intent ~30% of the time.`,
+                location: {
+                  file: filePath,
+                  line: node.loc?.start.line || 1,
                 },
                 suggestion:
                   'Replace boolean arg with a named options object or separate functions.',
@@ -256,22 +315,79 @@ export async function scanFile(
           }
         }
 
+        // --- Ambiguous Names ---
+        if (options.checkAmbiguousNames !== false) {
+          // Tree-sitter
+          if (node.type === 'variable_declarator') {
+            const nameNode = node.childForFieldName('name');
+            if (nameNode && isAmbiguousName(nameNode.text)) {
+              signals.ambiguousNames++;
+              issues.push({
+                type: IssueType.AmbiguousApi,
+                category: 'ambiguous-name',
+                severity: Severity.Info,
+                message: `Ambiguous variable name "${nameNode.text}" — AI intent is unclear.`,
+                location: {
+                  file: filePath,
+                  line: node.startPosition.row + 1,
+                },
+              });
+            }
+          }
+          // ESTree
+          else if (
+            node.type === 'VariableDeclarator' &&
+            node.id.type === 'Identifier'
+          ) {
+            if (isAmbiguousName(node.id.name)) {
+              signals.ambiguousNames++;
+              issues.push({
+                type: IssueType.AmbiguousApi,
+                category: 'ambiguous-name',
+                severity: Severity.Info,
+                message: `Ambiguous variable name "${node.id.name}" — AI intent is unclear.`,
+                location: {
+                  file: filePath,
+                  line: node.loc?.start.line || 1,
+                },
+              });
+            }
+          }
+        }
+
         // --- Callback Depth ---
-        const type = node.type.toLowerCase();
+        const nodeType = (node.type || '').toLowerCase();
         const isFunction =
-          type.includes('function') ||
-          type.includes('arrow') ||
-          type.includes('lambda') ||
-          type === 'method_declaration';
+          nodeType.includes('function') ||
+          nodeType.includes('arrow') ||
+          nodeType.includes('lambda') ||
+          nodeType === 'method_declaration';
 
         if (isFunction) {
           callbackDepth++;
           maxCallbackDepth = Math.max(maxCallbackDepth, callbackDepth);
         }
 
+        // Recurse Tree-sitter
         if (node.namedChildren) {
           for (const child of node.namedChildren) {
             visitNode(child);
+          }
+        }
+        // Recurse ESTree
+        else {
+          for (const key in node) {
+            if (key === 'parent' || key === 'loc' || key === 'range') continue;
+            const child = node[key];
+            if (child && typeof child === 'object') {
+              if (Array.isArray(child)) {
+                child.forEach(
+                  (c) => c && typeof c.type === 'string' && visitNode(c)
+                );
+              } else if (typeof child.type === 'string') {
+                visitNode(child);
+              }
+            }
           }
         }
 
@@ -280,7 +396,12 @@ export async function scanFile(
         }
       };
 
-      visitNode(ast.rootNode);
+      // Start visiting
+      if ((ast as any).rootNode) {
+        visitNode((ast as any).rootNode); // Tree-sitter
+      } else {
+        visitNode(ast); // ESTree
+      }
 
       if (options.checkDeepCallbacks !== false && maxCallbackDepth >= 3) {
         signals.deepCallbacks = maxCallbackDepth - 2;
