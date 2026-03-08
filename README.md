@@ -34,6 +34,10 @@ TST = testability
 
 ````
 
+## Language Support
+
+Analyzes **TypeScript, JavaScript, Python, Java, Go, and C#** (95% market coverage).
+
 ## Overview
 
 The CLI provides both unified analysis (scan multiple tools at once) and individual tool access for pattern detection, context analysis, and consistency checking.
