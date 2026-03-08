@@ -1,6 +1,6 @@
 {
   "name": "aiready-action",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "AIReady GitHub Action - Block PRs that break your AI context budget",
   "main": "dist/index.js",
   "scripts": {
