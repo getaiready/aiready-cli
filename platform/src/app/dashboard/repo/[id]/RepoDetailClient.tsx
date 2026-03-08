@@ -21,8 +21,12 @@ import { BusinessImpact } from './components/BusinessImpact';
 import { RemediationQueue } from './components/RemediationQueue';
 import { MethodologyPanel } from '@/components/MethodologyPanel';
 import CodeBlock from '@/components/CodeBlock';
-import { metrics as metricDefinitions } from '@/app/metrics/constants';
 import { TrendCharts } from './components/TrendCharts';
+import { BenchmarkCard } from './components/BenchmarkCard';
+import { metrics as metricDefinitions } from '@/app/metrics/constants';
+import { toast } from 'sonner';
+import { Icon } from '@/components/Icon';
+import { auth } from '@/lib/auth';
 
 interface Props {
   repo: Repository;
@@ -54,9 +58,10 @@ function RepoDetailContent({ repo, user, teams, overallScore }: Props) {
   const [showMethodology, setShowMethodology] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
   const [historicalMetrics, setHistoricalMetrics] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'insights' | 'remediation'>(
-    'insights'
-  );
+  const [benchmarks, setBenchmarks] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<
+    'issues' | 'insights' | 'remediation'
+  >('issues');
   const ITEMS_PER_PAGE = 25;
 
   useEffect(() => {
@@ -82,10 +87,19 @@ function RepoDetailContent({ repo, user, teams, overallScore }: Props) {
 
   async function fetchHistoricalMetrics() {
     try {
-      const res = await fetch(`/api/repos/${repo.id}/metrics?limit=100`);
-      const data = await res.json();
-      if (res.ok) {
+      const [metricsRes, benchmarksRes] = await Promise.all([
+        fetch(`/api/repos/${repo.id}/metrics?limit=100`),
+        fetch(`/api/repos/${repo.id}/benchmarks`),
+      ]);
+
+      if (metricsRes.ok) {
+        const data = await metricsRes.json();
         setHistoricalMetrics(data.metrics || []);
+      }
+
+      if (benchmarksRes.ok) {
+        const data = await benchmarksRes.json();
+        setBenchmarks(data.benchmarks);
       }
     } catch (err) {
       console.error('Error fetching historical metrics:', err);
@@ -379,6 +393,8 @@ function RepoDetailContent({ repo, user, teams, overallScore }: Props) {
                       businessImpact={analysis.summary.businessImpact}
                       aiScore={analysis.summary.aiReadinessScore}
                     />
+
+                    {benchmarks && <BenchmarkCard data={benchmarks} />}
 
                     {historicalMetrics.length > 1 && (
                       <TrendCharts metrics={historicalMetrics} />
