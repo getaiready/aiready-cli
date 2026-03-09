@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { PatternDetectProvider } from '../provider';
-import * as main from '../index';
+import * as analyzer from '../analyzer';
 
-vi.mock('../index', async () => {
-  const actual = await vi.importActual('../index');
+vi.mock('../analyzer', async () => {
+  const actual = await vi.importActual('../analyzer');
   return {
     ...actual,
     analyzePatterns: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock('../index', async () => {
 
 describe('Pattern Detect Provider', () => {
   it('should analyze and return SpokeOutput', async () => {
-    vi.mocked(main.analyzePatterns).mockResolvedValue({
+    vi.mocked(analyzer.analyzePatterns).mockResolvedValue({
       results: [],
       duplicates: [],
       files: ['f1.ts'],

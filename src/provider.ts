@@ -7,7 +7,7 @@ import {
   SpokeOutputSchema,
   GLOBAL_SCAN_OPTIONS,
 } from '@aiready/core';
-import { analyzePatterns, PatternDetectOptions } from './index';
+import { analyzePatterns, PatternDetectOptions } from './analyzer';
 import { calculatePatternScore } from './scoring';
 
 /**
