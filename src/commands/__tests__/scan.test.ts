@@ -1,47 +1,147 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { scanAction } from '../scan';
+import * as core from '@aiready/core';
+import * as index from '../../index';
+import * as upload from '../upload';
+import { writeFileSync, readFileSync, existsSync } from 'fs';
+import { Severity } from '@aiready/core';
 
-vi.mock('../index', () => ({
-  analyzeUnified: vi.fn().mockResolvedValue({
-    summary: { totalIssues: 0, toolsRun: [] },
-  }),
-  scoreUnified: vi.fn().mockResolvedValue({
-    overall: 80,
-    breakdown: [],
-  }),
+vi.mock('../../index', () => ({
+  analyzeUnified: vi.fn(),
+  scoreUnified: vi.fn(),
+}));
+
+vi.mock('../upload', () => ({
+  uploadAction: vi.fn(),
 }));
 
 vi.mock('@aiready/core', async () => {
   const actual = await vi.importActual('@aiready/core');
   return {
     ...actual,
-    loadMergedConfig: vi.fn().mockResolvedValue({
-      tools: ['pattern-detect'],
-      output: { format: 'console' },
-    }),
-    getRepoMetadata: vi.fn().mockReturnValue({}),
+    loadMergedConfig: vi.fn(),
+    loadConfig: vi.fn(),
+    getRepoMetadata: vi.fn().mockReturnValue({ name: 'test-repo' }),
     handleJSONOutput: vi.fn(),
     handleCLIError: vi.fn(),
     getElapsedTime: vi.fn().mockReturnValue('1.0'),
     resolveOutputPath: vi.fn().mockReturnValue('report.json'),
     formatScore: vi.fn().mockReturnValue('80/100'),
-    calculateTokenBudget: vi
-      .fn()
-      .mockReturnValue({ efficiencyRatio: 0.8, wastedTokens: { total: 0 } }),
+    calculateTokenBudget: vi.fn().mockReturnValue({
+      efficiencyRatio: 0.8,
+      wastedTokens: {
+        total: 100,
+        bySource: { duplication: 50, fragmentation: 50 },
+      },
+      totalContextTokens: 1000,
+    }),
+    calculateBusinessROI: vi.fn().mockReturnValue({
+      monthlySavings: 500,
+      productivityGainHours: 20,
+      annualValue: 6000,
+    }),
   };
 });
 
 vi.mock('fs', () => ({
   writeFileSync: vi.fn(),
-  readFileSync: vi.fn().mockReturnValue('{}'),
+  readFileSync: vi.fn(),
   existsSync: vi.fn().mockReturnValue(true),
 }));
 
 describe('Scan CLI Action', () => {
-  it('should run unified scan', async () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  let consoleSpy: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.mocked(core.loadMergedConfig).mockResolvedValue({
+      tools: ['pattern-detect'],
+      output: { format: 'console' },
+    });
+    vi.mocked(index.analyzeUnified).mockResolvedValue({
+      summary: {
+        totalIssues: 5,
+        toolsRun: ['pattern-detect'],
+        totalFiles: 10,
+        executionTime: 1000,
+      },
+      'pattern-detect': {
+        results: [
+          {
+            fileName: 'f1.ts',
+            issues: [
+              { severity: Severity.Critical },
+              { severity: Severity.Major },
+            ],
+          },
+        ],
+      },
+    } as any);
+    vi.mocked(index.scoreUnified).mockResolvedValue({
+      overall: 80,
+      breakdown: [
+        {
+          toolName: 'pattern-detect',
+          score: 80,
+          tokenBudget: {
+            totalContextTokens: 1000,
+            wastedTokens: { bySource: { duplication: 50, fragmentation: 50 } },
+          },
+        },
+      ],
+    } as any);
+  });
+
+  it('runs standard scan with scoring', async () => {
     await scanAction('.', { score: true });
-    expect(consoleSpy).toHaveBeenCalled();
-    consoleSpy.mockRestore();
+    expect(index.analyzeUnified).toHaveBeenCalled();
+    expect(index.scoreUnified).toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('AI Readiness Overall Score')
+    );
+  });
+
+  it('handles profiles correctly', async () => {
+    await scanAction('.', { profile: 'agentic' });
+    expect(core.loadMergedConfig).toHaveBeenCalled();
+  });
+
+  it('compares with previous report', async () => {
+    vi.mocked(readFileSync).mockReturnValue(
+      JSON.stringify({ scoring: { overall: 70 } })
+    );
+    await scanAction('.', { compareTo: 'prev.json', score: true });
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Trend: +10')
+    );
+  });
+
+  it('handles CI failure on critical issues', async () => {
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation((() => {}) as any);
+
+    await scanAction('.', { ci: true, failOn: 'critical', score: true });
+
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('PR BLOCKED')
+    );
+    exitSpy.mockRestore();
+  });
+
+  it('handles upload flag', async () => {
+    await scanAction('.', { upload: true, apiKey: 'test-key' });
+    expect(upload.uploadAction).toHaveBeenCalled();
+  });
+
+  it('supports JSON output format', async () => {
+    vi.mocked(core.loadMergedConfig).mockResolvedValue({
+      tools: ['pattern-detect'],
+      output: { format: 'json', file: 'out.json' },
+    });
+    await scanAction('.', {});
+    expect(core.handleJSONOutput).toHaveBeenCalled();
   });
 });
