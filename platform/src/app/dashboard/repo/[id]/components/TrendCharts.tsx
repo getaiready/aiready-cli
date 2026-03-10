@@ -23,7 +23,7 @@ export function TrendCharts({
   useEffect(() => {
     if (!metrics.length || !svgRef.current) return;
 
-    const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+    const margin = { top: 20, right: 150, bottom: 30, left: 40 };
     const width = svgRef.current.clientWidth - margin.left - margin.right;
     const height = 300 - margin.top - margin.bottom;
 
@@ -103,12 +103,14 @@ export function TrendCharts({
       .attr('x', 5)
       .attr('y', 9.5)
       .attr('dy', '0.32em')
+      .attr('fill', (d) => color(d))
+      .attr('font-weight', 'bold')
       .text((d) => d);
   }, [metrics]);
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-6 overflow-hidden">
-      <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
+    <div className="bg-slate-900/20 border border-slate-800 rounded-3xl p-8 overflow-hidden">
+      <h3 className="text-xl font-bold text-white mb-6">{title}</h3>
       <div className="w-full h-[300px]">
         <svg ref={svgRef} className="w-full h-full" />
       </div>

@@ -136,15 +136,14 @@ export default async function ContactPage() {
               </h2>
               <p className="text-slate-400 leading-relaxed mb-6">
                 AIReady was built on a simple premise: code that is easy for
-                humans to understand is good, but code that is optimized for AI
-                agents is the future of productivity.
+                humans to understand is a baseline, but code that is optimized
+                for autonomous AI agents is the new standard for engineering
+                velocity.
               </p>
               <p className="text-slate-400 leading-relaxed">
-                Whether you're a solo developer or an engineering leader, we're
-                here to help you navigate the transition from manual coding to
-                AI-assisted engineering.
+                We're here to help you bridge the gap between legacy manual
+                coding and the future of agent-native autonomous engineering.
               </p>
-
               <div className="mt-12 p-6 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-2xl border border-indigo-500/20">
                 <p className="text-white font-bold mb-2">Technical Advisory</p>
                 <p className="text-sm text-slate-400">

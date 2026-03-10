@@ -61,14 +61,8 @@ function RepoDetailContent({ repo, user, teams, overallScore }: Props) {
   const [benchmarks, setBenchmarks] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<
     'issues' | 'insights' | 'remediation'
-  >('issues');
+  >('insights');
   const ITEMS_PER_PAGE = 25;
-
-  useEffect(() => {
-    if (analysis?.summary.businessImpact) {
-      setActiveTab('insights');
-    }
-  }, [analysis]);
 
   const toggleIssue = (index: number) => {
     const newExpanded = new Set(expandedIssues);
