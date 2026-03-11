@@ -25,6 +25,8 @@ import {
   clawmartUploadAction,
   clawmartDownloadAction,
   clawmartHelpText,
+  bugAction,
+  bugHelpText,
 } from './commands';
 
 const getDirname = () => {
@@ -377,6 +379,16 @@ clawmart
   .option('--server <url>', 'Custom ClawMart API server')
   .action(async (idOrSlug, options) => {
     await clawmartDownloadAction(idOrSlug, options);
+  });
+
+program
+  .command('bug')
+  .description('Report a bug or provide feedback (Agent-friendly)')
+  .argument('[message]', 'Short description of the issue')
+  .option('-t, --type <type>', 'Issue type: bug, feature, metric', 'bug')
+  .addHelpText('after', bugHelpText)
+  .action(async (message, options) => {
+    await bugAction(message, options);
   });
 
 program.parse();
