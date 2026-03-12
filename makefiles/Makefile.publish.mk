@@ -319,39 +319,39 @@ publish-landing: ## Publish landing page to GitHub. Usage: make publish-landing 
 	git push -f "$$remote" "$$landing_tag"; \
 	$(call log_success,Landing tag pushed: $$landing_tag)
 
-# Sync changes from clawhub repo back to monorepo
-sync-clawhub: ## Sync changes from aiready-clawhub back to monorepo
-	@$(call log_step,Syncing changes from aiready-clawhub back to monorepo...)
-	@url="https://github.com/$(OWNER)/aiready-clawhub.git"; \
-	remote="aiready-clawhub"; \
+# Sync changes from clawmore repo back to monorepo
+sync-clawmore: ## Sync changes from aiready-clawmore back to monorepo
+	@$(call log_step,Syncing changes from aiready-clawmore back to monorepo...)
+	@url="https://github.com/$(OWNER)/aiready-clawmore.git"; \
+	remote="aiready-clawmore"; \
 	branch="main"; \
 	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
 	$(call log_info,Fetching latest from $$remote...); \
 	git fetch "$$remote" "$$branch"; \
-	$(call log_info,Pulling changes into clawhub/ directory...); \
-	git subtree pull --prefix=clawhub "$$remote" "$$branch" --squash -m "chore: sync clawhub from standalone repo"; \
-	$(call log_success,Synced changes from aiready-clawhub)
+	$(call log_info,Pulling changes into clawmore/ directory...); \
+	git subtree pull --prefix=clawmore "$$remote" "$$branch" --squash -m "chore: sync clawmore from standalone repo"; \
+	$(call log_success,Synced changes from aiready-clawmore)
 
-publish-clawhub: ## Publish clawhub to GitHub. Usage: make publish-clawhub [OWNER=username]
-	@$(call log_step,Publishing clawhub to GitHub...)
-	@url="https://github.com/$(OWNER)/aiready-clawhub.git"; \
-	remote="aiready-clawhub"; \
-	branch="publish-clawhub"; \
+publish-clawmore: ## Publish clawmore to GitHub. Usage: make publish-clawmore [OWNER=username]
+	@$(call log_step,Publishing clawmore to GitHub...)
+	@url="https://github.com/$(OWNER)/aiready-clawmore.git"; \
+	remote="aiready-clawmore"; \
+	branch="publish-clawmore"; \
 	target_branch="main"; \
-	clawhub_version=$$(node -p "require('$(REPO_ROOT)/clawhub/package.json').version" 2>/dev/null || echo "0.1.0"); \
+	clawmore_version=$$(node -p "require('$(REPO_ROOT)/clawmore/package.json').version" 2>/dev/null || echo "0.1.0"); \
 	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
 	$(call log_info,Remote set: $$remote -> $$url); \
 	git branch -D "$$branch" >/dev/null 2>&1 || true; \
-	$(call log_info,Creating subtree split for clawhub...); \
-	git subtree split --prefix=clawhub -b "$$branch" >/dev/null; \
+	$(call log_info,Creating subtree split for clawmore...); \
+	git subtree split --prefix=clawmore -b "$$branch" >/dev/null; \
 	$(call log_info,Subtree split complete: $$branch); \
 	split_commit=$$(git rev-parse "$$branch"); \
 	git push -f "$$remote" "$$branch:$$target_branch"; \
-	$(call log_success,Synced clawhub to GitHub repo ($$target_branch)); \
-	clawhub_tag="v$$clawhub_version"; \
-	git tag -f "$$clawhub_tag" "$$split_commit" -m "Release clawhub v$$clawhub_version" 2>/dev/null || true; \
-	git push -f "$$remote" "$$clawhub_tag"; \
-	$(call log_success,ClawHub tag pushed: $$clawhub_tag)
+	$(call log_success,Synced clawmore to GitHub repo ($$target_branch)); \
+	clawmore_tag="v$$clawmore_version"; \
+	git tag -f "$$clawmore_tag" "$$split_commit" -m "Release clawmore v$$clawmore_version" 2>/dev/null || true; \
+	git push -f "$$remote" "$$clawmore_tag"; \
+	$(call log_success,ClawMore tag pushed: $$clawmore_tag)
 
 # Push to monorepo and all spoke repos
 sync: ## Push monorepo to origin and sync all spokes to their public repos. Use FORCE=true to sync all.
@@ -375,7 +375,7 @@ sync: ## Push monorepo to origin and sync all spokes to their public repos. Use 
 	@git push origin $(TARGET_BRANCH)
 	@$(call log_success,Pushed to monorepo)
 	@$(call log_step,Syncing relevant repositories in parallel...)
-	@$(MAKE) $(MAKE_PARALLEL) $(addprefix github-sync-spoke-,$(ALL_SPOKES)) github-sync-landing github-sync-clawhub github-sync-vscode github-sync-action CHANGED_FILES="$$CHANGED_FILES" FORCE="$(FORCE)"
+	@$(MAKE) $(MAKE_PARALLEL) $(addprefix github-sync-spoke-,$(ALL_SPOKES)) github-sync-landing github-sync-clawmore github-sync-vscode github-sync-action CHANGED_FILES="$$CHANGED_FILES" FORCE="$(FORCE)"
 	@$(call log_success,Sync process completed)
 
 .PHONY: github-sync-spoke-%
@@ -402,15 +402,15 @@ github-sync-landing:
 		$(MAKE) publish-landing OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)' || true; \
 	fi
 
-.PHONY: github-sync-clawhub
-github-sync-clawhub:
+.PHONY: github-sync-clawmore
+github-sync-clawmore:
 	@should_sync=false; \
-	if [ "$(FORCE)" = "true" ] || [ "$(CHANGED_FILES)" = "FORCE_ALL" ] || echo "$(CHANGED_FILES)" | grep -q "clawhub/"; then \
+	if [ "$(FORCE)" = "true" ] || [ "$(CHANGED_FILES)" = "FORCE_ALL" ] || echo "$(CHANGED_FILES)" | grep -q "clawmore/"; then \
 		should_sync=true; \
 	fi; \
 	if [ "$$should_sync" = "true" ]; then \
-		$(call log_step,Syncing ClawHub repository...); \
-		$(MAKE) publish-clawhub OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)' || true; \
+		$(call log_step,Syncing ClawMore repository...); \
+		$(MAKE) publish-clawmore OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)' || true; \
 	fi
 
 .PHONY: github-sync-vscode
