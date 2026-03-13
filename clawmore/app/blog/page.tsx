@@ -77,6 +77,16 @@ const BLOG_POSTS = [
     hash: '1dollarai',
     category: 'MINIMALIST_ARCHITECT',
   },
+  {
+    slug: 'bridge-pattern-ephemeral-persistent',
+    title: 'The Bridge Pattern: HTTP to WebSocket',
+    excerpt:
+      'Solving the "Persistent connection" problem in a serverless world. How we connect ephemeral Lambda triggers to long-running AI streams.',
+    date: 'MAR 01, 2026',
+    readTime: '07 MIN',
+    hash: 'bridge-proto',
+    category: 'PROTOCOL_BRIDGE',
+  },
 ];
 
 export default function BlogIndex() {
