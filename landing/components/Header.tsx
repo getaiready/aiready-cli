@@ -3,8 +3,15 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { usePathname } from 'next/navigation';
+import { cn } from '@aiready/components';
+import { FileCode, BookOpen } from 'lucide-react';
 
 export function Header() {
+  const pathname = usePathname();
+  const isDocs = pathname?.startsWith('/docs');
+  const isBlog = pathname?.startsWith('/blog');
+
   return (
     <motion.header
       initial={{ y: 0, opacity: 1 }}
@@ -16,10 +23,13 @@ export function Header() {
         <Link href="/">
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-2 flex-shrink-0"
+            className={cn(
+              'flex items-center gap-2 flex-shrink-0 transition-all duration-300',
+              !isBlog && !isDocs && 'drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]'
+            )}
           >
             <Image
-              src="/logo-text.png"
+              src="/logo-text-transparent.png"
               alt="AIReady Logo"
               width={210}
               height={48}
@@ -39,22 +49,44 @@ export function Header() {
         <div className="flex items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
           <Link
             href="/docs"
-            className="hidden sm:block text-sm md:text-base font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white relative group transition-colors"
+            className={cn(
+              'hidden sm:flex items-center gap-1.5 text-sm md:text-base font-medium transition-colors relative group',
+              isDocs
+                ? 'glow-blue'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:glow-blue'
+            )}
           >
+            <FileCode className="w-4 h-4" />
             <span>Docs</span>
-            <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></span>
+            <span
+              className={cn(
+                'absolute left-0 -bottom-1 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 transition-all duration-300',
+                isDocs ? 'w-full' : 'w-0 group-hover:w-full'
+              )}
+            ></span>
           </Link>
           <Link
             href="/blog"
-            className="hidden sm:block text-sm md:text-base font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white relative group transition-colors"
+            className={cn(
+              'hidden sm:flex items-center gap-1.5 text-sm md:text-base font-medium transition-colors relative group',
+              isBlog
+                ? 'glow-purple'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:glow-purple'
+            )}
           >
+            <BookOpen className="w-4 h-4" />
             <span>Blog</span>
-            <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></span>
+            <span
+              className={cn(
+                'absolute left-0 -bottom-1 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 transition-all duration-300',
+                isBlog ? 'w-full' : 'w-0 group-hover:w-full'
+              )}
+            ></span>
           </Link>
           <Link
             href="https://www.npmjs.com/package/@aiready/cli"
             target="_blank"
-            className="hidden lg:block text-sm md:text-base font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white relative group transition-colors"
+            className="hidden lg:block text-sm md:text-base font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white relative group transition-colors hover:glow-blue"
           >
             <span>Unified CLI</span>
             <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></span>
@@ -62,7 +94,7 @@ export function Header() {
           <Link
             href="https://marketplace.visualstudio.com/items?itemName=pengcao.aiready"
             target="_blank"
-            className="hidden md:block text-sm md:text-base font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white relative group transition-colors"
+            className="hidden md:block text-sm md:text-base font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white relative group transition-colors hover:glow-blue"
           >
             <span>VS Code</span>
             <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></span>

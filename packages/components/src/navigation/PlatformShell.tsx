@@ -72,8 +72,8 @@ function NavItemComponent({
         className={cn(
           'flex items-center gap-3 px-4 py-3 rounded-xl transition-all',
           isActive
-            ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-            : 'text-slate-400 hover:text-white hover:bg-slate-800/50 border border-transparent'
+            ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 glow-blue'
+            : 'text-slate-400 hover:text-white hover:bg-slate-800/50 border border-transparent hover:glow-blue'
         )}
       >
         <Icon
@@ -337,7 +337,7 @@ export function PlatformShell({
     <header className="sticky top-0 z-20 h-16 border-b border-indigo-500/10 backdrop-blur-md bg-slate-950/20 px-4 sm:px-6 lg:px-8">
       <div className="h-full flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest hidden sm:block">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest hidden sm:block glow-text">
             {activePage || 'Dashboard'}
           </p>
         </div>

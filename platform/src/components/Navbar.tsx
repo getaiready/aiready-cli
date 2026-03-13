@@ -31,7 +31,10 @@ export default function Navbar({
       <div className="h-full flex items-center justify-between">
         <div className="flex items-center gap-4">
           {showLogo && (
-            <Link href="/dashboard" className="flex items-center">
+            <Link
+              href="/dashboard"
+              className="flex items-center drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]"
+            >
               <img
                 src="/logo-text-transparent-dark-theme.png"
                 alt="AIReady"
@@ -40,7 +43,7 @@ export default function Navbar({
             </Link>
           )}
           <div className="h-4 w-px bg-slate-800 mx-2 hidden lg:block" />
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest hidden sm:block">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest hidden sm:block glow-text">
             {activePage || 'Dashboard'}
           </p>
         </div>
