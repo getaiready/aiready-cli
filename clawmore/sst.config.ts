@@ -31,7 +31,11 @@ export default $config({
 
     // SNS Topic for notifications
     const topic = new sst.aws.SnsTopic('LeadNotifications');
-    topic.subscribe('caopengau@gmail.com');
+    new aws.sns.TopicSubscription('LeadEmailSubscription', {
+      topic: topic.arn,
+      protocol: 'email',
+      endpoint: 'caopengau@gmail.com',
+    });
 
     // API Gateway for lead submissions (standalone to match landing pattern)
     const api = new sst.aws.ApiGatewayV2('LeadApi', {
