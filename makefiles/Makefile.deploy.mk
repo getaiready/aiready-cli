@@ -8,6 +8,12 @@ include $(MAKEFILE_DIR)/Makefile.shared.mk
 .PHONY: deploy-landing deploy-landing-prod deploy-landing-remove landing-logs landing-verify landing-cleanup
 .PHONY: deploy-platform deploy-platform-prod deploy-platform-remove platform-logs platform-verify
 .PHONY: deploy-clawmore deploy-clawmore-dev deploy-clawmore-prod clawmore-verify
+.PHONY: ses-domain-status ses-production-access-status ses-request-production-access
+
+SES_MAIL_TYPE ?= TRANSACTIONAL
+SES_WEBSITE_URL ?= https://$(DOMAIN_NAME)
+SES_CONTACT_LANGUAGE ?= EN
+SES_ADDITIONAL_CONTACT_EMAILS ?=
 
 ##@ Deployment
 
@@ -148,6 +154,45 @@ deploy-platform-prod: verify-aws-account ## Deploy platform to AWS (production)
 		[ -f .env.prod ] && set -a && . ./.env.prod && set +a || true && \
 		AWS_PROFILE=$(AWS_PROFILE) pnpm run deploy:prod
 	@$(call log_success,Platform deployed to production)
+
+##@ Email (SES)
+
+ses-domain-status: verify-aws-account ## Show SES domain identity status for DOMAIN_NAME
+	@$(call log_step,Checking SES domain identity for $(DOMAIN_NAME) in $(AWS_REGION))
+	@OUT=$$(aws sesv2 get-email-identity \
+		--email-identity "$(DOMAIN_NAME)" \
+		--profile $(AWS_PROFILE) \
+		--region $(AWS_REGION) \
+		--output json 2>/dev/null || true); \
+	if [ -z "$$OUT" ]; then \
+		$(call log_warning,No SES identity found for $(DOMAIN_NAME). Deploy landing production stage to create it.); \
+		exit 1; \
+	fi; \
+	echo "$$OUT" | jq '{IdentityName, IdentityType, VerifiedForSendingStatus, DkimAttributes}'
+
+ses-production-access-status: verify-aws-account ## Show SES production access status in AWS_REGION
+	@$(call log_step,Checking SES production access status in $(AWS_REGION))
+	@aws sesv2 get-account \
+		--profile $(AWS_PROFILE) \
+		--region $(AWS_REGION) \
+		--output json | jq '{ProductionAccessEnabled, SendQuota}'
+
+ses-request-production-access: verify-aws-account ## Request SES production access (requires verified domain identity)
+	@$(call log_warning,Requesting SES production access in $(AWS_REGION) for $(DOMAIN_NAME))
+	@EXTRA_ARGS=""; \
+	if [ -n "$(SES_ADDITIONAL_CONTACT_EMAILS)" ]; then \
+		EXTRA_ARGS="--additional-contact-email-addresses $(SES_ADDITIONAL_CONTACT_EMAILS)"; \
+	fi; \
+	aws sesv2 put-account-details \
+		--production-access-enabled \
+		--mail-type "$(SES_MAIL_TYPE)" \
+		--website-url "$(SES_WEBSITE_URL)" \
+		--contact-language "$(SES_CONTACT_LANGUAGE)" \
+		$$EXTRA_ARGS \
+		--profile $(AWS_PROFILE) \
+		--region $(AWS_REGION)
+	@$(call log_success,SES production access request submitted. Approval is asynchronous.)
+	@$(MAKE) -f $(MAKEFILE_DIR)/Makefile.deploy.mk ses-production-access-status
 	@$(MAKE) platform-verify
 
 platform-verify: ## Verify platform is accessible

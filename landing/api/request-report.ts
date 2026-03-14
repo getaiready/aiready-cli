@@ -11,6 +11,8 @@ import {
 const bucket = process.env.SUBMISSIONS_BUCKET!;
 const s3 = new S3Client({});
 const sesToEmail = process.env.SES_TO_EMAIL || '';
+const sesFromEmail =
+  process.env.SES_FROM_EMAIL || 'notifications@getaiready.dev';
 const ses = new SESClient({});
 
 export async function handler(event: Event) {
@@ -145,7 +147,7 @@ https://getaiready.dev`;
                 Text: { Data: textBody },
               },
             },
-            Source: 'notifications@getaiready.dev',
+            Source: sesFromEmail,
           })
         );
       } catch {}

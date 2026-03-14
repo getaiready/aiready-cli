@@ -19,58 +19,27 @@ export default $config({
     };
   },
   async run() {
+    const cloudflareZoneId = '50eb7dcadc84c58ab34583742db0b671';
+
     // Storage for report submissions
     const submissions = new sst.aws.Bucket('Submissions', {
       public: false,
     });
 
-    // SES Email Domain Identity with DKIM
-    // If the SES domain identity already exists (e.g. created previously), skip creating it
+    // SES domain identity is managed as infrastructure so DNS verification is reproducible.
     const domainName = 'getaiready.dev';
-    let emailDomain: any = undefined;
-    try {
-      const cp = await import('child_process');
-      const cmd = `aws sesv2 get-email-identity --email-identity ${domainName} --output json`;
-      try {
-        const out = cp.execSync(cmd, { encoding: 'utf8', env: process.env });
-        if (out) {
-          console.log(
-            `SES identity for ${domainName} already exists; skipping creation.`
-          );
-          emailDomain = { sender: domainName };
-        }
-      } catch (e: any) {
-        // If aws cli returns non-zero, assume identity not found and create via SST
-        const output = [
-          e.stdout ? String(e.stdout) : '',
-          e.stderr ? String(e.stderr) : '',
-          String(e),
-        ].join('\n');
-
-        if (
-          output.includes('NotFoundException') ||
-          output.includes('not exist') ||
-          output.includes('not found')
-        ) {
-          console.log(
-            `SES identity for ${domainName} not found; creating via SST.`
-          );
-          emailDomain = new sst.aws.Email('NotificationEmail', {
-            sender: domainName,
-            dns: sst.cloudflare.dns({
-              zone: '50eb7dcadc84c58ab34583742db0b671',
-            }),
-          });
-        } else {
-          // Unknown error - rethrow so deploy fails visibly
-          console.error(`Unexpected error checking SES identity: ${output}`);
-          throw e;
-        }
-      }
-    } catch (err) {
-      // If child_process import or aws CLI check fails, rethrow to make the failure visible
-      throw err;
-    }
+    const defaultSesFromEmail = `notifications@${domainName}`;
+    const manageSesDomainIdentity =
+      $app.stage === 'production' ||
+      process.env.SES_MANAGE_DOMAIN_IDENTITY === 'true';
+    const emailDomain = manageSesDomainIdentity
+      ? new sst.aws.Email('NotificationEmail', {
+          sender: domainName,
+          dns: sst.cloudflare.dns({
+            zone: cloudflareZoneId,
+          }),
+        })
+      : undefined;
 
     // API Gateway HTTP API for public form submissions
     const api = new sst.aws.ApiGatewayV2('RequestApi', {
@@ -83,6 +52,7 @@ export default $config({
       environment: {
         SUBMISSIONS_BUCKET: submissions.name,
         SES_TO_EMAIL: process.env.SES_TO_EMAIL || '',
+        SES_FROM_EMAIL: process.env.SES_FROM_EMAIL || defaultSesFromEmail,
       },
       permissions: [
         {
@@ -108,7 +78,7 @@ export default $config({
             ? 'getaiready.dev'
             : `${$app.stage}.getaiready.dev`,
         dns: sst.cloudflare.dns({
-          zone: '50eb7dcadc84c58ab34583742db0b671',
+          zone: cloudflareZoneId,
         }),
       },
       invalidation: {
