@@ -1,6 +1,6 @@
 const meta = {
   title: 'The Economic Moat: Quantifying your AI ROI',
-  date: '2026-03-14',
+  date: '2026-02-20',
   excerpt:
     'Intelligence is becoming a commodity, so the competitive advantage shifts to Context. Learn how to turn Technical Debt into a Token Budget and build your economic moat.',
   author: 'Peng Cao',

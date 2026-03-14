@@ -1,6 +1,6 @@
 const meta = {
   title: 'Roadmap to Autonomy: The $1/Month AI Agent',
-  date: '2026-04-08',
+  date: '2026-03-12',
   excerpt:
     "Scale-to-zero isn't just about efficiency; it's about accessibility. Learn how to run a fully autonomous engineering backbone for the price of a single coffee.",
   author: 'Peng Cao',

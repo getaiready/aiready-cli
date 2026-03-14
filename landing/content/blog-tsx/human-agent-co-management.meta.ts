@@ -1,6 +1,6 @@
 const meta = {
   title: 'Human-Agent Co-Management: The New Engineering Culture',
-  date: '2026-04-02',
+  date: '2026-03-08',
   excerpt:
     'Engineering is no longer a solo human endeavor. Learn how to manage autonomous agents across Slack, Discord, and Telegram, and build a culture of shared agency.',
   author: 'Peng Cao',

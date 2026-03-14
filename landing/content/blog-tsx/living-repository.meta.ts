@@ -1,6 +1,6 @@
 const meta = {
   title: 'The Living Repository: Infrastructure as a Blueprint',
-  date: '2026-04-12',
+  date: '2026-03-14',
   excerpt:
     'The series finale. Discover how a single, versioned blueprint allows an autonomous team to mutate, evolve, and persist its own architecture over time.',
   author: 'Peng Cao',

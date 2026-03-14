@@ -1,6 +1,6 @@
 const meta = {
   title: 'Closing the Loop: Git as a Runtime',
-  date: '2026-03-24',
+  date: '2026-02-28',
   excerpt:
     'Reasoning is not deployment. Learn how we use SST Ion and Pulumi-based synthesis to close the gap between LLM intent and verified infrastructure mutations.',
   author: 'Peng Cao',

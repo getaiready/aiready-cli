@@ -1,6 +1,6 @@
 const meta = {
   title: 'Recursive Safety: VPCs and Recursion Guards',
-  date: '2026-04-05',
+  date: '2026-03-10',
   excerpt:
     "What if the agent deletes your production database? Learn how to build 'Recursive Safety' using multi-layered recursion guards, VPC isolation, and human-in-the-loop gates.",
   author: 'Peng Cao',
