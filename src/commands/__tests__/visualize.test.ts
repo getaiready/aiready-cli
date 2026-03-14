@@ -32,7 +32,7 @@ vi.mock('@aiready/core', () => ({
 }));
 
 vi.mock('../../utils/helpers', () => ({
-  findLatestScanReport: vi.fn(),
+  findLatestReport: vi.fn(),
 }));
 
 describe('Visualize CLI Action', () => {
@@ -54,7 +54,7 @@ describe('Visualize CLI Action', () => {
   });
 
   it('should find latest report if none specified', async () => {
-    vi.spyOn(helpers, 'findLatestScanReport').mockReturnValue('latest.json');
+    vi.spyOn(helpers, 'findLatestReport').mockReturnValue('latest.json');
     await visualizeAction('.', {});
     expect(fs.readFileSync).toHaveBeenCalledWith(
       expect.stringContaining('latest.json'),
@@ -64,7 +64,7 @@ describe('Visualize CLI Action', () => {
 
   it('should handle missing reports', async () => {
     vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-    vi.spyOn(helpers, 'findLatestScanReport').mockReturnValue(null);
+    vi.spyOn(helpers, 'findLatestReport').mockReturnValue(null);
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await visualizeAction('.', { report: 'missing.json' });

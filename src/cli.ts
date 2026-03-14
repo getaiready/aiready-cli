@@ -132,9 +132,10 @@ program
     '--js',
     'Generate configuration as a JavaScript file (aiready.config.js)'
   )
+  .option('--full', 'Generate a full configuration with all available options')
   .action(async (options) => {
     const format = options.js ? 'js' : 'json';
-    await initAction({ force: options.force, format });
+    await initAction({ force: options.force, format, full: options.full });
   });
 
 // Patterns command - Detect duplicate code patterns
