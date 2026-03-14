@@ -25,7 +25,7 @@ import JsonLd from '../components/JsonLd';
 
 interface ClawMoreClientProps {
   apiUrl: string;
-  dict: any;
+  dict?: any;
 }
 
 const CLAW_MORE_JSON_LD = {

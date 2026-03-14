@@ -16,7 +16,7 @@ import LocaleSwitcher from './LocaleSwitcher';
 
 interface NavbarProps {
   variant?: 'home' | 'post';
-  dict: any;
+  dict?: any;
 }
 
 export default function Navbar({ variant = 'home', dict }: NavbarProps) {
@@ -56,20 +56,20 @@ export default function Navbar({ variant = 'home', dict }: NavbarProps) {
                 className="hover:text-cyber-blue hover:glow-blue transition-colors flex items-center gap-1.5"
               >
                 <Layers className="w-3 h-3" />{' '}
-                {dict.navbar?.features || 'Features'}
+                {dict?.navbar?.features || 'Features'}
               </Link>
               <Link
                 href="/#evolution"
                 className="hover:text-cyber-blue hover:glow-blue transition-colors flex items-center gap-1.5"
               >
                 <RefreshCcw className="w-3 h-3" />{' '}
-                {dict.navbar?.evolution || 'Evolution'}
+                {dict?.navbar?.evolution || 'Evolution'}
               </Link>
               <Link
                 href="/#pricing"
                 className="hover:text-cyber-blue hover:glow-blue transition-colors flex items-center gap-1.5"
               >
-                <Zap className="w-3 h-3" /> {dict.navbar?.pricing || 'Pricing'}
+                <Zap className="w-3 h-3" /> {dict?.navbar?.pricing || 'Pricing'}
               </Link>
               <Link
                 href="/blog"
@@ -79,7 +79,7 @@ export default function Navbar({ variant = 'home', dict }: NavbarProps) {
                     : 'hover:text-cyber-purple hover:glow-purple'
                 }`}
               >
-                <Activity className="w-3 h-3" /> {dict.navbar?.blog || 'Blog'}
+                <Activity className="w-3 h-3" /> {dict?.navbar?.blog || 'Blog'}
               </Link>
             </div>
           ) : (
@@ -88,7 +88,7 @@ export default function Navbar({ variant = 'home', dict }: NavbarProps) {
               className="hover:text-cyber-purple hover:glow-purple transition-colors flex items-center gap-2 text-zinc-300"
             >
               <ArrowLeft className="w-3 h-3" />{' '}
-              {dict.navbar?.backToJournal || 'Back to Journal'}
+              {dict?.navbar?.backToJournal || 'Back to Journal'}
             </Link>
           )}
 
@@ -98,7 +98,7 @@ export default function Navbar({ variant = 'home', dict }: NavbarProps) {
               href="https://github.com/caopengau/serverlessclaw"
               className="hidden sm:flex px-4 py-2 rounded-sm bg-white/5 hover:bg-white/10 text-white transition-all items-center gap-2 border border-white/10"
             >
-              <Code className="w-3 h-3" /> {dict.navbar?.source || 'Source'}
+              <Code className="w-3 h-3" /> {dict?.navbar?.source || 'Source'}
             </Link>
             <div
               className={`flex items-center gap-2 px-3 py-2 rounded-sm ${
