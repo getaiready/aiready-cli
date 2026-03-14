@@ -22,6 +22,18 @@ test.describe('SEO Metadata', () => {
       'content',
       'website'
     );
+
+    // Open Graph Image
+    const ogImage = await page
+      .locator('meta[property="og:image"]')
+      .getAttribute('content');
+    expect(ogImage).toContain('logo-text.png');
+
+    // Twitter Card
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    );
   });
 
   test('blog index has correct SEO tags', async ({ page }) => {
@@ -32,6 +44,12 @@ test.describe('SEO Metadata', () => {
       .locator('meta[name="description"]')
       .getAttribute('content');
     expect(description).toContain('AI-assisted development');
+
+    // Open Graph Image
+    const ogImage = await page
+      .locator('meta[property="og:image"]')
+      .getAttribute('content');
+    expect(ogImage).toContain('logo-text.png');
   });
 
   test('blog post has correct SEO tags and schema', async ({ page }) => {
@@ -44,7 +62,15 @@ test.describe('SEO Metadata', () => {
     const ogImage = await page
       .locator('meta[property="og:image"]')
       .getAttribute('content');
+    // For blog posts we expect a custom image, falling back to logo-text.png if not present
+    // but the-agentic-wall has agentic-shift-series-1.png as its image
     expect(ogImage).toContain('agentic-shift-series-1.png');
+
+    // Twitter
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    );
 
     // Schema.org JSON-LD
     const schema = await page
@@ -58,5 +84,17 @@ test.describe('SEO Metadata', () => {
   test('docs page has correct SEO tags', async ({ page }) => {
     await page.goto('/docs');
     await expect(page).toHaveTitle(/Documentation - AIReady/);
+
+    // Open Graph Image
+    const ogImage = await page
+      .locator('meta[property="og:image"]')
+      .getAttribute('content');
+    expect(ogImage).toContain('logo-text.png');
+
+    // Twitter Card
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    );
   });
 });

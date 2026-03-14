@@ -94,17 +94,17 @@ export default function DocsPageClient() {
                   }`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 text-2xl ${
                       selectedTool.id === tool.id
                         ? 'bg-blue-600 text-white'
                         : 'bg-slate-100 text-slate-600'
                     }`}
                   >
-                    <tool.icon size={20} />
+                    {tool.icon}
                   </div>
                   <h3 className="font-bold text-slate-900">{tool.name}</h3>
                   <p className="text-sm text-slate-500 line-clamp-1">
-                    {tool.shortDesc}
+                    {tool.description}
                   </p>
                 </button>
               ))}

@@ -7,6 +7,9 @@ import { Bot, Copy, Check } from 'lucide-react';
 interface AgentPromptProps {
   variant?: 'basic' | 'detailed' | 'fix' | 'consulting';
   className?: string;
+  title?: string;
+  description?: string;
+  prompt?: string;
 }
 
 const prompts = {
