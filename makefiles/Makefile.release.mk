@@ -1,60 +1,77 @@
 ###############################################################################
-# Makefile.release: One-command release orchestrator & deployment integration
+# Makefile.release: Release orchestrator for all distributable components
 #
-# Automates deployment workflows combined with tests:
-# - Release to staging endpoints (release-dev)
-#
-# Automates per-spoke release steps:
-# - Version bump (patch/minor/major)
-# - Commit package.json change
-# - Create annotated git tag
-# - Build + publish to npm (pnpm)
-# - Sync GitHub spoke repo via subtree split
-# - Push monorepo branch and tags
-#
-# Usage examples:
-#   make release-one SPOKE=pattern-detect TYPE=minor
-#   make release-one SPOKE=core TYPE=patch
-#   make release-all TYPE=minor
-#   make release-status
-
-# Internal helper for parallel publishing (called by release-all)
-.PHONY: release-spoke-%
-release-spoke-%:
-	@$(call log_info,Releasing spoke @aiready/$*...); \
-	$(MAKE) npm-publish SPOKE=$* || exit 1; \
-	$(MAKE) publish SPOKE=$* OWNER=$(OWNER) || exit 1; \
-	$(call log_success,Released @aiready/$*)
-
-#
-# Notes:
-# - Always uses pnpm for publish to resolve workspace:* dependencies
-# - Tags use the form: <spoke>-v<version> (e.g., pattern-detect-v0.3.0)
-# - Requires npm login for publish
+# npm spokes:  make release-one SPOKE=pattern-detect TYPE=minor
+#              make release-all TYPE=minor
+# ClawMore:    make release-clawmore-dev TYPE=patch / release-clawmore-prod TYPE=patch
+# Landing:     make release-landing-dev TYPE=minor  / release-landing-prod TYPE=minor
+# Platform:    make release-platform TYPE=patch
+# VS Code:     make release-vscode TYPE=patch
+# Status:      make release-status
 ###############################################################################
 
-# Resolve this makefile's directory to allow absolute invocation
 MAKEFILE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
-ROOT_DIR := $(abspath $(MAKEFILE_DIR)/..)
+ROOT_DIR     := $(abspath $(MAKEFILE_DIR)/..)
 include $(MAKEFILE_DIR)/Makefile.shared.mk
 include $(MAKEFILE_DIR)/Makefile.publish.mk
 
-.PHONY: check-changes check-dependency-updates check-dependency-updates release-one release-all release-dev release-status \
-	release-landing release-platform version-landing-patch version-landing-minor version-landing-major \
-	version-platform-patch version-platform-minor version-platform-major help
-
-# Default owner and branch (can be overridden)
-OWNER ?= caopengau
+OWNER         ?= caopengau
 TARGET_BRANCH ?= main
-LANDING_DIR := $(ROOT_DIR)/landing
-PLATFORM_DIR := $(ROOT_DIR)/platform
+LANDING_DIR   := $(ROOT_DIR)/landing
+PLATFORM_DIR  := $(ROOT_DIR)/platform
+CLAWMORE_DIR  := $(ROOT_DIR)/clawmore
 
-# Internal helper: resolve version bump target name from TYPE
+.PHONY: check-changes check-dependency-updates release-one release-all release-dev release-status \
+	release-landing release-landing-dev release-landing-prod \
+	release-platform release-vscode \
+	release-clawmore release-clawmore-dev release-clawmore-prod \
+	release-spoke-% release-help \
+	$(foreach t,patch minor major, \
+		version-landing-$(t) version-platform-$(t) version-vscode-$(t) version-clawmore-$(t))
+
+###############################################################################
+# Internal macros
+###############################################################################
+
+# Resolve bump target name from TYPE (Make-level: returns version-patch|minor|major)
 define bump_target_for_type
 $(if $(filter $(1),patch),version-patch,$(if $(filter $(1),minor),version-minor,$(if $(filter $(1),major),version-major,)))
 endef
 
-# Internal: commit + tag for a spoke after version bump
+# TYPE validation (shell-level). Use as: @$(validate_type)
+define validate_type
+	if [ -z "$(TYPE)" ]; then \
+		$(call log_error,TYPE required: make $@ TYPE=patch|minor|major); \
+		exit 1; \
+	fi; \
+	if [ "$(TYPE)" != "patch" ] && [ "$(TYPE)" != "minor" ] && [ "$(TYPE)" != "major" ]; then \
+		$(call log_error,Invalid TYPE '$(TYPE)'. Expected patch|minor|major); \
+		exit 1; \
+	fi
+endef
+
+# Commit package.json + create annotated tag for any non-spoke app.
+# $(1)=abs dir  $(2)=git-relative dir  $(3)=display name  $(4)=tag prefix
+define commit_and_tag_app
+	version=$$(node -p "require('$(1)/package.json').version"); \
+	$(call log_step,Committing $(3) v$$version...); \
+	cd $(ROOT_DIR) && git add $(2)/package.json; \
+	cd $(ROOT_DIR) && git commit -m "chore(release): $(3) v$$version"; \
+	tag_name="$(4)-v$$version"; \
+	$(call log_step,Tagging $$tag_name...); \
+	cd $(ROOT_DIR) && git tag -a "$$tag_name" -m "Release $(3) v$$version"; \
+	$(call log_success,Committed and tagged $$tag_name)
+endef
+
+# Force-create a dev tag (no commit).  $(1)=abs dir  $(2)=tag prefix  $(3)=display name
+define tag_dev_release
+	version=$$(node -p "require('$(1)/package.json').version"); \
+	$(call log_step,Tagging $(3) dev release $$version...); \
+	cd $(ROOT_DIR) && git tag -f -a "$(2)-dev-v$$version" -m "Dev release $(3) v$$version"; \
+	$(call log_success,Tagged $(2)-dev-v$$version)
+endef
+
+# Commit + tag for an npm spoke (uses Make var SPOKE, not call args)
 define commit_and_tag
 	version=$$(node -p "require('$(ROOT_DIR)/packages/$(SPOKE)/package.json').version"); \
 	$(call log_step,Committing @aiready/$(SPOKE) v$$version...); \
@@ -66,526 +83,272 @@ define commit_and_tag
 	$(call log_success,Committed and tagged $$tag_name)
 endef
 
-# Internal: commit + tag for landing after version bump
-define commit_and_tag_landing
-	version=$$(node -p "require('$(LANDING_DIR)/package.json').version"); \
-	$(call log_step,Committing @aiready/landing v$$version...); \
-	cd $(ROOT_DIR) && git add landing/package.json; \
-	cd $(ROOT_DIR) && git commit -m "chore(release): @aiready/landing v$$version"; \
-	tag_name="landing-v$$version"; \
-	$(call log_step,Tagging $$tag_name...); \
-	cd $(ROOT_DIR) && git tag -a "$$tag_name" -m "Release @aiready/landing v$$version"; \
-	$(call log_success,Committed and tagged $$tag_name)
-endef
-
-# Internal: commit + tag for platform after version bump
-define commit_and_tag_platform
-	version=$$(node -p "require('$(PLATFORM_DIR)/package.json').version"); \
-	$(call log_step,Committing @aiready/platform v$$version...); \
-	cd $(ROOT_DIR) && git add platform/package.json; \
-	cd $(ROOT_DIR) && git commit -m "chore(release): @aiready/platform v$$version"; \
-	tag_name="platform-v$$version"; \
-	$(call log_step,Tagging $$tag_name...); \
-	cd $(ROOT_DIR) && git tag -a "$$tag_name" -m "Release @aiready/platform v$$version"; \
-	$(call log_success,Committed and tagged $$tag_name)
-endef
-
-# Internal: commit + tag for vscode-extension after version bump
-define commit_and_tag_vscode
-	version=$$(node -p "require('$(EXTENSION_DIR)/package.json').version"); \
-	$(call log_step,Committing aiready VS Code extension v$$version...); \
-	cd $(ROOT_DIR) && git add vscode-extension/package.json; \
-	cd $(ROOT_DIR) && git commit -m "chore(release): vscode-extension v$$version"; \
-	tag_name="vscode-extension-v$$version"; \
-	$(call log_step,Tagging $$tag_name...); \
-	cd $(ROOT_DIR) && git tag -a "$$tag_name" -m "Release VS Code extension v$$version"; \
-	$(call log_success,Committed and tagged $$tag_name)
-endef
-
-# Internal: tag platform dev release (no version bump commit)
+# Shorthand dev tag for platform (used by release-dev)
 define tag_platform_dev
-	version=$$(node -p "require('$(PLATFORM_DIR)/package.json').version"); \
-	tag_name="platform-dev-v$$version"; \
-	$(call log_step,Tagging dev release $$tag_name...); \
-	cd $(ROOT_DIR) && git tag -f -a "$$tag_name" -m "Dev release @aiready/platform v$$version"; \
-	$(call log_success,Tagged $$tag_name)
+	$(call tag_dev_release,$(PLATFORM_DIR),platform,@aiready/platform)
 endef
 
-# Internal: tag landing dev release
-define tag_landing_dev
-	version=$$(node -p "require('$(LANDING_DIR)/package.json').version"); \
-	tag_name="landing-dev-v$$version"; \
-	$(call log_step,Tagging dev release $$tag_name...); \
-	cd $(ROOT_DIR) && git tag -f -a "$$tag_name" -m "Dev release @aiready/landing v$$version"; \
-	$(call log_success,Tagged $$tag_name)
-endef
+# Internal parallel helper for release-all
+.PHONY: release-spoke-%
+release-spoke-%:
+	@$(call log_info,Releasing spoke @aiready/$*...); \
+	$(MAKE) npm-publish SPOKE=$* || exit 1; \
+	$(MAKE) publish SPOKE=$* OWNER=$(OWNER) || exit 1; \
+	$(call log_success,Released @aiready/$*)
 
-##@ Landing Version Management
+###############################################################################
+# Version bump targets (4 pattern rules replace 12 individual targets)
+###############################################################################
 
-version-landing-patch: ## Bump landing version (patch)
-	@$(call log_step,Bumping @aiready/landing version (patch)...)
-	@cd $(LANDING_DIR) && npm version patch --no-git-tag-version
-	@$(call log_success,Landing version bumped to $$(node -p "require('$(LANDING_DIR)/package.json').version"))
+version-landing-%: ## Bump landing version: version-landing-patch|minor|major
+	@$(call log_step,Bumping landing version ($*)...)
+	@cd $(LANDING_DIR) && npm version $* --no-git-tag-version
+	@$(call log_success,landing bumped to $$(node -p "require('$(LANDING_DIR)/package.json').version"))
 
-version-landing-minor: ## Bump landing version (minor)
-	@$(call log_step,Bumping @aiready/landing version (minor)...)
-	@cd $(LANDING_DIR) && npm version minor --no-git-tag-version
-	@$(call log_success,Landing version bumped to $$(node -p "require('$(LANDING_DIR)/package.json').version"))
+version-platform-%: ## Bump platform version: version-platform-patch|minor|major
+	@$(call log_step,Bumping platform version ($*)...)
+	@cd $(PLATFORM_DIR) && npm version $* --no-git-tag-version
+	@$(call log_success,platform bumped to $$(node -p "require('$(PLATFORM_DIR)/package.json').version"))
 
-version-landing-major: ## Bump landing version (major)
-	@$(call log_step,Bumping @aiready/landing version (major)...)
-	@cd $(LANDING_DIR) && npm version major --no-git-tag-version
-	@$(call log_success,Landing version bumped to $$(node -p "require('$(LANDING_DIR)/package.json').version"))
+version-vscode-%: ## Bump vscode-extension version: version-vscode-patch|minor|major
+	@$(call log_step,Bumping VS Code extension version ($*)...)
+	@cd $(EXTENSION_DIR) && npm version $* --no-git-tag-version
+	@$(call log_success,vscode-extension bumped to $$(node -p "require('$(EXTENSION_DIR)/package.json').version"))
 
-##@ Platform Version Management
+version-clawmore-%: ## Bump clawmore version: version-clawmore-patch|minor|major
+	@$(call log_step,Bumping clawmore version ($*)...)
+	@cd $(CLAWMORE_DIR) && npm version $* --no-git-tag-version
+	@$(call log_success,clawmore bumped to $$(node -p "require('$(CLAWMORE_DIR)/package.json').version"))
 
-version-platform-patch: ## Bump platform version (patch)
-	@$(call log_step,Bumping @aiready/platform version (patch)...)
-	@cd $(PLATFORM_DIR) && npm version patch --no-git-tag-version
-	@$(call log_success,Platform version bumped to $$(node -p "require('$(PLATFORM_DIR)/package.json').version"))
+###############################################################################
+# ClawMore Release
+###############################################################################
 
-version-platform-minor: ## Bump platform version (minor)
-	@$(call log_step,Bumping @aiready/platform version (minor)...)
-	@cd $(PLATFORM_DIR) && npm version minor --no-git-tag-version
-	@$(call log_success,Platform version bumped to $$(node -p "require('$(PLATFORM_DIR)/package.json').version"))
+release-clawmore: release-clawmore-prod ## Alias -> release-clawmore-prod
 
-version-platform-major: ## Bump platform version (major)
-	@$(call log_step,Bumping @aiready/platform version (major)...)
-	@cd $(PLATFORM_DIR) && npm version major --no-git-tag-version
-	@$(call log_success,Platform version bumped to $$(node -p "require('$(PLATFORM_DIR)/package.json').version"))
+release-clawmore-dev: ## Deploy ClawMore to dev stage: TYPE=patch|minor|major
+	@$(validate_type)
+	@$(MAKE) -C $(ROOT_DIR) version-clawmore-$(TYPE)
+	@$(call tag_dev_release,$(CLAWMORE_DIR),clawmore,clawmore)
+	@$(call log_step,Building ClawMore...)
+	@cd $(CLAWMORE_DIR) && pnpm build
+	@$(MAKE) -C $(ROOT_DIR) deploy-clawmore-dev
+	@$(MAKE) -C $(ROOT_DIR) test-clawmore-e2e-local
+	@cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags
+	@$(call log_success,Dev release finished for clawmore)
 
-##@ VS Code Extension Version Management
+release-clawmore-prod: ## Release ClawMore to production: TYPE=patch|minor|major
+	@$(validate_type)
+	@$(MAKE) -C $(ROOT_DIR) version-clawmore-$(TYPE)
+	@$(call commit_and_tag_app,$(CLAWMORE_DIR),clawmore,clawmore,clawmore)
+	@$(call log_step,Building ClawMore...)
+	@cd $(CLAWMORE_DIR) && pnpm build
+	@$(MAKE) -C $(ROOT_DIR) deploy-clawmore-prod
+	@$(MAKE) -C $(ROOT_DIR) clawmore-verify || $(call log_warning,Verification timed out - may still be deploying)
+	@$(MAKE) -C $(ROOT_DIR) test-clawmore-e2e-local
+	@$(MAKE) -C $(ROOT_DIR) publish-clawmore OWNER=$(OWNER)
+	@cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags
+	@$(call log_success,Release finished for clawmore)
 
-version-vscode-patch: ## Bump vscode-extension version (patch)
-	@$(call log_step,Bumping VS Code extension version (patch)...)
-	@cd $(EXTENSION_DIR) && npm version patch --no-git-tag-version
-	@$(call log_success,VS Code extension version bumped to $$(node -p "require('$(EXTENSION_DIR)/package.json').version"))
+###############################################################################
+# Landing Release
+###############################################################################
 
-version-vscode-minor: ## Bump vscode-extension version (minor)
-	@$(call log_step,Bumping VS Code extension version (minor)...)
-	@cd $(EXTENSION_DIR) && npm version minor --no-git-tag-version
-	@$(call log_success,VS Code extension version bumped to $$(node -p "require('$(EXTENSION_DIR)/package.json').version"))
+release-landing: release-landing-prod ## Alias -> release-landing-prod
 
-version-vscode-major: ## Bump vscode-extension version (major)
-	@$(call log_step,Bumping VS Code extension version (major)...)
-	@cd $(EXTENSION_DIR) && npm version major --no-git-tag-version
-	@$(call log_success,VS Code extension version bumped to $$(node -p "require('$(EXTENSION_DIR)/package.json').version"))
+release-landing-dev: ## Release landing to dev stage: TYPE=patch|minor|major
+	@$(validate_type)
+	@$(MAKE) -C $(ROOT_DIR) version-landing-$(TYPE)
+	@$(call tag_dev_release,$(LANDING_DIR),landing,@aiready/landing)
+	@$(MAKE) -C $(ROOT_DIR) test-landing
+	@cd $(LANDING_DIR) && pnpm build
+	@$(MAKE) -C $(ROOT_DIR) deploy-landing-dev
+	@cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags
+	@$(call log_success,Dev release finished for @aiready/landing)
 
-##@ Landing Release
+release-landing-prod: ## Release landing to production: TYPE=patch|minor|major
+	@$(validate_type)
+	@$(MAKE) -C $(ROOT_DIR) version-landing-$(TYPE)
+	@$(call commit_and_tag_app,$(LANDING_DIR),landing,@aiready/landing,landing)
+	@$(MAKE) -C $(ROOT_DIR) test-landing
+	@$(MAKE) -C $(ROOT_DIR) test-landing-e2e-local
+	@cd $(LANDING_DIR) && pnpm build
+	@$(MAKE) -C $(ROOT_DIR) deploy-landing-prod
+	@$(MAKE) -C $(ROOT_DIR) landing-verify VERIFY_RETRIES=3 VERIFY_WAIT=10 || \
+		$(call log_warning,Verification timed out - CloudFront may still be propagating)
+	@$(MAKE) -C $(ROOT_DIR) publish-landing OWNER=$(OWNER)
+	@cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags
+	@$(call log_success,Release finished for @aiready/landing)
 
-release-landing: release-landing-prod ## Alias for release-landing-prod
+###############################################################################
+# Platform Release
+###############################################################################
 
-release-landing-dev: ## Release landing page to DEV: TYPE=patch|minor|major
-	@if [ -z "$(TYPE)" ]; then \
-		$(call log_error,TYPE parameter required. Usage: make $@ TYPE=minor); \
-		exit 1; \
-	fi
-	@bump_target="version-landing-$(TYPE)"; \
-	if [ "$(TYPE)" != "patch" ] && [ "$(TYPE)" != "minor" ] && [ "$(TYPE)" != "major" ]; then \
-		$(call log_error,Invalid TYPE '$(TYPE)'. Expected patch|minor|major); \
-		exit 1; \
-	fi; \
-	$(MAKE) -C $(ROOT_DIR) $$bump_target; \
-	$(call log_success,Version bump complete for @aiready/landing (dev)); \
-	$(call tag_landing_dev); \
-	$(call log_step,Running landing tests before dev release...); \
-	$(MAKE) -C $(ROOT_DIR) test-landing || exit 1; \
-	$(call log_step,Building landing page...); \
-	cd $(LANDING_DIR) && pnpm build || { \
-		$(call log_error,Build failed for @aiready/landing. Aborting dev release.); \
-		exit 1; \
-	}; \
-	$(call log_success,Build complete); \
-	$(call log_step,Deploying to dev stage...); \
-	$(MAKE) -C $(ROOT_DIR) deploy-landing-dev || { \
-		$(call log_error,Dev deployment failed. Aborting dev release.); \
-		exit 1; \
-	}; \
-	$(call log_success,Dev deployment complete); \
-	$(call log_step,Verifying dev deployment...); \
-	@site_url=$$(cd $(LANDING_DIR) && sst list | awk '/site:/ {print $$2}'); \
-	if curl -fsS -o /dev/null $$site_url >/dev/null 2>&1; then \
-		echo "$(GREEN)✓ Dev site is live: $$site_url$(NC)"; \
-	else \
-		echo "$(YELLOW)⚠️  Dev site may still be deploying$(NC)"; \
-	fi; \
-	$(call log_step,Pushing monorepo branch and tags...); \
-	cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags; \
-	$(call log_success,Dev release finished for @aiready/landing)
+release-platform: ## Release platform to production: TYPE=patch|minor|major
+	@$(validate_type)
+	@$(MAKE) -C $(ROOT_DIR) version-platform-$(TYPE)
+	@$(call commit_and_tag_app,$(PLATFORM_DIR),platform,@aiready/platform,platform)
+	@$(MAKE) -C $(ROOT_DIR) build
+	@CI=1 $(MAKE) -C $(ROOT_DIR) test
+	@CI=1 $(MAKE) -C $(ROOT_DIR) test-contract
+	@CI=1 $(MAKE) -C $(ROOT_DIR) test-integration
+	@CI=1 $(MAKE) -C $(ROOT_DIR) test-verify-cli
+	@CI=1 $(MAKE) -C $(ROOT_DIR) test-platform
+	@CI=1 $(MAKE) -C $(ROOT_DIR) test-platform-e2e-local
+	@$(MAKE) -C $(ROOT_DIR) deploy-platform-prod
+	@$(MAKE) -C $(ROOT_DIR) platform-verify || \
+		$(call log_warning,Verification failed - platform may still be deploying)
+	@cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags
+	@$(call log_success,Release finished for @aiready/platform)
 
-release-landing-prod: ## Release landing page to PRODUCTION: TYPE=patch|minor|major
-	@if [ -z "$(TYPE)" ]; then \
-		$(call log_error,TYPE parameter required. Usage: make $@ TYPE=minor); \
-		exit 1; \
-	fi
-	@bump_target="version-landing-$(TYPE)"; \
-	if [ "$(TYPE)" != "patch" ] && [ "$(TYPE)" != "minor" ] && [ "$(TYPE)" != "major" ]; then \
-		$(call log_error,Invalid TYPE '$(TYPE)'. Expected patch|minor|major); \
-		exit 1; \
-	fi; \
-	$(MAKE) -C $(ROOT_DIR) $$bump_target; \
-	$(call log_success,Version bump complete for @aiready/landing); \
-	$(call commit_and_tag_landing); \
-	$(call log_step,Running landing tests before release...); \
-	$(MAKE) -C $(ROOT_DIR) test-landing || exit 1; \
-	$(MAKE) -C $(ROOT_DIR) test-landing-e2e-local || exit 1; \
-	$(call log_step,Building landing page...); \
-	cd $(LANDING_DIR) && pnpm build || { \
-		$(call log_error,Build failed for @aiready/landing. Aborting release.); \
-		exit 1; \
-	}; \
-	$(call log_success,Build complete); \
-	$(call log_step,Deploying to production...); \
-	$(MAKE) -C $(ROOT_DIR) deploy-landing-prod || { \
-		$(call log_error,Production deployment failed. Aborting release.); \
-		$(call log_warning,Version was bumped and tagged locally. Run 'git reset --hard HEAD~1 && git tag -d landing-v'$$(node -p "require('$(LANDING_DIR)/package.json').version") to undo.); \
-		exit 1; \
-	}; \
-	$(call log_success,Production deployment complete); \
-	$(call log_step,Verifying deployment...); \
-	$(MAKE) -C $(ROOT_DIR) landing-verify VERIFY_RETRIES=3 VERIFY_WAIT=10 || { \
-		$(call log_warning,Deployment verification timed out - CloudFront may still be propagating); \
-		$(call log_info,Continuing with release - check deployment status with: make landing-verify); \
-	}; \
-	$(call log_step,Syncing landing to GitHub sub-repo...); \
-	$(MAKE) -C $(ROOT_DIR) publish-landing OWNER=$(OWNER); \
-	$(call log_step,Pushing monorepo branch and tags...); \
-	cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags; \
-	$(call log_success,Release finished for @aiready/landing)
-
-##@ Platform Release
-
-release-platform: ## Release platform: TYPE=patch|minor|major
-	@if [ -z "$(TYPE)" ]; then \
-		$(call log_error,TYPE parameter required. Usage: make $@ TYPE=minor); \
-		exit 1; \
-	fi
-	@bump_target="version-platform-$(TYPE)"; \
-	if [ "$(TYPE)" != "patch" ] && [ "$(TYPE)" != "minor" ] && [ "$(TYPE)" != "major" ]; then \
-		$(call log_error,Invalid TYPE '$(TYPE)'. Expected patch|minor|major); \
-		exit 1; \
-	fi; \
-	$(MAKE) -C $(ROOT_DIR) $$bump_target; \
-	$(call log_success,Version bump complete for @aiready/platform); \
-	$(call commit_and_tag_platform); \
-	$(call log_step,Running fullest range of tests for platform production release...); \
-	$(MAKE) -C $(ROOT_DIR) build || exit 1; \
-	CI=1 $(MAKE) -C $(ROOT_DIR) test || exit 1; \
-	CI=1 $(MAKE) -C $(ROOT_DIR) test-contract || exit 1; \
-	CI=1 $(MAKE) -C $(ROOT_DIR) test-integration || exit 1; \
-	CI=1 $(MAKE) -C $(ROOT_DIR) test-verify-cli || exit 1; \
-	CI=1 $(MAKE) -C $(ROOT_DIR) test-platform || exit 1; \
-	CI=1 $(MAKE) -C $(ROOT_DIR) test-platform-e2e-local || exit 1; \
-	$(call log_step,Building and deploying platform to production...); \
-	$(MAKE) -C $(ROOT_DIR) deploy-platform-prod || { \
-		$(call log_error,Production deployment failed. Aborting release.); \
-		$(call log_warning,Version was bumped and tagged locally. Run 'git reset --hard HEAD~1 && git tag -d platform-v'$$(node -p "require('$(PLATFORM_DIR)/package.json').version") to undo.); \
-		exit 1; \
-	}; \
-	$(call log_success,Platform production deployment complete); \
-	$(call log_step,Verifying deployment...); \
-	$(MAKE) -C $(ROOT_DIR) platform-verify || { \
-		$(call log_warning,Deployment verification failed - platform may still be deploying); \
-	}; \
-	$(call log_step,Pushing monorepo branch and tags...); \
-	cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags; \
-	$(call log_success,Release finished for @aiready/platform)
-
-##@ VS Code Extension Release
+###############################################################################
+# VS Code Extension Release
+###############################################################################
 
 release-vscode: ## Release VS Code extension: TYPE=patch|minor|major
-	@if [ -z "$(TYPE)" ]; then \
-		$(call log_error,TYPE parameter required. Usage: make $@ TYPE=minor); \
-		exit 1; \
-	fi
-	@bump_target="version-vscode-$(TYPE)"; \
-	if [ "$(TYPE)" != "patch" ] && [ "$(TYPE)" != "minor" ] && [ "$(TYPE)" != "major" ]; then \
-		$(call log_error,Invalid TYPE '$(TYPE)'. Expected patch|minor|major); \
-		exit 1; \
-	fi; \
-	$(MAKE) -C $(ROOT_DIR) $$bump_target; \
-	$(call log_success,Version bump complete for VS Code extension); \
-	$(call commit_and_tag_vscode); \
-	$(call log_step,Building VS Code extension...); \
-	cd $(EXTENSION_DIR) && pnpm build || { \
-		$(call log_error,Build failed for VS Code extension. Aborting release.); \
-		exit 1; \
-	}; \
-	$(call log_success,Build complete); \
-	$(call log_step,Syncing VS Code extension to GitHub sub-repo...); \
-	$(MAKE) -C $(ROOT_DIR) publish-vscode-sync OWNER=$(OWNER); \
-	$(call log_step,Pushing monorepo branch and tags...); \
-	cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags; \
-	$(call log_success,Release finished for VS Code extension)
+	@$(validate_type)
+	@$(MAKE) -C $(ROOT_DIR) version-vscode-$(TYPE)
+	@$(call commit_and_tag_app,$(EXTENSION_DIR),vscode-extension,vscode-extension,vscode-extension)
+	@cd $(EXTENSION_DIR) && pnpm build
+	@$(MAKE) -C $(ROOT_DIR) publish-vscode-sync OWNER=$(OWNER)
+	@cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags
+	@$(call log_success,Release finished for VS Code extension)
 
-##@ Package Release
+###############################################################################
+# npm Spoke Releases
+###############################################################################
 
-# Check if a spoke has changes since its last release tag
-check-changes: ## Check if SPOKE has changes since last release tag (returns: has_changes/no_changes)
+check-changes: ## Check if SPOKE has changes since last release tag
 	$(call require_spoke)
 	@last_tag=$$(git for-each-ref 'refs/tags/$(SPOKE)-v*' --sort=-creatordate --format '%(refname:short)' | head -n1); \
 	if [ -z "$$last_tag" ]; then \
-		$(call log_info,No previous release tag found for @aiready/$(SPOKE)); \
-		echo "has_changes"; \
-		exit 0; \
+		$(call log_info,No previous release tag for @aiready/$(SPOKE)); \
+		echo "has_changes"; exit 0; \
 	fi; \
-	$(call log_step,Checking changes in packages/$(SPOKE) since $$last_tag...); \
 	if git diff --quiet "$$last_tag" -- packages/$(SPOKE); then \
-		$(call log_info,No code changes detected in packages/$(SPOKE) since $$last_tag); \
-		$(call log_step,Checking for outdated dependencies...); \
 		if $(MAKE) -s check-dependency-updates SPOKE=$(SPOKE) | grep -q "has_outdated_deps"; then \
-			$(call log_info,Outdated dependencies detected, changes needed); \
-			echo "has_changes"; \
-			exit 0; \
-		else \
-			$(call log_info,No changes detected in packages/$(SPOKE) since $$last_tag); \
-			echo "no_changes"; \
-			exit 1; \
+			$(call log_info,Outdated dependencies detected); echo "has_changes"; exit 0; \
 		fi; \
-	else \
-		$(call log_info,Code changes detected in packages/$(SPOKE) since $$last_tag); \
-		echo "has_changes"; \
-		exit 0; \
-	fi
+		$(call log_info,No changes since $$last_tag); echo "no_changes"; exit 1; \
+	fi; \
+	$(call log_info,Code changes detected since $$last_tag); echo "has_changes"
 
-# Check if a spoke's published dependencies are outdated
 check-dependency-updates: ## Check if SPOKE's published dependencies have newer versions
 	$(call require_spoke)
 	@./makefiles/scripts/check-dependency-updates.sh $(SPOKE)
 
-# Release a single spoke end-to-end
-
-release-one: ## Release one spoke: TYPE=patch|minor|major, SPOKE=core|pattern-detect
+release-one: ## Release one npm spoke: SPOKE=name TYPE=patch|minor|major
 	$(call require_spoke)
-	@if [ -z "$(TYPE)" ]; then \
-		$(call log_error,TYPE parameter required. Usage: make $@ SPOKE=pattern-detect TYPE=minor); \
-		exit 1; \
-	fi; \
-	bump_target="$(call bump_target_for_type,$(TYPE))"; \
-	if [ -z "$$bump_target" ]; then \
-		$(call log_error,Invalid TYPE '$(TYPE)'. Expected patch|minor|major); \
-		exit 1; \
-	fi; \
-	$(MAKE) -C $(ROOT_DIR) $$bump_target SPOKE=$(SPOKE); \
-	$(call log_success,Version bump complete for @aiready/$(SPOKE)); \
-	$(call commit_and_tag); \
-	$(call log_step,Building workspace...); \
-	$(MAKE) -C $(ROOT_DIR) build; \
-	$(call log_success,Build complete); \
-	if ! $(MAKE) -C $(ROOT_DIR) test-contract SPOKE=$(SPOKE); then \
-		$(call log_error,Contract Tests failed for @aiready/$(SPOKE). Aborting release.); \
-		exit 1; \
-	fi; \
-	if ! $(MAKE) -C $(ROOT_DIR) test-integration; then \
-		$(call log_error,Integration Tests failed for @aiready/$(SPOKE). Aborting release.); \
-		exit 1; \
-	fi; \
-	$(call log_success,Integration Tests passed); \
-	if ! $(MAKE) -C $(ROOT_DIR) test-verify-cli; then \
-		$(call log_error,CLI smoke test failed. Aborting release.); \
-		exit 1; \
-	fi; \
-	$(call log_success,CLI smoke test passed); \
-	if [ "$(SPOKE)" = "core" ] || [ "$(SPOKE)" = "cli" ]; then \
-		$(call log_step,HUB RELEASE DETECTED: Running mandatory downstream safety checks...); \
-		if ! $(MAKE) -C $(ROOT_DIR) test-downstream; then \
-			$(call log_error,Downstream verification failed for HUB release. Aborting release.); \
-			exit 1; \
-		fi; \
-		$(call log_success,Downstream safety checks passed); \
-	fi; \
-	$(call log_step,Publishing @aiready/$(SPOKE) to npm...); \
-	if ! $(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(SPOKE); then \
-		$(call log_error,NPM publish failed for @aiready/$(SPOKE). Aborting release.); \
-		exit 1; \
-	fi; \
-	$(call log_step,Syncing GitHub spoke for @aiready/$(SPOKE)...); \
-	$(MAKE) -C $(ROOT_DIR) publish SPOKE=$(SPOKE) OWNER=$(OWNER); \
-	$(call log_step,Pushing monorepo branch and tags...); \
-	cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags; \
-	$(call log_success,Release finished for @aiready/$(SPOKE))
+	@$(validate_type)
+	@$(MAKE) -C $(ROOT_DIR) $(call bump_target_for_type,$(TYPE)) SPOKE=$(SPOKE)
+	@$(call commit_and_tag)
+	@$(MAKE) -C $(ROOT_DIR) build
+	@$(MAKE) -C $(ROOT_DIR) test-contract SPOKE=$(SPOKE)
+	@$(MAKE) -C $(ROOT_DIR) test-integration
+	@$(MAKE) -C $(ROOT_DIR) test-verify-cli
+	@if [ "$(SPOKE)" = "core" ] || [ "$(SPOKE)" = "cli" ]; then \
+		$(call log_step,HUB RELEASE: Running downstream safety checks...); \
+		$(MAKE) -C $(ROOT_DIR) test-downstream || { \
+			$(call log_error,Downstream checks failed. Aborting.); exit 1; \
+		}; \
+	fi
+	@$(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(SPOKE)
+	@$(MAKE) -C $(ROOT_DIR) publish SPOKE=$(SPOKE) OWNER=$(OWNER)
+	@cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags
+	@$(call log_success,Release finished for @aiready/$(SPOKE))
 
-# Release all spokes with the same bump type
-# Strategy: 
-#   1. Version bump all packages (serial to avoid git conflicts)
-#   2. Commit + tag all changes together (once)
-#   3. Build + test (once)
-#   4. Publish to npm + sync GitHub (serial for proper dependency order)
-# Landing site is EXCLUDED - use 'make release-landing' separately
-# ⚠️  CLI is ALWAYS released last because it depends on ALL spokes
-
-release-all: ## Release all spokes: TYPE=patch|minor|major (excludes landing)
-	@if [ -z "$(TYPE)" ]; then \
-		$(call log_error,TYPE parameter required. Example: make $@ TYPE=minor); \
-		exit 1; \
-	fi; \
-	bump_target="$(call bump_target_for_type,$(TYPE))"; \
-	if [ -z "$$bump_target" ]; then \
-		$(call log_error,Invalid TYPE '$(TYPE)'. Expected patch|minor|major); \
-		exit 1; \
-	fi; \
-	$(call log_step,Phase 1: Building workspace ONCE...); \
-	$(MAKE) -C $(ROOT_DIR) build || { \
-		$(call log_error,Build failed. Aborting release-all.); \
-		exit 1; \
-	}; \
-	$(call log_success,Build complete); \
-	$(call log_step,Phase 2: Testing current state (Unit + Contract)...); \
-	$(MAKE) -C $(ROOT_DIR) test || { \
-		$(call log_error,Tests failed. Aborting release-all.); \
-		exit 1; \
-	}; \
-	$(call log_step,Phase 2.1: Running explicit Spoke-to-Hub Contract Tests...); \
-	$(MAKE) -C $(ROOT_DIR) test-contract || { \
-		$(call log_error,Contract tests failed. Aborting release-all.); \
-		exit 1; \
-	}; \
-	$(call log_step,Phase 2.2: Running Tier 2 Integration Tests...); \
-	$(MAKE) -C $(ROOT_DIR) test-integration || { \
-		$(call log_error,Integration tests failed. Aborting release-all.); \
-		exit 1; \
-	}; \
-	$(call log_step,Phase 2.3: Running Tier 3 Local E2E Tests...); \
-	$(MAKE) -C $(ROOT_DIR) test-platform-e2e-local || { \
-		$(call log_error,Platform E2E tests failed locally. Aborting release-all.); \
-		exit 1; \
-	}; \
-	$(call log_success,All Tiers of contract and integration testing passed); \
-	$(call log_success,CLI smoke test passed); \
-	$(call log_step,Phase 2.6: Running mandatory downstream safety checks...); \
-	$(MAKE) -C $(ROOT_DIR) test-downstream || { \
-		$(call log_error,Downstream verification failed. Aborting release-all.); \
-		exit 1; \
-	}; \
-	$(call log_success,Downstream safety checks passed); \
-	$(call log_step,Phase 3: Version bumping all spokes...); \
-	for spoke in $(CORE_SPOKE) $(MIDDLE_SPOKES) $(CLI_SPOKE); do \
-		$(call log_info,Bumping @aiready/$$spoke...); \
-		$(MAKE) -C $(ROOT_DIR) $$bump_target SPOKE=$$spoke || exit 1; \
-		$(call log_success,Version bumped for @aiready/$$spoke); \
-	done; \
-	$(call log_step,Phase 4: Committing all version bumps...); \
-	cd $(ROOT_DIR) && git add packages/*/package.json || true; \
-	if [ -f "$(ROOT_DIR)/landing/package.json" ]; then git add landing/package.json; fi; \
-	if [ -f "$(ROOT_DIR)/platform/package.json" ]; then git add platform/package.json; fi; \
-	cd $(ROOT_DIR) && git commit -m "chore(release): version bumps across spokes" || $(call log_info,No changes to commit); \
-	$(call log_step,Phase 4.5: Tagging each spoke...); \
-	for spoke in $(CORE_SPOKE) $(MIDDLE_SPOKES) $(CLI_SPOKE); do \
+# Build+test once, then version-bump -> publish in order: core -> middle -> cli
+# Landing, platform, and clawmore are excluded -- use their dedicated targets.
+release-all: ## Release all npm spokes: TYPE=patch|minor|major
+	@$(validate_type)
+	@$(call log_step,Phase 1: Build...)
+	@$(MAKE) -C $(ROOT_DIR) build
+	@$(call log_step,Phase 2: Full test suite...)
+	@$(MAKE) -C $(ROOT_DIR) test
+	@$(MAKE) -C $(ROOT_DIR) test-contract
+	@$(MAKE) -C $(ROOT_DIR) test-integration
+	@$(MAKE) -C $(ROOT_DIR) test-platform-e2e-local
+	@$(MAKE) -C $(ROOT_DIR) test-downstream
+	@$(call log_step,Phase 3: Version bump all spokes...)
+	@for spoke in $(CORE_SPOKE) $(MIDDLE_SPOKES) $(CLI_SPOKE); do \
+		$(MAKE) -C $(ROOT_DIR) $(call bump_target_for_type,$(TYPE)) SPOKE=$$spoke || exit 1; \
+	done
+	@$(call log_step,Phase 4: Commit + tag all...)
+	@cd $(ROOT_DIR) && git add packages/*/package.json && \
+		git commit -m "chore(release): version bumps across spokes" || true
+	@for spoke in $(CORE_SPOKE) $(MIDDLE_SPOKES) $(CLI_SPOKE); do \
 		version=$$(node -p "require('$(ROOT_DIR)/packages/$$spoke/package.json').version"); \
-		tag_name="$$spoke-v$$version"; \
-		$(call log_step,Tagging $$tag_name...); \
-		cd $(ROOT_DIR) && git tag -f -a "$$tag_name" -m "Release @aiready/$$spoke v$$version" || true; \
-	done; \
-	$(call log_step,Phase 5: Publishing core spoke first...); \
-	$(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(CORE_SPOKE) || exit 1; \
-	$(MAKE) -C $(ROOT_DIR) publish SPOKE=$(CORE_SPOKE) OWNER=$(OWNER) || exit 1; \
-	$(call log_success,Published @aiready/$(CORE_SPOKE)); \
-	$(call log_step,Phase 6: Publishing middle spokes in parallel...); \
-	$(MAKE) $(MAKE_PARALLEL) $(addprefix release-spoke-,$(MIDDLE_SPOKES)) || exit 1; \
-	$(call log_step,Phase 7: Publishing CLI last...); \
-	$(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(CLI_SPOKE) || exit 1; \
-	$(MAKE) -C $(ROOT_DIR) publish SPOKE=$(CLI_SPOKE) OWNER=$(OWNER) || exit 1; \
-	$(call log_success,Published @aiready/$(CLI_SPOKE)); \
-	$(call log_step,Phase 8: Pushing all changes to monorepo...); \
-	cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags; \
-	$(call log_success,🎉 All spokes released successfully in proper order: core → middle → cli)
+		cd $(ROOT_DIR) && git tag -f -a "$$spoke-v$$version" -m "Release @aiready/$$spoke v$$version" || true; \
+	done
+	@$(call log_step,Phase 5: Publish core...)
+	@$(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(CORE_SPOKE)
+	@$(MAKE) -C $(ROOT_DIR) publish SPOKE=$(CORE_SPOKE) OWNER=$(OWNER)
+	@$(call log_step,Phase 6: Publish middle spokes in parallel...)
+	@$(MAKE) $(MAKE_PARALLEL) $(addprefix release-spoke-,$(MIDDLE_SPOKES))
+	@$(call log_step,Phase 7: Publish CLI...)
+	@$(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(CLI_SPOKE)
+	@$(MAKE) -C $(ROOT_DIR) publish SPOKE=$(CLI_SPOKE) OWNER=$(OWNER)
+	@cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags
+	@$(call log_success,All spokes released: core -> middle -> cli)
 
-# Status overview: local vs published versions
+###############################################################################
+# Dev pipeline + Status
+###############################################################################
 
-release-dev: ## Full dev deploy workflow: Build + Unit test + Contract test + Deploy dev + Plawright e2e tests
-	@$(call log_step,Starting dev release pipeline...); \
-	$(MAKE) -C $(ROOT_DIR) build || exit 1; \
-	$(MAKE) -C $(ROOT_DIR) test || exit 1; \
-	$(MAKE) -C $(ROOT_DIR) test-contract || exit 1; \
-	$(MAKE) -C $(ROOT_DIR) deploy-platform || exit 1; \
-	$(call tag_platform_dev); \
-	$(call log_step,Running Platform E2E tests against Dev endpoint...); \
-	$(MAKE) -C $(ROOT_DIR) test-platform-e2e || { \
-		$(call log_error,Platform E2E tests failed on dev endpoint); \
-		exit 1; \
-	}; \
-	$(call log_step,Running Landing E2E tests...); \
-	$(MAKE) -C $(ROOT_DIR) test-landing-e2e || { \
-		$(call log_error,Landing E2E tests failed); \
-		exit 1; \
-	}; \
-	$(call log_step,Pushing tags...); \
-	cd $(ROOT_DIR) && git push origin --follow-tags; \
-	$(call log_success,Dev release pipeline completed successfully!)
+release-dev: ## Dev pipeline: build + test + deploy platform dev + E2E
+	@$(MAKE) -C $(ROOT_DIR) build
+	@$(MAKE) -C $(ROOT_DIR) test
+	@$(MAKE) -C $(ROOT_DIR) test-contract
+	@$(MAKE) -C $(ROOT_DIR) deploy-platform
+	@$(call tag_platform_dev)
+	@$(MAKE) -C $(ROOT_DIR) test-platform-e2e
+	@$(MAKE) -C $(ROOT_DIR) test-landing-e2e
+	@cd $(ROOT_DIR) && git push origin --follow-tags
+	@$(call log_success,Dev release pipeline complete!)
 
-
-release-status: ## Show local and npm registry versions for all spokes + landing
-	@$(call log_step,Reading local and npm registry versions...); \
-	echo ""; \
-	printf "%-30s %-15s %-15s %-10s\n" "Package" "Local" "npm" "Status"; \
-	printf "%-30s %-15s %-15s %-10s\n" "-------" "-----" "---" "------"; \
+release-status: ## Show local vs published/tagged versions for all components
+	@echo ""; \
+	printf "%-30s %-15s %-17s %-10s\n" "Component" "Local" "Published/Tag" "Status"; \
+	printf "%-30s %-15s %-17s %-10s\n" "---------" "-----" "-------------" "------"; \
 	for spoke in $(ALL_SPOKES); do \
-		if [ -f "$(ROOT_DIR)/packages/$$spoke/package.json" ]; then \
-			local_ver=$$(node -p "require('$(ROOT_DIR)/packages/$$spoke/package.json').version" 2>/dev/null || echo "n/a"); \
-			npm_ver=$$(npm view @aiready/$$spoke version 2>/dev/null || echo "n/a"); \
-			if [ "$$local_ver" = "$$npm_ver" ]; then \
-				status="$(GREEN)✓$(RESET_COLOR)"; \
-			elif [ "$$npm_ver" = "n/a" ]; then \
-				status="$(YELLOW)new$(RESET_COLOR)"; \
-			else \
-				status="$(CYAN)ahead$(RESET_COLOR)"; \
-			fi; \
-			printf "%-30s %-15s %-15s %-10b\n" "@aiready/$$spoke" "$$local_ver" "$$npm_ver" "$$status"; \
-		fi; \
+		[ -f "$(ROOT_DIR)/packages/$$spoke/package.json" ] || continue; \
+		local_ver=$$(node -p "require('$(ROOT_DIR)/packages/$$spoke/package.json').version" 2>/dev/null || echo "n/a"); \
+		npm_ver=$$(npm view @aiready/$$spoke version 2>/dev/null || echo "n/a"); \
+		[ "$$local_ver" = "$$npm_ver" ] && s="$(GREEN)OK$(RESET_COLOR)" || \
+			{ [ "$$npm_ver" = "n/a" ] && s="$(YELLOW)new$(RESET_COLOR)" || s="$(CYAN)ahead$(RESET_COLOR)"; }; \
+		printf "%-30s %-15s %-17s %-10b\n" "@aiready/$$spoke" "$$local_ver" "$$npm_ver (npm)" "$$s"; \
 	done; \
-	if [ -f "$(LANDING_DIR)/package.json" ]; then \
-		local_ver=$$(node -p "require('$(LANDING_DIR)/package.json').version" 2>/dev/null || echo "n/a"); \
-		last_tag=$$(git for-each-ref 'refs/tags/landing-v*' --sort=-creatordate --format '%(refname:short)' | head -n1 | sed 's/landing-v//'); \
-		if [ -z "$$last_tag" ]; then \
-			last_tag="n/a"; \
-			status="$(YELLOW)new$(RESET_COLOR)"; \
-		elif [ "$$local_ver" = "$$last_tag" ]; then \
-			status="$(GREEN)✓$(RESET_COLOR)"; \
-		else \
-			status="$(CYAN)ahead$(RESET_COLOR)"; \
-		fi; \
-		printf "%-30s %-15s %-15s %-10b\n" "@aiready/landing" "$$local_ver" "$$last_tag" "$$status"; \
-	fi; \
+	for app in landing platform clawmore; do \
+		app_dir="$(ROOT_DIR)/$$app"; \
+		[ -f "$$app_dir/package.json" ] || continue; \
+		local_ver=$$(node -p "require('$$app_dir/package.json').version" 2>/dev/null || echo "n/a"); \
+		last_tag=$$(git for-each-ref "refs/tags/$$app-v*" --sort=-creatordate --format '%(refname:short)' | head -n1 | sed "s/$$app-v//"); \
+		[ -z "$$last_tag" ] && last_tag="n/a"; \
+		[ "$$local_ver" = "$$last_tag" ] && s="$(GREEN)OK$(RESET_COLOR)" || \
+			{ [ "$$last_tag" = "n/a" ] && s="$(YELLOW)new$(RESET_COLOR)" || s="$(CYAN)ahead$(RESET_COLOR)"; }; \
+		printf "%-30s %-15s %-17s %-10b\n" "$$app" "$$local_ver" "$$last_tag (tag)" "$$s"; \
+	done; \
 	if [ -f "$(EXTENSION_DIR)/package.json" ]; then \
 		local_ver=$$(node -p "require('$(EXTENSION_DIR)/package.json').version" 2>/dev/null || echo "n/a"); \
 		last_tag=$$(git for-each-ref 'refs/tags/vscode-extension-v*' --sort=-creatordate --format '%(refname:short)' | head -n1 | sed 's/vscode-extension-v//'); \
-		if [ -z "$$last_tag" ]; then \
-			last_tag="n/a"; \
-			status="$(YELLOW)new$(RESET_COLOR)"; \
-		elif [ "$$local_ver" = "$$last_tag" ]; then \
-			status="$(GREEN)✓$(RESET_COLOR)"; \
-		else \
-			status="$(CYAN)ahead$(RESET_COLOR)"; \
-		fi; \
-		printf "%-30s %-15s %-15s %-10b\n" "vscode-extension" "$$local_ver" "$$last_tag" "$$status"; \
+		[ -z "$$last_tag" ] && last_tag="n/a"; \
+		[ "$$local_ver" = "$$last_tag" ] && s="$(GREEN)OK$(RESET_COLOR)" || \
+			{ [ "$$last_tag" = "n/a" ] && s="$(YELLOW)new$(RESET_COLOR)" || s="$(CYAN)ahead$(RESET_COLOR)"; }; \
+		printf "%-30s %-15s %-17s %-10b\n" "vscode-extension" "$$local_ver" "$$last_tag (tag)" "$$s"; \
 	fi; \
 	echo ""; \
 	$(call log_success,Status collected)
 
-release-help: ## Show release help
-	@echo "Available targets:"; \
-	echo "  check-changes            - Check if SPOKE has changes since last release"; \
-	echo "  check-dependency-updates - Check if SPOKE has outdated dependencies"; \
-	echo "  release-one              - Release one spoke (TYPE, SPOKE, [FORCE])"; \
-	echo "  release-all              - Release all spokes (TYPE, [FORCE])"; \
-	echo "  release-landing          - Release landing page (TYPE)"; \
-	echo "  release-status           - Show local vs npm/git tag versions"; \
-	echo ""; \
-	echo "Examples:"; \
-	echo "  make check-changes SPOKE=cli"; \
-	echo "  make check-dependency-updates SPOKE=cli"; \
-	echo "  make release-one SPOKE=pattern-detect TYPE=minor"; \
-	echo "  make release-all TYPE=minor"; \
-	echo "  make release-landing TYPE=minor"; \
-	echo "  make release-status";
-
-release-clawmore: ## Release ClawMore: TYPE=patch|minor|major
-	@$(call log_step,Starting patch release for ClawMore...)
-	@cd clawmore && npm version patch --no-git-tag-version
-	@git add clawmore/package.json clawmore/app/blog/BlogClient.tsx
-	@git commit -m "chore(clawmore): release patch and fix BlogClient types"
-	@V=$$(jq -r .version < clawmore/package.json) && \
-	 git tag clawmore-v$$V && \
-	 git push origin main && \
-	 git push origin clawmore-v$$V
-	@$(MAKE) test-clawmore-e2e-local
+release-help: ## Show release targets and examples
+	@printf "%-45s %s\n" "Target" "Description"
+	@printf "%-45s %s\n" "------" "-----------"
+	@printf "%-45s %s\n" "release-one SPOKE=name TYPE=patch" "Release one npm spoke"
+	@printf "%-45s %s\n" "release-all TYPE=minor" "Release all npm spokes (core->middle->cli)"
+	@printf "%-45s %s\n" "release-clawmore-dev TYPE=patch" "Deploy ClawMore to dev"
+	@printf "%-45s %s\n" "release-clawmore-prod TYPE=patch" "Release ClawMore to production"
+	@printf "%-45s %s\n" "release-landing-dev TYPE=minor" "Deploy landing to dev"
+	@printf "%-45s %s\n" "release-landing-prod TYPE=minor" "Release landing to production"
+	@printf "%-45s %s\n" "release-platform TYPE=patch" "Release platform to production"
+	@printf "%-45s %s\n" "release-vscode TYPE=patch" "Release VS Code extension"
+	@printf "%-45s %s\n" "release-status" "Show all component versions"
+	@printf "%-45s %s\n" "check-changes SPOKE=cli" "Check if spoke has unreleased changes"
