@@ -220,7 +220,7 @@ export async function visualizeAction(
 
     // Generate static HTML (default behavior or fallback from failed --dev)
     console.log('Generating HTML...');
-    const html = generateHTML(graph);
+    const html = generateHTML(graph as any);
     const defaultOutput = 'visualization.html';
     const outPath = resolvePath(dirPath, options.output || defaultOutput);
     writeFileSync(outPath, html, 'utf8');
