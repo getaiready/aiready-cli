@@ -53,6 +53,8 @@ export default $config({
         SUBMISSIONS_BUCKET: submissions.name,
         SES_TO_EMAIL: process.env.SES_TO_EMAIL || '',
         SES_FROM_EMAIL: process.env.SES_FROM_EMAIL || defaultSesFromEmail,
+        SES_CONFIGURATION_SET:
+          'aiready-landing-production-notificationemailconfig-ttxwnzxe',
       },
       permissions: [
         {

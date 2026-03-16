@@ -61,6 +61,7 @@ export async function sendEmail(
         }),
       },
     },
+    ConfigurationSetName: process.env.SES_CONFIGURATION_SET,
   };
 
   try {

@@ -132,6 +132,8 @@ export default $config({
         SES_DOMAIN: sesDomain,
         SES_FROM_EMAIL: `noreply@${sesDomain}`,
         SES_TO_EMAIL: process.env.SES_TO_EMAIL || 'team@getaiready.dev',
+        SES_CONFIGURATION_SET:
+          'aiready-landing-production-notificationemailconfig-ttxwnzxe',
       },
     };
 
@@ -194,6 +196,8 @@ export default $config({
       environment: {
         S3_BUCKET: bucket.name,
         DYNAMO_TABLE: table.name,
+        SES_CONFIGURATION_SET:
+          'aiready-landing-production-notificationemailconfig-ttxwnzxe',
       },
     });
 
@@ -214,6 +218,8 @@ export default $config({
       environment: {
         S3_BUCKET: bucket.name,
         DYNAMO_TABLE: table.name,
+        SES_CONFIGURATION_SET:
+          'aiready-landing-production-notificationemailconfig-ttxwnzxe',
       },
     });
 

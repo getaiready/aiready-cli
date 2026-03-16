@@ -148,6 +148,7 @@ https://getaiready.dev`;
               },
             },
             Source: sesFromEmail,
+            ConfigurationSetName: process.env.SES_CONFIGURATION_SET,
           })
         );
       } catch {}
