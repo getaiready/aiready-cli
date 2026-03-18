@@ -263,18 +263,18 @@ export async function scanAction(directory: string, options: ScanOptions) {
 
       // Token Budget & Cost Logic
       const totalWastedDuplication = (scoringResult.breakdown || []).reduce(
-        (sum, s) =>
+        (sum: number, s: any) =>
           sum + (s.tokenBudget?.wastedTokens.bySource.duplication || 0),
         0
       );
       const totalWastedFragmentation = (scoringResult.breakdown || []).reduce(
-        (sum, s) =>
+        (sum: number, s: any) =>
           sum + (s.tokenBudget?.wastedTokens.bySource.fragmentation || 0),
         0
       );
       const totalContext = Math.max(
         ...(scoringResult.breakdown || []).map(
-          (s) => s.tokenBudget?.totalContextTokens || 0
+          (s: any) => s.tokenBudget?.totalContextTokens || 0
         ),
         0
       );

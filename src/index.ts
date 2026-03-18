@@ -57,6 +57,12 @@ export interface UnifiedAnalysisOptions extends ScanOptions {
     total?: number;
     message?: string;
   }) => void;
+  /** Files or directories to include in scan */
+  include?: string[];
+  /** Files or directories to exclude from scan */
+  exclude?: string[];
+  /** Batch size for comparisons */
+  batchSize?: number;
 }
 
 /**
@@ -323,8 +329,9 @@ export async function analyzeUnified(
       }
 
       // 2. Add camelCase version of canonical ID (e.g., 'patternDetect', 'contextAnalyzer')
-      const camelCaseId = provider.id.replace(/-([a-z])/g, (g) =>
-        g[1].toUpperCase()
+      const camelCaseId = provider.id.replace(
+        /-([a-z])/g,
+        (_: string, g: string) => g.toUpperCase()
       );
       if (camelCaseId !== provider.id && !result[camelCaseId]) {
         (result as any)[camelCaseId] = output;

@@ -61,7 +61,7 @@ export function printScoring(
 
   if (scoringResult.breakdown) {
     console.log(chalk.bold('\nTool breakdown:'));
-    scoringResult.breakdown.forEach((tool) => {
+    scoringResult.breakdown.forEach((tool: any) => {
       const rating = getRating(tool.score);
       const emoji = getRatingDisplay(rating).emoji;
       console.log(
@@ -71,15 +71,15 @@ export function printScoring(
 
     // Top Actionable Recommendations
     const allRecs = scoringResult.breakdown
-      .flatMap((t) =>
-        (t.recommendations || []).map((r) => ({ ...r, tool: t.toolName }))
+      .flatMap((t: any) =>
+        (t.recommendations || []).map((r: any) => ({ ...r, tool: t.toolName }))
       )
-      .sort((a, b) => b.estimatedImpact - a.estimatedImpact)
+      .sort((a: any, b: any) => b.estimatedImpact - a.estimatedImpact)
       .slice(0, 3);
 
     if (allRecs.length > 0) {
       console.log(chalk.bold('\n🎯 Top Actionable Recommendations:'));
-      allRecs.forEach((rec, i) => {
+      allRecs.forEach((rec: any, i: number) => {
         const priorityIcon =
           rec.priority === 'high'
             ? '🔴'
