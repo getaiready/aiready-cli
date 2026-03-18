@@ -5,7 +5,9 @@ import * as fs from 'fs';
 let isTreeSitterInitialized = false;
 
 /**
- * Initialize tree-sitter once
+ * Initialize tree-sitter once.
+ *
+ * @lastUpdated 2026-03-18
  */
 export async function initTreeSitter(): Promise<void> {
   if (isTreeSitterInitialized) return;
@@ -81,7 +83,9 @@ function findFileRecursively(
 }
 
 /**
- * Find a WASM file for a specific language
+ * Find a WASM file for a specific language.
+ *
+ * @lastUpdated 2026-03-18
  */
 export function getWasmPath(language: string): string | null {
   const wasmFileName =
@@ -115,7 +119,9 @@ export function getWasmPath(language: string): string | null {
 }
 
 /**
- * Load a language and return a configured parser
+ * Load a language and return a configured parser.
+ *
+ * @lastUpdated 2026-03-18
  */
 export async function setupParser(
   language: string

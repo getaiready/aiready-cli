@@ -32,7 +32,8 @@ export function calculateEnhancedCohesion(
   // 1. Domain-based cohesion using entropy
   const domains = exports.map((e) => e.inferredDomain || 'unknown');
   const domainCounts = new Map<string, number>();
-  for (const d of domains) domainCounts.set(d, (domainCounts.get(d) || 0) + 1);
+  for (const domain of domains)
+    domainCounts.set(domain, (domainCounts.get(domain) || 0) + 1);
 
   // IF ALL DOMAINS MATCH, RETURN 1.0 IMMEDIATELY (Legacy test compatibility)
   if (domainCounts.size === 1 && domains[0] !== 'unknown') {
@@ -40,11 +41,11 @@ export function calculateEnhancedCohesion(
   }
 
   const probs = Array.from(domainCounts.values()).map(
-    (c) => c / exports.length
+    (count) => count / exports.length
   );
   let domainEntropy = 0;
-  for (const p of probs) {
-    if (p > 0) domainEntropy -= p * Math.log2(p);
+  for (const prob of probs) {
+    if (prob > 0) domainEntropy -= prob * Math.log2(prob);
   }
 
   const maxEntropy = Math.log2(Math.max(2, domainCounts.size));
@@ -158,7 +159,7 @@ export function calculateFragmentation(
   if (files.length <= 1) return 0;
 
   const directories = new Set(
-    files.map((f) => f.split('/').slice(0, -1).join('/'))
+    files.map((file) => file.split('/').slice(0, -1).join('/'))
   );
   const uniqueDirs = directories.size;
 
@@ -189,15 +190,15 @@ export function calculatePathEntropy(files: string[]): number {
   if (!files || files.length === 0) return 0;
 
   const dirCounts = new Map<string, number>();
-  for (const f of files) {
-    const dir = f.split('/').slice(0, -1).join('/') || '.';
+  for (const file of files) {
+    const dir = file.split('/').slice(0, -1).join('/') || '.';
     dirCounts.set(dir, (dirCounts.get(dir) || 0) + 1);
   }
 
   const counts = Array.from(dirCounts.values());
   if (counts.length <= 1) return 0;
 
-  const total = counts.reduce((s, v) => s + v, 0);
+  const total = counts.reduce((sum, value) => sum + value, 0);
   let entropy = 0;
   for (const count of counts) {
     const prob = count / total;
@@ -217,11 +218,11 @@ export function calculatePathEntropy(files: string[]): number {
 export function calculateDirectoryDistance(files: string[]): number {
   if (!files || files.length <= 1) return 0;
 
-  const pathSegments = (p: string) => p.split('/').filter(Boolean);
-  const commonAncestorDepth = (a: string[], b: string[]) => {
-    const minLen = Math.min(a.length, b.length);
+  const pathSegments = (pathStr: string) => pathStr.split('/').filter(Boolean);
+  const commonAncestorDepth = (pathA: string[], pathB: string[]) => {
+    const minLen = Math.min(pathA.length, pathB.length);
     let i = 0;
-    while (i < minLen && a[i] === b[i]) i++;
+    while (i < minLen && pathA[i] === pathB[i]) i++;
     return i;
   };
 

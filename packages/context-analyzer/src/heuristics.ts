@@ -1,10 +1,75 @@
 import { DependencyNode } from './types';
 
 /**
- * Detect if a file is a barrel export (index.ts)
+ * Heuristic patterns for file classification.
+ */
+const BARREL_EXPORT_MIN_EXPORTS = 5;
+const BARREL_EXPORT_TOKEN_LIMIT = 1000;
+
+const HANDLER_NAME_PATTERNS = [
+  'handler',
+  '.handler.',
+  '-handler.',
+  'lambda',
+  '.lambda.',
+  '-lambda.',
+];
+
+const SERVICE_NAME_PATTERNS = [
+  'service',
+  '.service.',
+  '-service.',
+  '_service.',
+];
+
+const EMAIL_NAME_PATTERNS = [
+  '-email-',
+  '.email.',
+  '_email_',
+  '-template',
+  '.template.',
+  '_template',
+  '-mail.',
+  '.mail.',
+];
+
+const PARSER_NAME_PATTERNS = [
+  'parser',
+  '.parser.',
+  '-parser.',
+  '_parser.',
+  'transform',
+  'converter',
+  'mapper',
+  'serializer',
+];
+
+const SESSION_NAME_PATTERNS = ['session', 'state', 'context', 'store'];
+
+const NEXTJS_METADATA_EXPORTS = [
+  'metadata',
+  'generatemetadata',
+  'faqjsonld',
+  'jsonld',
+  'icon',
+];
+
+const CONFIG_NAME_PATTERNS = [
+  '.config.',
+  'tsconfig',
+  'jest.config',
+  'package.json',
+  'aiready.json',
+  'next.config',
+  'sst.config',
+];
+
+/**
+ * Detect if a file is a barrel export (index.ts).
  *
  * @param node - The dependency node to analyze.
  * @returns True if the file matches barrel export patterns.
+ * @lastUpdated 2026-03-18
  */
 export function isBarrelExport(node: DependencyNode): boolean {
   const { file, exports } = node;
@@ -12,22 +77,24 @@ export function isBarrelExport(node: DependencyNode): boolean {
 
   const isIndexFile = fileName === 'index.ts' || fileName === 'index.js';
   const isSmallAndManyExports =
-    node.tokenCost < 1000 && (exports || []).length > 5;
+    node.tokenCost < BARREL_EXPORT_TOKEN_LIMIT &&
+    (exports || []).length > BARREL_EXPORT_MIN_EXPORTS;
 
   const isReexportPattern =
-    (exports || []).length >= 5 &&
-    (exports || []).every((e) =>
-      ['const', 'function', 'type', 'interface'].includes(e.type)
+    (exports || []).length >= BARREL_EXPORT_MIN_EXPORTS &&
+    (exports || []).every((exp: any) =>
+      ['const', 'function', 'type', 'interface'].includes(exp.type)
     );
 
   return !!isIndexFile || !!isSmallAndManyExports || !!isReexportPattern;
 }
 
 /**
- * Detect if a file is primarily type definitions
+ * Detect if a file is primarily type definitions.
  *
  * @param node - The dependency node to analyze.
  * @returns True if the file contains primarily types or matches type paths.
+ * @lastUpdated 2026-03-18
  */
 export function isTypeDefinition(node: DependencyNode): boolean {
   const { file } = node;
@@ -37,7 +104,9 @@ export function isTypeDefinition(node: DependencyNode): boolean {
   const hasExports = nodeExports.length > 0;
   const areAllTypes =
     hasExports &&
-    nodeExports.every((e) => e.type === 'type' || e.type === 'interface');
+    nodeExports.every(
+      (exp: any) => exp.type === 'type' || exp.type === 'interface'
+    );
 
   const isTypePath = /\/(types|interfaces|models)\//i.test(file);
   return !!areAllTypes || (isTypePath && hasExports);
@@ -48,6 +117,7 @@ export function isTypeDefinition(node: DependencyNode): boolean {
  *
  * @param node - The dependency node to analyze.
  * @returns True if the file path or name suggests a utility/helper role.
+ * @lastUpdated 2026-03-18
  */
 export function isUtilityModule(node: DependencyNode): boolean {
   const { file } = node;
@@ -62,24 +132,20 @@ export function isUtilityModule(node: DependencyNode): boolean {
  *
  * @param node - The dependency node to analyze.
  * @returns True if the file serves as a coordination point for requests/lambdas.
+ * @lastUpdated 2026-03-18
  */
 export function isLambdaHandler(node: DependencyNode): boolean {
   const { file, exports } = node;
   const fileName = file.split('/').pop()?.toLowerCase() || '';
-  const handlerPatterns = [
-    'handler',
-    '.handler.',
-    '-handler.',
-    'lambda',
-    '.lambda.',
-    '-lambda.',
-  ];
-  const isHandlerName = handlerPatterns.some((p) => fileName.includes(p));
+
+  const isHandlerName = HANDLER_NAME_PATTERNS.some((pattern: string) =>
+    fileName.includes(pattern)
+  );
   const isHandlerPath = /\/(handlers|lambdas|lambda|functions)\//i.test(file);
   const hasHandlerExport = (exports || []).some(
-    (e) =>
-      ['handler', 'main', 'lambdahandler'].includes(e.name.toLowerCase()) ||
-      e.name.toLowerCase().endsWith('handler')
+    (exp: any) =>
+      ['handler', 'main', 'lambdahandler'].includes(exp.name.toLowerCase()) ||
+      exp.name.toLowerCase().endsWith('handler')
   );
   return isHandlerName || isHandlerPath || hasHandlerExport;
 }
@@ -89,17 +155,22 @@ export function isLambdaHandler(node: DependencyNode): boolean {
  *
  * @param node - The dependency node to analyze.
  * @returns True if the file orchestrates logic or matches service patterns.
+ * @lastUpdated 2026-03-18
  */
 export function isServiceFile(node: DependencyNode): boolean {
   const { file, exports } = node;
   const fileName = file.split('/').pop()?.toLowerCase() || '';
-  const servicePatterns = ['service', '.service.', '-service.', '_service.'];
-  const isServiceName = servicePatterns.some((p) => fileName.includes(p));
-  const isServicePath = file.toLowerCase().includes('/services/');
-  const hasServiceNamedExport = (exports || []).some((e) =>
-    e.name.toLowerCase().includes('service')
+
+  const isServiceName = SERVICE_NAME_PATTERNS.some((pattern: string) =>
+    fileName.includes(pattern)
   );
-  const hasClassExport = (exports || []).some((e) => e.type === 'class');
+  const isServicePath = file.toLowerCase().includes('/services/');
+  const hasServiceNamedExport = (exports || []).some((exp: any) =>
+    exp.name.toLowerCase().includes('service')
+  );
+  const hasClassExport = (exports || []).some(
+    (exp: any) => exp.type === 'class'
+  );
   return (
     isServiceName || isServicePath || (hasServiceNamedExport && hasClassExport)
   );
@@ -110,27 +181,21 @@ export function isServiceFile(node: DependencyNode): boolean {
  *
  * @param node - The dependency node to analyze.
  * @returns True if the file is used for rendering notifications or emails.
+ * @lastUpdated 2026-03-18
  */
 export function isEmailTemplate(node: DependencyNode): boolean {
   const { file, exports } = node;
   const fileName = file.split('/').pop()?.toLowerCase() || '';
-  const emailPatterns = [
-    '-email-',
-    '.email.',
-    '_email_',
-    '-template',
-    '.template.',
-    '_template',
-    '-mail.',
-    '.mail.',
-  ];
-  const isEmailName = emailPatterns.some((p) => fileName.includes(p));
+
+  const isEmailName = EMAIL_NAME_PATTERNS.some((pattern: string) =>
+    fileName.includes(pattern)
+  );
   const isEmailPath = /\/(emails|mail|notifications)\//i.test(file);
   const hasTemplateFunction = (exports || []).some(
-    (e) =>
-      e.type === 'function' &&
-      (e.name.toLowerCase().startsWith('render') ||
-        e.name.toLowerCase().startsWith('generate'))
+    (exp: any) =>
+      exp.type === 'function' &&
+      (exp.name.toLowerCase().startsWith('render') ||
+        exp.name.toLowerCase().startsWith('generate'))
   );
   return isEmailPath || isEmailName || hasTemplateFunction;
 }
@@ -140,27 +205,21 @@ export function isEmailTemplate(node: DependencyNode): boolean {
  *
  * @param node - The dependency node to analyze.
  * @returns True if the file handles data conversion or serialization.
+ * @lastUpdated 2026-03-18
  */
 export function isParserFile(node: DependencyNode): boolean {
   const { file, exports } = node;
   const fileName = file.split('/').pop()?.toLowerCase() || '';
-  const parserPatterns = [
-    'parser',
-    '.parser.',
-    '-parser.',
-    '_parser.',
-    'transform',
-    'converter',
-    'mapper',
-    'serializer',
-  ];
-  const isParserName = parserPatterns.some((p) => fileName.includes(p));
+
+  const isParserName = PARSER_NAME_PATTERNS.some((pattern: string) =>
+    fileName.includes(pattern)
+  );
   const isParserPath = /\/(parsers|transformers)\//i.test(file);
   const hasParseFunction = (exports || []).some(
-    (e) =>
-      e.type === 'function' &&
-      (e.name.toLowerCase().startsWith('parse') ||
-        e.name.toLowerCase().startsWith('transform'))
+    (exp: any) =>
+      exp.type === 'function' &&
+      (exp.name.toLowerCase().startsWith('parse') ||
+        exp.name.toLowerCase().startsWith('transform'))
   );
   return isParserName || isParserPath || hasParseFunction;
 }
@@ -170,15 +229,20 @@ export function isParserFile(node: DependencyNode): boolean {
  *
  * @param node - The dependency node to analyze.
  * @returns True if the file manages application state or sessions.
+ * @lastUpdated 2026-03-18
  */
 export function isSessionFile(node: DependencyNode): boolean {
   const { file, exports } = node;
   const fileName = file.split('/').pop()?.toLowerCase() || '';
-  const sessionPatterns = ['session', 'state', 'context', 'store'];
-  const isSessionName = sessionPatterns.some((p) => fileName.includes(p));
+
+  const isSessionName = SESSION_NAME_PATTERNS.some((pattern: string) =>
+    fileName.includes(pattern)
+  );
   const isSessionPath = /\/(sessions|state)\//i.test(file);
-  const hasSessionExport = (exports || []).some((e) =>
-    ['session', 'state', 'store'].some((p) => e.name.toLowerCase().includes(p))
+  const hasSessionExport = (exports || []).some((exp: any) =>
+    ['session', 'state', 'store'].some((pattern: string) =>
+      exp.name.toLowerCase().includes(pattern)
+    )
   );
   return isSessionName || isSessionPath || hasSessionExport;
 }
@@ -188,6 +252,7 @@ export function isSessionFile(node: DependencyNode): boolean {
  *
  * @param node - The dependency node to analyze.
  * @returns True if the file is a Next.js page or metadata entry.
+ * @lastUpdated 2026-03-18
  */
 export function isNextJsPage(node: DependencyNode): boolean {
   const { file, exports } = node;
@@ -199,16 +264,12 @@ export function isNextJsPage(node: DependencyNode): boolean {
   if (!isInAppDir || (fileName !== 'page.tsx' && fileName !== 'page.ts'))
     return false;
 
-  const hasDefaultExport = (exports || []).some((e) => e.type === 'default');
-  const nextJsExports = [
-    'metadata',
-    'generatemetadata',
-    'faqjsonld',
-    'jsonld',
-    'icon',
-  ];
-  const hasNextJsExport = (exports || []).some((e) =>
-    nextJsExports.includes(e.name.toLowerCase())
+  const hasDefaultExport = (exports || []).some(
+    (exp: any) => exp.type === 'default'
+  );
+
+  const hasNextJsExport = (exports || []).some((exp: any) =>
+    NEXTJS_METADATA_EXPORTS.includes(exp.name.toLowerCase())
   );
 
   return hasDefaultExport || hasNextJsExport;
@@ -219,26 +280,20 @@ export function isNextJsPage(node: DependencyNode): boolean {
  *
  * @param node - The dependency node to analyze.
  * @returns True if the file matches configuration, setting, or schema patterns.
+ * @lastUpdated 2026-03-18
  */
 export function isConfigFile(node: DependencyNode): boolean {
   const { file, exports } = node;
   const lowerPath = file.toLowerCase();
   const fileName = file.split('/').pop()?.toLowerCase() || '';
 
-  const configPatterns = [
-    '.config.',
-    'tsconfig',
-    'jest.config',
-    'package.json',
-    'aiready.json',
-    'next.config',
-    'sst.config',
-  ];
-  const isConfigName = configPatterns.some((p) => fileName.includes(p));
+  const isConfigName = CONFIG_NAME_PATTERNS.some((pattern: string) =>
+    fileName.includes(pattern)
+  );
   const isConfigPath = /\/(config|settings|schemas)\//i.test(lowerPath);
-  const hasSchemaExport = (exports || []).some((e) =>
-    ['schema', 'config', 'setting'].some((p) =>
-      e.name.toLowerCase().includes(p)
+  const hasSchemaExport = (exports || []).some((exp: any) =>
+    ['schema', 'config', 'setting'].some((pattern: string) =>
+      exp.name.toLowerCase().includes(pattern)
     )
   );
 

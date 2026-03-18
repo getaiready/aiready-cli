@@ -13,7 +13,9 @@ LABEL org.opencontainers.image.vendor="AIReady"
 WORKDIR /workspace
 
 # Install AIReady CLI globally
-RUN npm install -g @aiready/cli
+RUN apk add --no-cache --virtual .build-deps python3 make g++ && \
+    npm install -g @aiready/cli && \
+    apk del .build-deps
 
 # Create non-root user
 RUN addgroup -g 1001 -S aiready && \
