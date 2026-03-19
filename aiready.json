@@ -22,9 +22,9 @@
   },
   "tools": {
     "pattern-detect": {
-      "minSimilarity": 0.5,
-      "minLines": 5,
-      "batchSize": 200,
+      "minSimilarity": 0.4,
+      "minLines": 4,
+      "batchSize": 300,
       "approx": true,
       "minSharedTokens": 5,
       "maxCandidatesPerBlock": 500
