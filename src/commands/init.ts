@@ -20,6 +20,8 @@ export async function initAction(options: {
   }
 
   const baseConfig = {
+    $schema: 'https://getaiready.dev/schema.json',
+
     // Target quality score threshold (0-100)
     threshold: 75,
 
