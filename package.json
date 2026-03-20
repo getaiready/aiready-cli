@@ -8,12 +8,26 @@
   "bin": {
     "aiready": "./dist/cli.js"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CONTRIBUTING.md"
+  ],
   "scripts": {
     "build": "tsup src/index.ts src/cli.ts --format cjs,esm",
     "dev": "tsup src/index.ts src/cli.ts --format cjs,esm --dts --watch",
     "test": "vitest run",
     "lint": "eslint src",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "@aiready/agent-grounding": "workspace:*",
@@ -40,7 +54,12 @@
     "ai-readiness",
     "code-analysis"
   ],
+  "author": "AIReady Team",
   "license": "MIT",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/caopengau"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/caopengau/aiready-cli.git"
@@ -48,5 +67,8 @@
   "homepage": "https://github.com/caopengau/aiready-cli",
   "bugs": {
     "url": "https://github.com/caopengau/aiready-cli/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

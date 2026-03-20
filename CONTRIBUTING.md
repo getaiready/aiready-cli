@@ -39,14 +39,99 @@ The CLI follows a **hub-and-spoke** pattern:
 - **Spoke integration**: Each analysis tool is independent and imported as needed
 - **Unified interface**: Consistent CLI options across all tools
 
+## � Development Setup
+
+1. Clone the [monorepo](https://github.com/caopengau/aiready):
+
+   ```bash
+   git clone https://github.com/caopengau/aiready.git
+   cd aiready
+   pnpm install
+   ```
+
+2. The CLI is located in `packages/cli/`
+
+3. Build and develop:
+
+   ```bash
+   # Build the CLI
+   pnpm build
+
+   # Watch mode for development
+   pnpm dev
+
+   # Run tests
+   pnpm test
+
+   # Run linter
+   pnpm lint
+   ```
+
+## 🔧 Making Changes
+
+1. Create a feature branch from `main`:
+
+   ```bash
+   git checkout -b feat/your-feature-name
+   ```
+
+2. Make your changes and write tests if applicable
+
+3. Run tests and linter:
+
+   ```bash
+   pnpm test
+   pnpm lint
+   ```
+
+4. Commit with [Conventional Commits](https://www.conventionalcommits.org/):
+
+   ```bash
+   git commit -m "feat: add new feature"
+   git commit -m "fix: resolve issue"
+   git commit -m "docs: update guide"
+   ```
+
+5. Push to your fork and open a Pull Request
+
+## 📋 Pull Request Guidelines
+
+- Ensure all tests pass
+- Update documentation if needed
+- Link related issues
+- Keep PRs focused on a single feature or fix
+- Use clear, descriptive commit messages
+
+## 📦 Publishing
+
+Publishing is handled automatically via the monorepo's release process:
+
+```bash
+# From monorepo root
+make sync               # Syncs all spokes and publishes
+make npm-publish SPOKE=cli  # Publish CLI individually
+```
+
+For more details, see [Release Management](../../.github/sub-instructions/release-management.md)
+
 ## 🐛 Reporting Issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/caopengau/aiready-cli/issues) with:
+Found a bug or have a feature request? [Open an issue on GitHub](https://github.com/caopengau/aiready/issues) with:
 
 - Clear description of the problem or feature
 - Steps to reproduce (for bugs)
 - Expected vs actual behavior
 - Your environment (Node version, OS)
+
+## ❓ Questions?
+
+- Review the [README.md](./README.md)
+- Check [AIReady documentation](https://getaiready.dev/)
+- Browse existing [discussions and issues](https://github.com/caopengau/aiready/discussions)
+
+## 📄 License
+
+All contributions are licensed under the MIT License.
 
 ## 🔧 Development Setup
 
