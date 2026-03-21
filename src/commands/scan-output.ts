@@ -5,6 +5,13 @@
 import chalk from 'chalk';
 import { writeFileSync } from 'fs';
 import type { ScoringResult } from '../index';
+import {
+  getRatingLabel,
+  getRatingEmoji,
+  getToolEmoji,
+  getPriorityIcon,
+} from '@aiready/core';
+import { getScoreBar } from '@aiready/core';
 
 /**
  * Print scan summary results
@@ -110,64 +117,4 @@ export function printBusinessImpact(roi: any, tokenBudget: any): void {
       )
     );
   }
-}
-
-/**
- * Get rating label from score
- */
-function getRatingLabel(score: number): string {
-  if (score >= 90) return 'Excellent';
-  if (score >= 75) return 'Good';
-  if (score >= 60) return 'Fair';
-  if (score >= 40) return 'Needs Work';
-  return 'Critical';
-}
-
-/**
- * Get rating emoji from score
- */
-function getRatingEmoji(score: number): string {
-  if (score >= 90) return '✅';
-  if (score >= 75) return '👍';
-  if (score >= 60) return '👌';
-  if (score >= 40) return '🔨';
-  return '🚨';
-}
-
-/**
- * Get tool emoji from score
- */
-function getToolEmoji(score: number): string {
-  if (score >= 90) return '✅';
-  if (score >= 75) return '👍';
-  if (score >= 60) return '👌';
-  if (score >= 40) return '🔨';
-  return '🚨';
-}
-
-/**
- * Get priority icon
- */
-function getPriorityIcon(priority: string): string {
-  switch (priority) {
-    case 'critical':
-      return '🔴';
-    case 'high':
-      return '🟠';
-    case 'medium':
-      return '🟡';
-    case 'low':
-      return '🔵';
-    default:
-      return '⚪';
-  }
-}
-
-/**
- * Generate score bar visualization
- */
-function getScoreBar(score: number): string {
-  const filled = Math.round(score / 10);
-  const empty = 10 - filled;
-  return '█'.repeat(filled) + '░'.repeat(empty);
 }
