@@ -7,21 +7,21 @@ import { fileURLToPath } from 'url';
 
 import {
   scanAction,
-  scanHelpText,
+  SCAN_HELP_TEXT,
   initAction,
   patternsAction,
-  patternsHelpText,
+  PATTERNS_HELP_TEXT,
   contextAction,
   consistencyAction,
   visualizeAction,
-  visualizeHelpText,
-  visualiseHelpText,
+  VISUALIZE_HELP_TEXT,
+  VISUALISE_HELP_TEXT,
   changeAmplificationAction,
   testabilityAction,
   uploadAction,
-  uploadHelpText,
+  UPLOAD_HELP_TEXT,
   bugAction,
-  bugHelpText,
+  BUG_HELP_TEXT,
 } from './commands';
 
 const getDirname = () => {
@@ -120,7 +120,7 @@ program
   .option('--api-key <key>', 'Platform API key for automatic upload')
   .option('--upload', 'Automatically upload results to the platform')
   .option('--server <url>', 'Custom platform URL')
-  .addHelpText('after', scanHelpText)
+  .addHelpText('after', SCAN_HELP_TEXT)
   .action(async (directory, options) => {
     await scanAction(directory, options);
   });
@@ -165,7 +165,7 @@ program
   .option('--output-file <path>', 'Output file path (for json)')
   .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
   .option('--no-score', 'Disable calculating AI Readiness Score')
-  .addHelpText('after', patternsHelpText)
+  .addHelpText('after', PATTERNS_HELP_TEXT)
   .action(async (directory, options) => {
     await patternsAction(directory, options);
   });
@@ -244,7 +244,7 @@ program
     'Start Vite dev server (live reload) for interactive development',
     true
   )
-  .addHelpText('after', visualiseHelpText)
+  .addHelpText('after', VISUALISE_HELP_TEXT)
   .action(async (directory, options) => {
     await visualizeAction(directory, options);
   });
@@ -274,7 +274,7 @@ program
     'Start Vite dev server (live reload) for interactive development',
     false
   )
-  .addHelpText('after', visualizeHelpText)
+  .addHelpText('after', VISUALIZE_HELP_TEXT)
   .action(async (directory, options) => {
     await visualizeAction(directory, options);
   });
@@ -314,7 +314,7 @@ program
   .option('--api-key <key>', 'Platform API key')
   .option('--repo-id <id>', 'Platform repository ID (optional)')
   .option('--server <url>', 'Custom platform URL')
-  .addHelpText('after', uploadHelpText)
+  .addHelpText('after', UPLOAD_HELP_TEXT)
   .action(async (file, options) => {
     await uploadAction(file, options);
   });
@@ -325,7 +325,7 @@ program
   .argument('[message]', 'Short description of the issue')
   .option('-t, --type <type>', 'Issue type: bug, feature, metric', 'bug')
   .option('--submit', 'Submit the issue directly using the GitHub CLI (gh)')
-  .addHelpText('after', bugHelpText)
+  .addHelpText('after', BUG_HELP_TEXT)
   .action(async (message, options) => {
     await bugAction(message, options);
   });

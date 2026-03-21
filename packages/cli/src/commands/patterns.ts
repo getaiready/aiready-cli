@@ -214,7 +214,7 @@ export async function patternsAction(
   }
 }
 
-export const patternsHelpText = `
+export const PATTERNS_HELP_TEXT = `
 EXAMPLES:
   $ aiready patterns                                 # Default analysis
   $ aiready patterns --similarity 0.6               # Stricter matching

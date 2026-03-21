@@ -117,7 +117,7 @@ export async function uploadAction(file: string, options: UploadOptions) {
   }
 }
 
-export const uploadHelpText = `
+export const UPLOAD_HELP_TEXT = `
 EXAMPLES:
   $ aiready upload report.json --api-key ar_...
   $ aiready upload .aiready/latest.json

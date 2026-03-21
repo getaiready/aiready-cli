@@ -143,9 +143,9 @@ export async function consistencyAction(
         if (namingResults.length > 0) {
           console.log(chalk.bold('🏷️  Naming Issues\n'));
           let shown = 0;
-          for (const result of namingResults) {
+          for (const namingFileResult of namingResults) {
             if (shown >= 5) break;
-            for (const issue of result.issues) {
+            for (const issue of namingFileResult.issues) {
               if (shown >= 5) break;
               const severityColor =
                 issue.severity === 'critical'
@@ -178,9 +178,9 @@ export async function consistencyAction(
         if (patternResults.length > 0) {
           console.log(chalk.bold('🔄 Pattern Issues\n'));
           let shown = 0;
-          for (const result of patternResults) {
+          for (const patternFileResult of patternResults) {
             if (shown >= 5) break;
-            for (const issue of result.issues) {
+            for (const issue of patternFileResult.issues) {
               if (shown >= 5) break;
               const severityColor =
                 issue.severity === 'critical'
