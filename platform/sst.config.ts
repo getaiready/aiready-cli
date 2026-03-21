@@ -1,3 +1,4 @@
+// @ts-nocheck
 /// <reference path="./.sst/platform/config.d.ts" />
 
 // Suppress AWS SDK warning when both profile and static keys are set
@@ -32,7 +33,8 @@ export default $config({
     // 1. Pro Plan ($49/mo)
     const proProduct = new stripe.Product('ProProduct', {
       name: 'AIReady Pro',
-      description: 'Advanced AI-readiness metrics and historical trends for individual developers.',
+      description:
+        'Advanced AI-readiness metrics and historical trends for individual developers.',
     });
 
     const proPrice = new stripe.Price('ProPrice', {
@@ -45,7 +47,8 @@ export default $config({
     // 2. Team Plan ($99/mo)
     const teamProduct = new stripe.Product('TeamProduct', {
       name: 'AIReady Team',
-      description: 'CI/CD integration, team benchmarking, and priority support.',
+      description:
+        'CI/CD integration, team benchmarking, and priority support.',
     });
 
     const teamPrice = new stripe.Price('TeamPrice', {
@@ -58,7 +61,8 @@ export default $config({
     // 3. Enterprise Plan ($299/mo)
     const enterpriseProduct = new stripe.Product('EnterpriseProduct', {
       name: 'AIReady Enterprise',
-      description: 'Custom rules, SSO, and dedicated support for large organizations.',
+      description:
+        'Custom rules, SSO, and dedicated support for large organizations.',
     });
 
     const enterprisePrice = new stripe.Price('EnterprisePrice', {

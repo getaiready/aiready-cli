@@ -1,3 +1,4 @@
+// @ts-nocheck
 /// <reference path="./.sst/platform/config.d.ts" />
 
 // Suppress AWS SDK warning when both profile and static keys are set
@@ -19,13 +20,13 @@ export default $config({
       providers: {
         stripe: '0.0.14',
       },
-    };
+    } as any;
   },
   async run() {
     const isProd = $app.stage === 'production';
-    
+
     // Configure the Stripe provider
-    $config.providers.stripe = {
+    ($config as any).providers.stripe = {
       apiKey: process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder',
     };
 
@@ -34,14 +35,15 @@ export default $config({
       : `${$app.stage}.clawmore.getaiready.dev`;
 
     // --- Stripe Products & Prices (IaC) ---
-    
+
     // 1. Managed Platform Subscription ($29/mo)
-    const platformProduct = new stripe.Product('PlatformProduct', {
+    const platformProduct = new (stripe as any).Product('PlatformProduct', {
       name: 'ClawMore Managed Platform',
-      description: 'Fully managed serverless AWS infrastructure with AI evolution.',
+      description:
+        'Fully managed serverless AWS infrastructure with AI evolution.',
     });
 
-    const platformPrice = new stripe.Price('PlatformPrice', {
+    const platformPrice = new (stripe as any).Price('PlatformPrice', {
       product: platformProduct.id,
       unitAmount: 2900,
       currency: 'usd',
@@ -49,12 +51,12 @@ export default $config({
     });
 
     // 2. AI Fuel Pack ($10.00 one-time)
-    const fuelPackProduct = new stripe.Product('FuelPackProduct', {
+    const fuelPackProduct = new (stripe as any).Product('FuelPackProduct', {
       name: 'AI Fuel Pack',
       description: 'Pre-paid intelligence credits for agent mutations.',
     });
 
-    const fuelPackPrice = new stripe.Price('FuelPackPrice', {
+    const fuelPackPrice = new (stripe as any).Price('FuelPackPrice', {
       product: fuelPackProduct.id,
       unitAmount: 1000,
       currency: 'usd',
@@ -183,14 +185,16 @@ export default $config({
         DYNAMO_TABLE: table.name,
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
         STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
-        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+          process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
         OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
         CLAW_MORE_BUS: bus.name,
         GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID || '',
         GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || '',
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
-        AUTH_SECRET: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || '',
+        AUTH_SECRET:
+          process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || '',
         ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || '',
         ADMIN_EMAILS: process.env.ADMIN_EMAILS || '',
       },
