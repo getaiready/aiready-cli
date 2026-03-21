@@ -121,13 +121,20 @@ describe('CLI Helpers Advanced', () => {
 
   describe('handleCLIError', () => {
     it('should log error and exit with code 1', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
         throw new Error('process.exit called');
       });
 
-      expect(() => handleCLIError(new Error('test error'), 'test-command')).toThrow();
-      expect(consoleSpy).toHaveBeenCalledWith('❌ test-command failed:', new Error('test error'));
+      expect(() =>
+        handleCLIError(new Error('test error'), 'test-command')
+      ).toThrow();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '❌ test-command failed:',
+        new Error('test error')
+      );
       expect(exitSpy).toHaveBeenCalledWith(1);
 
       consoleSpy.mockRestore();
@@ -135,13 +142,18 @@ describe('CLI Helpers Advanced', () => {
     });
 
     it('should handle string error message', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
         throw new Error('process.exit called');
       });
 
       expect(() => handleCLIError('string error', 'test-command')).toThrow();
-      expect(consoleSpy).toHaveBeenCalledWith('❌ test-command failed:', 'string error');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '❌ test-command failed:',
+        'string error'
+      );
 
       consoleSpy.mockRestore();
       exitSpy.mockRestore();
@@ -189,55 +201,109 @@ describe('CLI Helpers Advanced', () => {
 
   describe('getSeverityColor', () => {
     it('should return red for critical', () => {
-      const mockChalk = { red: vi.fn((s) => s), yellow: vi.fn(), green: vi.fn(), blue: vi.fn(), white: vi.fn() };
+      const mockChalk = {
+        red: vi.fn((s) => s),
+        yellow: vi.fn(),
+        green: vi.fn(),
+        blue: vi.fn(),
+        white: vi.fn(),
+      };
       const result = getSeverityColor('critical', mockChalk);
       expect(result).toBe(mockChalk.red);
     });
 
     it('should return red for high-risk', () => {
-      const mockChalk = { red: vi.fn((s) => s), yellow: vi.fn(), green: vi.fn(), blue: vi.fn(), white: vi.fn() };
+      const mockChalk = {
+        red: vi.fn((s) => s),
+        yellow: vi.fn(),
+        green: vi.fn(),
+        blue: vi.fn(),
+        white: vi.fn(),
+      };
       const result = getSeverityColor('high-risk', mockChalk);
       expect(result).toBe(mockChalk.red);
     });
 
     it('should return red for blind-risk', () => {
-      const mockChalk = { red: vi.fn((s) => s), yellow: vi.fn(), green: vi.fn(), blue: vi.fn(), white: vi.fn() };
+      const mockChalk = {
+        red: vi.fn((s) => s),
+        yellow: vi.fn(),
+        green: vi.fn(),
+        blue: vi.fn(),
+        white: vi.fn(),
+      };
       const result = getSeverityColor('blind-risk', mockChalk);
       expect(result).toBe(mockChalk.red);
     });
 
     it('should return yellow for major', () => {
-      const mockChalk = { red: vi.fn(), yellow: vi.fn((s) => s), green: vi.fn(), blue: vi.fn(), white: vi.fn() };
+      const mockChalk = {
+        red: vi.fn(),
+        yellow: vi.fn((s) => s),
+        green: vi.fn(),
+        blue: vi.fn(),
+        white: vi.fn(),
+      };
       const result = getSeverityColor('major', mockChalk);
       expect(result).toBe(mockChalk.yellow);
     });
 
     it('should return yellow for moderate-risk', () => {
-      const mockChalk = { red: vi.fn(), yellow: vi.fn((s) => s), green: vi.fn(), blue: vi.fn(), white: vi.fn() };
+      const mockChalk = {
+        red: vi.fn(),
+        yellow: vi.fn((s) => s),
+        green: vi.fn(),
+        blue: vi.fn(),
+        white: vi.fn(),
+      };
       const result = getSeverityColor('moderate-risk', mockChalk);
       expect(result).toBe(mockChalk.yellow);
     });
 
     it('should return green for minor', () => {
-      const mockChalk = { red: vi.fn(), yellow: vi.fn(), green: vi.fn((s) => s), blue: vi.fn(), white: vi.fn() };
+      const mockChalk = {
+        red: vi.fn(),
+        yellow: vi.fn(),
+        green: vi.fn((s) => s),
+        blue: vi.fn(),
+        white: vi.fn(),
+      };
       const result = getSeverityColor('minor', mockChalk);
       expect(result).toBe(mockChalk.green);
     });
 
     it('should return green for safe', () => {
-      const mockChalk = { red: vi.fn(), yellow: vi.fn(), green: vi.fn((s) => s), blue: vi.fn(), white: vi.fn() };
+      const mockChalk = {
+        red: vi.fn(),
+        yellow: vi.fn(),
+        green: vi.fn((s) => s),
+        blue: vi.fn(),
+        white: vi.fn(),
+      };
       const result = getSeverityColor('safe', mockChalk);
       expect(result).toBe(mockChalk.green);
     });
 
     it('should return blue for info', () => {
-      const mockChalk = { red: vi.fn(), yellow: vi.fn(), green: vi.fn(), blue: vi.fn((s) => s), white: vi.fn() };
+      const mockChalk = {
+        red: vi.fn(),
+        yellow: vi.fn(),
+        green: vi.fn(),
+        blue: vi.fn((s) => s),
+        white: vi.fn(),
+      };
       const result = getSeverityColor('info', mockChalk);
       expect(result).toBe(mockChalk.blue);
     });
 
     it('should return white for unknown severity', () => {
-      const mockChalk = { red: vi.fn(), yellow: vi.fn(), green: vi.fn(), blue: vi.fn(), white: vi.fn((s) => s) };
+      const mockChalk = {
+        red: vi.fn(),
+        yellow: vi.fn(),
+        green: vi.fn(),
+        blue: vi.fn(),
+        white: vi.fn((s) => s),
+      };
       const result = getSeverityColor('unknown', mockChalk);
       expect(result).toBe(mockChalk.white);
     });
@@ -393,7 +459,7 @@ describe('CLI Helpers Advanced', () => {
       // Create files with different names/numbers - sort is by mtime, not name
       writeFileSync(join(reportDir, '.aiready', 'aiready-report-1.json'), '{}');
       writeFileSync(join(reportDir, '.aiready', 'aiready-report-2.json'), '{}');
-      
+
       const result = findLatestReport(reportDir);
       // The function sorts by mtime, so either file could be returned
       expect(result).toMatch(/aiready-report-\d+\.json$/);
@@ -404,7 +470,7 @@ describe('CLI Helpers Advanced', () => {
       mkdirSync(join(reportDir, '.aiready'), { recursive: true });
       writeFileSync(join(reportDir, '.aiready', 'aiready-scan-1.json'), '{}');
       writeFileSync(join(reportDir, '.aiready', 'aiready-scan-2.json'), '{}');
-      
+
       const result = findLatestReport(reportDir);
       expect(result).toContain('aiready-scan-');
     });
@@ -412,7 +478,10 @@ describe('CLI Helpers Advanced', () => {
 
   describe('findLatestScanReport', () => {
     it('should return null if directory does not exist', () => {
-      const result = findLatestScanReport(join(tmpDir, 'nonexistent'), 'report-');
+      const result = findLatestScanReport(
+        join(tmpDir, 'nonexistent'),
+        'report-'
+      );
       expect(result).toBeNull();
     });
 
@@ -429,7 +498,7 @@ describe('CLI Helpers Advanced', () => {
       writeFileSync(join(reportDir, 'report-1.json'), '{}');
       writeFileSync(join(reportDir, 'report-2.json'), '{}');
       writeFileSync(join(reportDir, 'report-10.json'), '{}');
-      
+
       const result = findLatestScanReport(reportDir, 'report-');
       expect(result).toContain('report-10.json');
     });

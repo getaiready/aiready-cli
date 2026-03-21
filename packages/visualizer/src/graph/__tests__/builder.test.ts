@@ -234,12 +234,16 @@ describe('GraphBuilder', () => {
       };
 
       const graph = GraphBuilder.buildFromReport(report, '/root');
-      
-      const criticalNode = graph.nodes.find((n) => n.id.includes('critical.ts'));
+
+      const criticalNode = graph.nodes.find((n) =>
+        n.id.includes('critical.ts')
+      );
       const majorNode = graph.nodes.find((n) => n.id.includes('major.ts'));
       const minorNode = graph.nodes.find((n) => n.id.includes('minor.ts'));
       const infoNode = graph.nodes.find((n) => n.id.includes('info.ts'));
-      const noSevNode = graph.nodes.find((n) => n.id.includes('no-severity.ts'));
+      const noSevNode = graph.nodes.find((n) =>
+        n.id.includes('no-severity.ts')
+      );
 
       expect(criticalNode?.color).toBe('#ff4d4f'); // red
       expect(majorNode?.color).toBe('#ff9900'); // orange
