@@ -24,26 +24,12 @@ import {
   mapToUnifiedReport,
 } from './report-formatter';
 import { uploadAction } from './upload';
-
-interface ScanOptions {
-  tools?: string;
-  profile?: string;
-  compareTo?: string;
-  include?: string;
-  exclude?: string;
-  output?: string;
-  outputFile?: string;
-  score?: boolean;
-  noScore?: boolean;
-  weights?: string;
-  threshold?: string;
-  ci?: boolean;
-  failOn?: string;
-  model?: string;
-  apiKey?: string;
-  upload?: boolean;
-  server?: string;
-}
+import {
+  type ScanOptions,
+  getProfileTools,
+  getDefaultTools,
+  createProgressCallback,
+} from './scan-helpers';
 
 /**
  * CLI action handler for the "scan" command.
@@ -87,55 +73,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
       ? options.tools.split(',').map((t) => t.trim())
       : undefined;
     if (options.profile) {
-      switch (options.profile.toLowerCase()) {
-        case 'agentic':
-          profileTools = [
-            ToolName.AiSignalClarity,
-            ToolName.AgentGrounding,
-            ToolName.TestabilityIndex,
-          ];
-          break;
-        case 'cost':
-          profileTools = [ToolName.PatternDetect, ToolName.ContextAnalyzer];
-          break;
-        case 'logic':
-          profileTools = [
-            ToolName.TestabilityIndex,
-            ToolName.NamingConsistency,
-            ToolName.ContextAnalyzer,
-            ToolName.PatternDetect,
-            ToolName.ChangeAmplification,
-          ];
-          break;
-        case 'ui':
-          profileTools = [
-            ToolName.NamingConsistency,
-            ToolName.ContextAnalyzer,
-            ToolName.PatternDetect,
-            ToolName.DocDrift,
-            ToolName.AiSignalClarity,
-          ];
-          break;
-        case 'security':
-          profileTools = [
-            ToolName.NamingConsistency,
-            ToolName.TestabilityIndex,
-          ];
-          break;
-        case 'onboarding':
-          profileTools = [
-            ToolName.ContextAnalyzer,
-            ToolName.NamingConsistency,
-            ToolName.AgentGrounding,
-          ];
-          break;
-        default:
-          console.log(
-            chalk.yellow(
-              `\n⚠️  Unknown profile '${options.profile}'. Using defaults.`
-            )
-          );
-      }
+      profileTools = getProfileTools(options.profile);
     }
 
     const cliOverrides: any = {
@@ -177,28 +115,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
     );
 
     // Dynamic progress callback
-    const progressCallback = (event: any) => {
-      // Handle progress messages
-      if (event.message) {
-        process.stdout.write(`\r\x1b[K   [${event.tool}] ${event.message}`);
-        return;
-      }
-
-      // Handle tool completion
-      process.stdout.write('\r\x1b[K'); // Clear the progress line
-      console.log(chalk.cyan(`--- ${event.tool.toUpperCase()} RESULTS ---`));
-      const res = event.data;
-      if (res && res.summary) {
-        if (res.summary.totalIssues !== undefined)
-          console.log(`  Issues found: ${chalk.bold(res.summary.totalIssues)}`);
-        if (res.summary.score !== undefined)
-          console.log(`  Tool Score: ${chalk.bold(res.summary.score)}/100`);
-        if (res.summary.totalFiles !== undefined)
-          console.log(
-            `  Files analyzed: ${chalk.bold(res.summary.totalFiles)}`
-          );
-      }
-    };
+    const progressCallback = createProgressCallback();
 
     // Determine scoring profile for project-type-aware weighting
     const scoringProfile =
