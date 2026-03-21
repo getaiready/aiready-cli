@@ -292,7 +292,7 @@ export async function visualizeAction(
   }
 }
 
-export const visualizeHelpText = `
+export const VISUALIZE_HELP_TEXT = `
 EXAMPLES:
   $ aiready visualize .  # Auto-detects latest report, generates HTML
   $ aiready visualize . --report .aiready/aiready-report-20260217-143022.json
@@ -310,7 +310,7 @@ NOTES:
     When --dev is not available, it falls back to static HTML generation.
 `;
 
-export const visualiseHelpText = `
+export const VISUALISE_HELP_TEXT = `
 EXAMPLES:
   $ aiready visualise .  # Auto-detects latest report
   $ aiready visualise . --report .aiready/aiready-report-20260217-143022.json

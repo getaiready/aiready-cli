@@ -101,14 +101,20 @@ export function createProgressCallback() {
     // Handle tool completion
     process.stdout.write('\r\x1b[K'); // Clear the progress line
     console.log(chalk.cyan(`--- ${event.tool.toUpperCase()} RESULTS ---`));
-    const res = event.data;
-    if (res && res.summary) {
-      if (res.summary.totalIssues !== undefined)
-        console.log(`  Issues found: ${chalk.bold(res.summary.totalIssues)}`);
-      if (res.summary.score !== undefined)
-        console.log(`  Tool Score: ${chalk.bold(res.summary.score)}/100`);
-      if (res.summary.totalFiles !== undefined)
-        console.log(`  Files analyzed: ${chalk.bold(res.summary.totalFiles)}`);
+    const toolResult = event.data;
+    if (toolResult && toolResult.summary) {
+      if (toolResult.summary.totalIssues !== undefined)
+        console.log(
+          `  Issues found: ${chalk.bold(toolResult.summary.totalIssues)}`
+        );
+      if (toolResult.summary.score !== undefined)
+        console.log(
+          `  Tool Score: ${chalk.bold(toolResult.summary.score)}/100`
+        );
+      if (toolResult.summary.totalFiles !== undefined)
+        console.log(
+          `  Files analyzed: ${chalk.bold(toolResult.summary.totalFiles)}`
+        );
     }
   };
 }

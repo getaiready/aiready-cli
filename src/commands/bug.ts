@@ -4,6 +4,8 @@ import { execSync } from 'child_process';
 
 /**
  * Handle bug and feedback reporting
+ * @param message - The bug or feedback message (optional). If provided, prepares a pre-filled issue.
+ * @param options - Command options including type (bug, feature, metric) and submit (boolean to submit via gh CLI)
  */
 export async function bugAction(message: string | undefined, options: any) {
   const repoUrl = 'https://github.com/caopengau/aiready-cli';
@@ -90,7 +92,7 @@ Type: ${type}
   );
 }
 
-export const bugHelpText = `
+export const BUG_HELP_TEXT = `
 EXAMPLES:
   $ aiready bug                                      # Show general links
   $ aiready bug "Naming check is too slow"           # Prepare a pre-filled bug report

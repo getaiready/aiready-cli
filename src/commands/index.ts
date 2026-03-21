@@ -2,19 +2,19 @@
  * Command exports for CLI
  */
 
-export { scanAction, scanHelpText } from './scan';
+export { scanAction, SCAN_HELP_TEXT } from './scan';
 export { initAction } from './init';
-export { patternsAction, patternsHelpText } from './patterns';
+export { patternsAction, PATTERNS_HELP_TEXT } from './patterns';
 export { contextAction } from './context';
 export { consistencyAction } from './consistency';
 export {
   visualizeAction,
-  visualizeHelpText,
-  visualiseHelpText,
+  VISUALIZE_HELP_TEXT,
+  VISUALISE_HELP_TEXT,
 } from './visualize';
 export { aiSignalClarityAction } from './ai-signal-clarity';
 export { agentGroundingAction } from './agent-grounding';
 export { testabilityAction } from './testability';
 export { changeAmplificationAction } from './change-amplification';
-export { uploadAction, uploadHelpText } from './upload';
-export { bugAction, bugHelpText } from './bug';
+export { uploadAction, UPLOAD_HELP_TEXT } from './upload';
+export { bugAction, BUG_HELP_TEXT } from './bug';

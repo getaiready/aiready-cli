@@ -346,4 +346,4 @@ export async function scanAction(directory: string, options: ScanOptions) {
   }
 }
 
-export const scanHelpText = `...`;
+export const SCAN_HELP_TEXT = `...`;
