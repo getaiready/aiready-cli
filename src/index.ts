@@ -13,16 +13,8 @@ import type {
   ScoringResult,
 } from '@aiready/core';
 
-// Pre-import all tool providers to ensure they are registered by default
-import '@aiready/pattern-detect';
-import '@aiready/context-analyzer';
-import '@aiready/consistency';
-import '@aiready/ai-signal-clarity';
-import '@aiready/agent-grounding';
-import '@aiready/testability';
-import '@aiready/doc-drift';
-import '@aiready/deps';
-import '@aiready/change-amplification';
+// Tools will be loaded dynamically on-demand to minimize initial context budget
+// The analyzeUnified function handles dynamic imports using TOOL_PACKAGE_MAP
 
 export type { ToolScoringOutput, ScoringResult };
 

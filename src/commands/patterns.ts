@@ -11,6 +11,8 @@ import {
   getElapsedTime,
   resolveOutputPath,
   formatToolScore,
+  printTerminalHeader,
+  getTerminalDivider,
 } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
 import { getReportTimestamp } from '../utils/helpers';
@@ -123,13 +125,7 @@ export async function patternsAction(
       );
     } else {
       // Console output - format to match standalone CLI
-      const terminalWidth = process.stdout.columns || 80;
-      const dividerWidth = Math.min(60, terminalWidth - 2);
-      const divider = '━'.repeat(dividerWidth);
-
-      console.log(chalk.cyan(divider));
-      console.log(chalk.bold.white('  PATTERN ANALYSIS SUMMARY'));
-      console.log(chalk.cyan(divider) + '\n');
+      printTerminalHeader('PATTERN ANALYSIS SUMMARY');
 
       console.log(
         chalk.white(`📁 Files analyzed: ${chalk.bold(results.length)}`)
@@ -154,9 +150,9 @@ export async function patternsAction(
         .sort(([, a], [, b]) => (b as number) - (a as number));
 
       if (sortedTypes.length > 0) {
-        console.log(chalk.cyan('\n' + divider));
+        console.log('\n' + getTerminalDivider());
         console.log(chalk.bold.white('  PATTERNS BY TYPE'));
-        console.log(chalk.cyan(divider) + '\n');
+        console.log(getTerminalDivider() + '\n');
         sortedTypes.forEach(([type, count]) => {
           console.log(`  ${chalk.white(type.padEnd(15))} ${chalk.bold(count)}`);
         });
@@ -164,9 +160,9 @@ export async function patternsAction(
 
       // Show top duplicates
       if (summary.totalPatterns > 0 && duplicates.length > 0) {
-        console.log(chalk.cyan('\n' + divider));
+        console.log('\n' + getTerminalDivider());
         console.log(chalk.bold.white('  TOP DUPLICATE PATTERNS'));
-        console.log(chalk.cyan(divider) + '\n');
+        console.log(getTerminalDivider() + '\n');
 
         // Sort by similarity and take top 10
         const topDuplicates = [...duplicates]
@@ -202,9 +198,9 @@ export async function patternsAction(
 
       // Display score if calculated
       if (patternScore) {
-        console.log(chalk.cyan(divider));
+        console.log(getTerminalDivider());
         console.log(chalk.bold.white('  AI READINESS SCORE (Patterns)'));
-        console.log(chalk.cyan(divider) + '\n');
+        console.log(getTerminalDivider() + '\n');
         console.log(formatToolScore(patternScore));
         console.log();
       }
