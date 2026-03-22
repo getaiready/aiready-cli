@@ -8,18 +8,8 @@ import chalk from 'chalk';
 import { loadConfig, mergeConfigWithDefaults } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
 
-// Re-export findLatestReport from core for deduplication with visualizer
-export { findLatestReport } from '@aiready/core';
-
-/**
- * Generate timestamp for report filenames (YYYYMMDD-HHMMSS)
- * Provides better granularity than date-only filenames
- */
-export function getReportTimestamp(): string {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-}
+// Re-export helpers from core for deduplication
+export { findLatestReport, getReportTimestamp } from '@aiready/core';
 
 /**
  * Warn if graph caps may be exceeded for visualization.

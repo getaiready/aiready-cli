@@ -3,19 +3,18 @@
  */
 
 import chalk from 'chalk';
-import { resolve as resolvePath } from 'path';
 import {
-  loadMergedConfig,
-  handleJSONOutput,
   handleCLIError,
   getElapsedTime,
-  resolveOutputPath,
   formatToolScore,
   printTerminalHeader,
   getTerminalDivider,
+  prepareActionConfig,
+  resolveOutputFormat,
+  formatStandardReport,
+  handleStandardJSONOutput,
 } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
-import { getReportTimestamp } from '../utils/helpers';
 
 interface PatternsOptions {
   similarity?: string;
@@ -37,7 +36,6 @@ export async function patternsAction(
   console.log(chalk.blue('🔍 Analyzing patterns...\n'));
 
   const startTime = Date.now();
-  const resolvedDir = resolvePath(process.cwd(), directory ?? '.');
 
   try {
     // Determine if smart defaults should be used
@@ -79,8 +77,8 @@ export async function patternsAction(
       cliOptions.minSharedTokens = parseInt(options.minSharedTokens);
     }
 
-    const finalOptions = await loadMergedConfig(
-      resolvedDir,
+    const { resolvedDir, finalOptions } = await prepareActionConfig(
+      directory,
       defaults,
       cliOptions
     );
@@ -101,28 +99,24 @@ export async function patternsAction(
       patternScore = calculatePatternScore(duplicates, results.length);
     }
 
-    const outputFormat =
-      options.output ?? finalOptions.output?.format ?? 'console';
-    const userOutputFile = options.outputFile ?? finalOptions.output?.file;
+    const { format: outputFormat, file: userOutputFile } = resolveOutputFormat(
+      options,
+      finalOptions
+    );
 
     if (outputFormat === 'json') {
-      const outputData = {
+      const outputData = formatStandardReport({
         results,
-        summary: { ...summary, executionTime: parseFloat(elapsedTime) },
-        ...(patternScore && { scoring: patternScore }),
-      };
+        summary,
+        elapsedTime,
+        score: patternScore,
+      });
 
-      const outputPath = resolveOutputPath(
-        userOutputFile,
-        `aiready-report-${getReportTimestamp()}.json`,
-        resolvedDir
-      );
-
-      handleJSONOutput(
+      handleStandardJSONOutput({
         outputData,
-        outputPath,
-        `✅ Results saved to ${outputPath}`
-      );
+        outputFile: userOutputFile,
+        resolvedDir,
+      });
     } else {
       // Console output - format to match standalone CLI
       printTerminalHeader('PATTERN ANALYSIS SUMMARY');

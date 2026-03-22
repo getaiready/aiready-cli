@@ -9,10 +9,6 @@ import {
 
 /**
  * Generate a visual progress bar for a score.
- *
- * @param score - The score value (0-100)
- * @param width - The width of the progress bar
- * @returns A colored progress bar string
  */
 function generateProgressBar(score: number, width: number = 20): string {
   const filled = Math.round((score / 100) * width);
@@ -29,9 +25,6 @@ function generateProgressBar(score: number, width: number = 20): string {
 
 /**
  * Count issues by severity level from all tool results.
- *
- * @param results - The unified results object
- * @returns Object with counts for each severity level
  */
 function countIssuesBySeverity(results: any): {
   critical: number;
@@ -65,10 +58,6 @@ function countIssuesBySeverity(results: any): {
 
 /**
  * Get top files with most issues.
- *
- * @param results - The unified results object
- * @param limit - Maximum number of files to return
- * @returns Array of files with issue counts
  */
 function getTopFilesWithIssues(
   results: any,
@@ -98,22 +87,15 @@ function getTopFilesWithIssues(
 
 /**
  * Handle console output for the scan results.
- *
- * @param results - The combined results from all tools.
- * @param startTime - The timestamp when the scan started.
  */
 export function printScanSummary(results: any, startTime: number) {
-  // Count issues by severity
   const severity = countIssuesBySeverity(results);
   const totalIssues = severity.critical + severity.major + severity.minor;
-
-  // Get top files with issues
   const topFiles = getTopFilesWithIssues(results);
 
   console.log(chalk.cyan('\n=== AIReady Run Summary ==='));
   console.log(`  Total issues: ${chalk.bold(String(totalIssues))}`);
 
-  // Severity breakdown
   if (totalIssues > 0) {
     console.log(chalk.dim('  Severity breakdown:'));
     if (severity.critical > 0) {
@@ -133,7 +115,6 @@ export function printScanSummary(results: any, startTime: number) {
     }
   }
 
-  // Top files with issues
   if (topFiles.length > 0) {
     console.log(chalk.dim('\n  Top files with issues:'));
     topFiles.forEach((item) => {
@@ -150,9 +131,6 @@ export function printScanSummary(results: any, startTime: number) {
 
 /**
  * Print business impact analysis based on ROI and budget metrics.
- *
- * @param roi - Calculated Return on Investment metrics.
- * @param unifiedBudget - Consolidated context budget metrics.
  */
 export function printBusinessImpact(roi: any, unifiedBudget: any) {
   console.log(chalk.bold('\n💰 Business Impact Analysis (Monthly)'));
@@ -172,9 +150,6 @@ export function printBusinessImpact(roi: any, unifiedBudget: any) {
 
 /**
  * Print detailed scoring breakdown by tool.
- *
- * @param scoringResult - The overall scoring result.
- * @param scoringProfile - The name of the scoring profile used.
  */
 export function printScoring(
   scoringResult: ScoringResult,
@@ -195,38 +170,40 @@ export function printScoring(
       );
     });
 
-    // Top Actionable Recommendations - increased from 3 to 5
-    const allRecs = scoringResult.breakdown
-      .flatMap((t: any) =>
-        (t.recommendations ?? []).map((r: any) => ({ ...r, tool: t.toolName }))
-      )
-      .sort((a: any, b: any) => b.estimatedImpact - a.estimatedImpact)
-      .slice(0, 5); // Increased from 3 to 5
+    printTopRecommendations(scoringResult.breakdown);
+  }
+}
 
-    if (allRecs.length > 0) {
-      console.log(chalk.bold('\n🎯 Top Actionable Recommendations:'));
-      allRecs.forEach((rec: any, i: number) => {
-        const priorityIcon =
-          rec.priority === 'high'
-            ? '🔴'
-            : rec.priority === 'medium'
-              ? '🟡'
-              : '🔵';
-        console.log(`  ${i + 1}. ${priorityIcon} ${chalk.bold(rec.action)}`);
-        console.log(
-          `     Impact: ${chalk.green(`+${rec.estimatedImpact} points`)} to ${rec.tool}`
-        );
-      });
-    }
+/**
+ * Extracts and prints the top actionable recommendations across all tools.
+ */
+function printTopRecommendations(breakdown: any[]) {
+  const allRecs = breakdown
+    .flatMap((t: any) =>
+      (t.recommendations ?? []).map((r: any) => ({ ...r, tool: t.toolName }))
+    )
+    .sort((a: any, b: any) => b.estimatedImpact - a.estimatedImpact)
+    .slice(0, 5);
+
+  if (allRecs.length > 0) {
+    console.log(chalk.bold('\n🎯 Top Actionable Recommendations:'));
+    allRecs.forEach((rec: any, i: number) => {
+      const priorityIcon =
+        rec.priority === 'high'
+          ? '🔴'
+          : rec.priority === 'medium'
+            ? '🟡'
+            : '🔵';
+      console.log(`  ${i + 1}. ${priorityIcon} ${chalk.bold(rec.action)}`);
+      console.log(
+        `     Impact: ${chalk.green(`+${rec.estimatedImpact} points`)} to ${rec.tool}`
+      );
+    });
   }
 }
 
 /**
  * Normalize and map tool-specific results to a unified report structure.
- *
- * @param res - Raw unified results object.
- * @param scoring - Optional scoring result to include.
- * @returns Enhanced report with totals and scoring.
  */
 export function mapToUnifiedReport(
   res: any,

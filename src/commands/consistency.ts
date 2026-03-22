@@ -4,14 +4,15 @@
 
 import chalk from 'chalk';
 import { writeFileSync } from 'fs';
-import { resolve as resolvePath } from 'path';
 import {
-  loadMergedConfig,
-  handleJSONOutput,
   handleCLIError,
   getElapsedTime,
   resolveOutputPath,
   formatToolScore,
+  prepareActionConfig,
+  resolveOutputFormat,
+  formatStandardReport,
+  handleStandardJSONOutput,
 } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
 import { getReportTimestamp, generateMarkdownReport } from '../utils/helpers';
@@ -34,7 +35,6 @@ export async function consistencyAction(
   console.log(chalk.blue('🔍 Analyzing consistency...\n'));
 
   const startTime = Date.now();
-  const resolvedDir = resolvePath(process.cwd(), directory ?? '.');
 
   try {
     // Define defaults
@@ -51,13 +51,17 @@ export async function consistencyAction(
     };
 
     // Load and merge config with CLI options
-    const finalOptions = await loadMergedConfig(resolvedDir, defaults, {
-      checkNaming: options.naming !== false,
-      checkPatterns: options.patterns !== false,
-      minSeverity: options.minSeverity,
-      include: options.include?.split(','),
-      exclude: options.exclude?.split(','),
-    });
+    const { resolvedDir, finalOptions } = await prepareActionConfig(
+      directory,
+      defaults,
+      {
+        checkNaming: options.naming !== false,
+        checkPatterns: options.patterns !== false,
+        minSeverity: options.minSeverity,
+        include: options.include?.split(','),
+        exclude: options.exclude?.split(','),
+      }
+    );
 
     const { analyzeConsistency, calculateConsistencyScore } =
       await import('@aiready/consistency');
@@ -76,31 +80,24 @@ export async function consistencyAction(
       );
     }
 
-    const outputFormat =
-      options.output ?? finalOptions.output?.format ?? 'console';
-    const userOutputFile = options.outputFile ?? finalOptions.output?.file;
+    const { format: outputFormat, file: userOutputFile } = resolveOutputFormat(
+      options,
+      finalOptions
+    );
 
     if (outputFormat === 'json') {
-      const outputData = {
-        ...report,
-        summary: {
-          ...report.summary,
-          executionTime: parseFloat(elapsedTime),
-        },
-        ...(consistencyScore && { scoring: consistencyScore }),
-      };
+      const outputData = formatStandardReport({
+        report,
+        summary: report.summary,
+        elapsedTime,
+        score: consistencyScore,
+      });
 
-      const outputPath = resolveOutputPath(
-        userOutputFile,
-        `aiready-report-${getReportTimestamp()}.json`,
-        resolvedDir
-      );
-
-      handleJSONOutput(
+      handleStandardJSONOutput({
         outputData,
-        outputPath,
-        `✅ Results saved to ${outputPath}`
-      );
+        outputFile: userOutputFile,
+        resolvedDir,
+      });
     } else if (outputFormat === 'markdown') {
       // Markdown output
       const markdown = generateMarkdownReport(report, elapsedTime);

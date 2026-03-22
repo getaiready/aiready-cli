@@ -3,17 +3,16 @@
  */
 
 import chalk from 'chalk';
-import { resolve as resolvePath } from 'path';
 import {
-  loadMergedConfig,
-  handleJSONOutput,
   handleCLIError,
   getElapsedTime,
-  resolveOutputPath,
   formatToolScore,
+  prepareActionConfig,
+  resolveOutputFormat,
+  formatStandardReport,
+  handleStandardJSONOutput,
 } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
-import { getReportTimestamp } from '../utils/helpers';
 
 interface ContextOptions {
   maxDepth?: string;
@@ -32,7 +31,6 @@ export async function contextAction(
   console.log(chalk.blue('🧠 Analyzing context costs...\n'));
 
   const startTime = Date.now();
-  const resolvedDir = resolvePath(process.cwd(), directory ?? '.');
 
   try {
     // Define defaults
@@ -48,14 +46,15 @@ export async function contextAction(
     };
 
     // Load and merge config with CLI options
-    const baseOptions = await loadMergedConfig(resolvedDir, defaults, {
-      maxDepth: options.maxDepth ? parseInt(options.maxDepth) : undefined,
-      maxContextBudget: options.maxContext
-        ? parseInt(options.maxContext)
-        : undefined,
-      include: options.include?.split(','),
-      exclude: options.exclude?.split(','),
-    });
+    const { resolvedDir, finalOptions: baseOptions } =
+      await prepareActionConfig(directory, defaults, {
+        maxDepth: options.maxDepth ? parseInt(options.maxDepth) : undefined,
+        maxContextBudget: options.maxContext
+          ? parseInt(options.maxContext)
+          : undefined,
+        include: options.include?.split(','),
+        exclude: options.exclude?.split(','),
+      });
 
     // Apply smart defaults for context analysis (always for individual context command)
     let finalOptions: any = { ...baseOptions };
@@ -93,28 +92,24 @@ export async function contextAction(
       contextScore = calculateContextScore(summary as any);
     }
 
-    const outputFormat =
-      options.output ?? finalOptions.output?.format ?? 'console';
-    const userOutputFile = options.outputFile ?? finalOptions.output?.file;
+    const { format: outputFormat, file: userOutputFile } = resolveOutputFormat(
+      options,
+      finalOptions
+    );
 
     if (outputFormat === 'json') {
-      const outputData = {
+      const outputData = formatStandardReport({
         results,
-        summary: { ...summary, executionTime: parseFloat(elapsedTime) },
-        ...(contextScore && { scoring: contextScore }),
-      };
+        summary,
+        elapsedTime,
+        score: contextScore,
+      });
 
-      const outputPath = resolveOutputPath(
-        userOutputFile,
-        `aiready-report-${getReportTimestamp()}.json`,
-        resolvedDir
-      );
-
-      handleJSONOutput(
+      handleStandardJSONOutput({
         outputData,
-        outputPath,
-        `✅ Results saved to ${outputPath}`
-      );
+        outputFile: userOutputFile,
+        resolvedDir,
+      });
     } else {
       // Console output - format the results nicely
       const terminalWidth = process.stdout.columns ?? 80;
