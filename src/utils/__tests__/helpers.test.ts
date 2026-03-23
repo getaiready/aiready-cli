@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { findLatestReport, getReportTimestamp, truncateArray } from '..';
+import { getReportTimestamp, truncateArray } from '..';
 import {
   generateMarkdownReport,
   buildToolScoringOutput,

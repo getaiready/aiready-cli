@@ -13,12 +13,7 @@ import {
   emitIssuesAsAnnotations,
 } from '@aiready/core';
 import { getReportTimestamp, warnIfGraphCapExceeded } from '../utils';
-import {
-  mapToUnifiedReport,
-  printScanSummary,
-  printBusinessImpact,
-  printScoring,
-} from './report-formatter';
+import { mapToUnifiedReport } from './report-formatter';
 import { uploadAction } from './upload';
 import { type ScanOptions } from './scan-helpers';
 import { resolveScanConfig } from './scan-config';
