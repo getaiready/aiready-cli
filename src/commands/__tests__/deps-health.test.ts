@@ -15,6 +15,21 @@ vi.mock('@aiready/core', () => ({
   mergeConfigWithDefaults: vi
     .fn()
     .mockImplementation((c, d) => ({ ...d, ...c })),
+  ToolName: {
+    PatternDetect: 'pattern-detect',
+    ContextAnalyzer: 'context-analyzer',
+    NamingConsistency: 'naming-consistency',
+    AiSignalClarity: 'ai-signal-clarity',
+    AgentGrounding: 'agent-grounding',
+    TestabilityIndex: 'testability-index',
+    DocDrift: 'doc-drift',
+    DependencyHealth: 'dependency-health',
+    ChangeAmplification: 'change-amplification',
+    CognitiveLoad: 'cognitive-load',
+    PatternEntropy: 'pattern-entropy',
+    ConceptCohesion: 'concept-cohesion',
+    SemanticDistance: 'semantic-distance',
+  },
 }));
 
 describe('Deps Health CLI Action', () => {
