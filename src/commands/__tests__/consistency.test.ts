@@ -48,10 +48,19 @@ vi.mock('@aiready/consistency', () => ({
     },
     recommendations: ['Fix names'],
   }),
-  calculateConsistencyScore: vi.fn().mockReturnValue({ score: 80 }),
+  calculateConsistencyScore: vi.fn().mockReturnValue({
+    score: 80,
+    toolName: 'Consistency',
+    rawMetrics: {},
+    factors: [],
+    recommendations: [],
+  }),
 }));
 
-import { analyzeConsistency } from '@aiready/consistency';
+import {
+  analyzeConsistency,
+  calculateConsistencyScore,
+} from '@aiready/consistency';
 
 describe('Consistency CLI Action', () => {
   let consoleSpy: any;
@@ -66,6 +75,13 @@ describe('Consistency CLI Action', () => {
     vi.mocked(core.resolveOutputFormat).mockReturnValue({
       format: 'console',
       file: undefined,
+    });
+    vi.mocked(calculateConsistencyScore).mockReturnValue({
+      score: 80,
+      toolName: 'Consistency',
+      rawMetrics: {},
+      factors: [],
+      recommendations: [],
     });
   });
 

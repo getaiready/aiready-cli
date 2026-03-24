@@ -14,6 +14,17 @@ vi.mock('@aiready/core', () => ({
   mergeConfigWithDefaults: vi
     .fn()
     .mockImplementation((c, d) => ({ ...d, ...c })),
+  handleCLIError: vi.fn(),
+  prepareActionConfig: vi.fn().mockResolvedValue({
+    resolvedDir: '.',
+    finalOptions: { output: { format: 'json', file: undefined } },
+  }),
+  resolveOutputFormat: vi
+    .fn()
+    .mockReturnValue({ format: 'json', file: undefined }),
+  formatStandardReport: vi.fn().mockReturnValue({ score: 75 }),
+  handleStandardJSONOutput: vi.fn(),
+  getElapsedTime: vi.fn().mockReturnValue('0.00'),
 }));
 
 describe('Agent Grounding CLI Action', () => {
