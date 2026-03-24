@@ -13,7 +13,21 @@ vi.mock('@aiready/core', async () => {
     getElapsedTime: vi.fn().mockReturnValue('1.0'),
     resolveOutputPath: vi.fn().mockReturnValue('report.json'),
     formatToolScore: vi.fn().mockReturnValue('Score: 80'),
-    resolveOutputFormat: vi.fn().mockReturnValue({ format: 'console' }),
+    resolveOutputFormat: vi
+      .fn()
+      .mockImplementation((opts: any, finalOpts: any) => {
+        // Return the actual format based on options
+        if (opts?.output === 'json' || finalOpts?.output?.format === 'json') {
+          return { format: 'json', file: undefined };
+        }
+        if (
+          opts?.output === 'markdown' ||
+          finalOpts?.output?.format === 'markdown'
+        ) {
+          return { format: 'markdown', file: undefined };
+        }
+        return { format: 'console', file: undefined };
+      }),
   };
 });
 
@@ -113,7 +127,28 @@ describe('Consistency CLI Action', () => {
   });
 
   it('calculates score if requested', async () => {
+    // For the score test, we need to ensure the options.score is preserved
+    // The mock for prepareActionConfig doesn't pass through the original options
+    // So we need to make sure the original options are accessible
+
+    // First, let's make sure the calculateConsistencyScore mock is set up
+    const calculateConsistencyScoreMock = vi.mocked(calculateConsistencyScore);
+    calculateConsistencyScoreMock.mockReturnValue({
+      score: 80,
+      toolName: 'Consistency',
+      rawMetrics: {},
+      factors: [],
+      recommendations: [],
+    });
+
+    // Now call the action with score: true
     await consistencyAction('.', { score: true });
+
+    // The test should pass if the score is calculated and printed
+    // We can check if calculateConsistencyScore was called
+    expect(calculateConsistencyScoreMock).toHaveBeenCalled();
+
+    // Also check if the AI Readiness Score was printed
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('AI Readiness Score')
     );
