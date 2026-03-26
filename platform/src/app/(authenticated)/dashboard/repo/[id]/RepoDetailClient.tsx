@@ -4,9 +4,8 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import PlatformShell from '@/components/PlatformShell';
 import { AlertCircleIcon, SettingsIcon } from '@/components/Icons';
-import type { Repository, Team, TeamMember } from '@/lib/db';
+import type { Repository } from '@/lib/db';
 import type { AnalysisData } from '@/lib/storage';
 import { ToolName, FRIENDLY_TOOL_NAMES } from '@aiready/core/client';
 import { RepoHeader } from './components/RepoHeader';
@@ -22,17 +21,9 @@ import { metrics as metricDefinitions } from '@/app/metrics/constants';
 
 interface Props {
   repo: Repository;
-  user: {
-    id: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-  };
-  teams: (TeamMember & { team: Team })[];
-  overallScore: number | null;
 }
 
-function RepoDetailContent({ repo, user, teams, overallScore }: Props) {
+function RepoDetailContent({ repo }: Props) {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category');
 

@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import { redirect, notFound } from 'next/navigation';
-import { getRepository, listUserTeams, listUserRepositories } from '@/lib/db';
+import { getRepository } from '@/lib/db';
 import RepoDetailClient from './RepoDetailClient';
 
 interface Props {
@@ -19,31 +19,5 @@ export default async function RepoDetailPage({ params }: Props) {
     notFound();
   }
 
-  const teams = await listUserTeams(session.user.id);
-  const userRepos = await listUserRepositories(session.user.id);
-
-  const reposWithScores = userRepos.filter(
-    (r) => r.aiScore !== null && r.aiScore !== undefined
-  );
-  const overallScore =
-    reposWithScores.length > 0
-      ? Math.round(
-          reposWithScores.reduce((sum, r) => sum + (r.aiScore || 0), 0) /
-            reposWithScores.length
-        )
-      : null;
-
-  return (
-    <RepoDetailClient
-      repo={repo}
-      user={{
-        id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
-        image: session.user.image,
-      }}
-      teams={teams}
-      overallScore={overallScore}
-    />
-  );
+  return <RepoDetailClient repo={repo} />;
 }

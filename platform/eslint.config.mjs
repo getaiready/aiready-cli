@@ -11,6 +11,8 @@ const eslintConfig = [
       'out/**',
       'build/**',
       'next-env.d.ts',
+      'sst-env.d.ts',
+      'monitor/sst-env.d.ts',
     ],
   },
   ...nextVitals,

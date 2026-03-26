@@ -22,7 +22,7 @@ This returns high-relevance file clusters based on AIReady's semantic index.
 AIReady provides programmatic fix instructions that agents can directly execute.
 
 1. `GET /api/agent/remediate?repoId={id}` returns a queue of "Quick Wins".
-2. Each suggestion includes a CLI command: `npx @aiready/cli fix --file {path} --strategy {strategy}`
+2. Each suggestion includes a CLI command: `npx @aiready/cli remediate --report {path} --tool {tool}`
 
 ## 🤝 Partner Specific Instructions
 

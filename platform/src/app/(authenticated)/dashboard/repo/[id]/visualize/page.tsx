@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import PlatformShell from '@/components/PlatformShell';
 import Visualizer from '@/components/Visualizer';
 import { GraphBuilder, GraphData } from '@/lib/graph-builder';
 import { toast } from 'sonner';
@@ -17,8 +16,6 @@ export default function VisualizePage({ params: paramsPromise }: Props) {
   const [data, setData] = useState<GraphData | null>(null);
   const [repo, setRepo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [teams, setTeams] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -40,19 +37,6 @@ export default function VisualizePage({ params: paramsPromise }: Props) {
         // Transform report to graph data
         const graphData = GraphBuilder.buildFromReport(result.analysis);
         setData(graphData);
-
-        const sessionRes = await fetch('/api/auth/session');
-        const session = await sessionRes.json();
-        if (session?.user) {
-          setUser(session.user);
-
-          // Fetch teams
-          const teamsRes = await fetch('/api/teams');
-          const teamsData = await teamsRes.json();
-          if (teamsRes.ok) {
-            setTeams(teamsData.teams || []);
-          }
-        }
       } catch (_err) {
         console.error('Error fetching visualization data:', _err);
         toast.error('An unexpected error occurred');

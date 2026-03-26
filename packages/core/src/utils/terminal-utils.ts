@@ -1,6 +1,4 @@
 import chalk from 'chalk';
-import { Severity } from '../types';
-import { getSeverityValue, getSeverityBadge } from './severity-utils';
 
 /**
  * Get a formatted terminal divider string based on current terminal width.

@@ -30,8 +30,8 @@ export function useDashboardData(
           }));
           setRepos(fetchedRepos.filter((r: any) => !deletedRepoIds.has(r.id)));
         }
-      } catch (err) {
-        console.error('Failed to fetch team repos:', err);
+      } catch (_err) {
+        console.error('Failed to fetch team repos:', _err);
       }
     },
     [deletedRepoIds]
@@ -126,8 +126,8 @@ export function useDashboardData(
             )
           );
         }
-      } catch (err) {
-        console.error('Polling error:', err);
+      } catch (_err) {
+        console.error('Polling error:', _err);
       }
     }, 5000);
 
@@ -220,7 +220,7 @@ export function useDashboardData(
           ) {
             lastAnalysis = result.analysis;
           }
-        } catch (err) {
+        } catch (_err) {
           failCount++;
           errors.push(`${file.name}: System error or invalid JSON`);
         }

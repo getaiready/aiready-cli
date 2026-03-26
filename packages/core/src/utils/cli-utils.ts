@@ -1,5 +1,3 @@
-import { getSafetyIcon } from './terminal-utils';
-
 export { getSafetyIcon } from './terminal-utils';
 
 /**

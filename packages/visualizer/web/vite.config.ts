@@ -1,10 +1,12 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type UserConfig } from 'vite';
 import { resolve } from 'path';
 import react from '@vitejs/plugin-react';
-import { existsSync } from 'fs';
-import tailwindcss from '@tailwindcss/vite';
+import { existsSync, readFileSync } from 'fs';
+import { createRequire } from 'module';
 
-export default defineConfig(async ({ command }) => {
+const require = createRequire(import.meta.url);
+
+export default defineConfig(({ command }): UserConfig => {
   const isDev = command === 'serve';
 
   // Resolve path to @aiready/components for alias
@@ -13,61 +15,57 @@ export default defineConfig(async ({ command }) => {
   if (!existsSync(componentsPath)) {
     // Fallback: try installed package
     try {
-      componentsPath = require.resolve('@aiready/components');
-      componentsPath = resolve(componentsPath, '..');
+      // Use synchronous resolve
+      componentsPath = resolve(
+        require.resolve('@aiready/components'),
+        '../../src'
+      );
     } catch (e) {
       // Use build dist as last resort
       componentsPath = resolve(__dirname, '../../components/dist');
     }
   }
 
-  const plugins: any[] = [react() /*, tailwindcss()*/];
-  // Dev-time middleware: if the CLI sets AIREADY_REPORT_PATH when spawning Vite,
-  // serve that file at /report-data.json so the client can fetch the report
-  // directly from the consumer working directory without copying into node_modules.
+  const plugins: any[] = [react()];
+
+  // Dev-time middleware
   const reportProxyPlugin = {
     name: 'aiready-report-proxy',
     configureServer(server: any) {
       const reportPath = process.env.AIREADY_REPORT_PATH;
       const visualizerConfigStr = process.env.AIREADY_VISUALIZER_CONFIG;
       if (!reportPath) return;
-      server.middlewares.use(async (req: any, res: any, next: any) => {
-        try {
-          const url = req.url || '';
-          if (
-            url === '/report-data.json' ||
-            url.startsWith('/report-data.json?')
-          ) {
-            const { promises: fsp } = await import('fs');
+
+      server.middlewares.use((req: any, res: any, next: any) => {
+        const url = req.url || '';
+        if (url === '/report-data.json' || url.startsWith('/report-data.json?')) {
+          try {
             if (!existsSync(reportPath)) {
               res.statusCode = 404;
               res.setHeader('Content-Type', 'text/plain; charset=utf-8');
               res.end('Report not found');
               return;
             }
-            const data = await fsp.readFile(reportPath, 'utf8');
+            const data = readFileSync(reportPath, 'utf8');
             const report = JSON.parse(data);
 
-            // Inject visualizer config from env if available
             if (visualizerConfigStr) {
               try {
                 const visualizerConfig = JSON.parse(visualizerConfigStr);
                 report.visualizerConfig = visualizerConfig;
-              } catch (e) {
-                // Silently ignore parse errors
-              }
+              } catch (e) {}
             }
 
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
             res.end(JSON.stringify(report));
             return;
+          } catch (e) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.end('Error reading report');
+            return;
           }
-        } catch (e) {
-          res.statusCode = 500;
-          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-          res.end('Error reading report');
-          return;
         }
         next();
       });
@@ -89,16 +87,14 @@ export default defineConfig(async ({ command }) => {
       },
     },
     server: {
-      // Use default port (5173); don't hardcode to avoid conflicts
       open: false,
     },
     resolve: {
-      alias: {
-        // during dev resolve to source for HMR; during build use the built dist
-        '@aiready/components': isDev
-          ? componentsPath
-          : resolve(__dirname, '../../components/dist/index.js'),
-      },
+      alias: isDev
+        ? {
+            '@aiready/components': componentsPath,
+          }
+        : ({} as Record<string, string>),
     },
   };
 });

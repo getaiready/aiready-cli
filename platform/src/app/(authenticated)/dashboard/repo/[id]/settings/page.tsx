@@ -1,7 +1,6 @@
 import { auth } from '@/lib/auth';
-import { getRepository, listUserTeams } from '@/lib/db';
+import { getRepository } from '@/lib/db';
 import { redirect } from 'next/navigation';
-import PlatformShell from '@/components/PlatformShell';
 import { ScanConfigForm } from './ScanConfigForm';
 import Breadcrumb from '@/components/Breadcrumb';
 
@@ -28,7 +27,6 @@ export default async function RepoSettingsPage({ params }: Props) {
     redirect('/dashboard');
   }
 
-  const teams = await listUserTeams(userId);
   const { getLatestAnalysis } = await import('@/lib/db');
   const latestAnalysis = await getLatestAnalysis(id);
   const fileCount = latestAnalysis?.summary?.totalFiles || 0;

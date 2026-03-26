@@ -26,8 +26,8 @@ I’m **SuperPeng (超级大鹏)**, and today, we’re giving our reasoning engi
 ## [1:45 - 4:00] The Living Circuit: Beyond the Script
 
 **Visual**:
-<ASSET: youtube/assets/branding/s1_d3_agentic_consciousness.png>
-_(Note: Visualizing a circuit board where the lines are pulsing with data)_
+<ASSET: youtube/assets/branding/s1*d3_agentic_consciousness.png>
+*(Note: Visualizing a circuit board where the lines are pulsing with data)\_
 "Traditional automation is like a train track. You start at point A, and if everything goes right, you follow the rails to point B. If a tree falls on the track, the train crashes. That’s **Linear Code**.
 
 OpenClaw is a **Living Circuit**.
@@ -43,8 +43,8 @@ When we build a Living Circuit, we aren't writing code to _do_ a task. We are wr
 ## [4:00 - 6:15] The Hands: Tool Orchestration
 
 **Visual**:
-<ASSET: youtube/assets/branding/s1_d1_llm_logic_gates.png>
-_(Note: Showing "Tools" as attachments to the logic gates)_
+<ASSET: youtube/assets/branding/s1*d1_llm_logic_gates.png>
+*(Note: Showing "Tools" as attachments to the logic gates)\_
 "Let’s talk about **The Hands**. In OpenClaw, these are called **Tools**.
 
 A tool can be anything: a database query, a GitHub API call, or even a simple script that checks the weather.
@@ -60,8 +60,8 @@ This feedback loop between the Reasoning Engine and the Tool Layer is what makes
 ## [6:15 - 8:30] Memory: The Nervous System
 
 **Visual**:
-<ASSET: youtube/assets/branding/s1_d3_agentic_consciousness.png>
-_(Note: Highlighting the connection between the Brain and a "Storage Cloud")_
+<ASSET: youtube/assets/branding/s1*d3_agentic_consciousness.png>
+*(Note: Highlighting the connection between the Brain and a "Storage Cloud")\_
 "The biggest weakness of ordinary AI is its memory—or lack of it. We call it the **Goldfish Effect**.
 
 The OpenClaw Skeleton solves this with a two-tier **Nervous System**:

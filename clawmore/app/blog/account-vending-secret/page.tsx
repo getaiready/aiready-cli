@@ -1,17 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import {
-  Clock,
-  Hash,
-  ChevronRight,
-  ShieldCheck,
-  Lock,
-  Globe,
-} from 'lucide-react';
-import Modal from '../../../components/Modal';
-import LeadForm from '../../../components/LeadForm';
+import { Clock, Hash, ChevronRight, ShieldCheck, Globe } from 'lucide-react';
 import SystemFlow from '../../../components/SystemFlow';
 import Navbar from '../../../components/Navbar';
 import Breadcrumbs from '../../../components/Breadcrumbs';
@@ -64,10 +54,6 @@ const SECURE_EDGES = [
 ];
 
 export default function BlogPost() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const closeModal = () => setIsModalOpen(false);
-  const apiUrl = process.env.NEXT_PUBLIC_LEAD_API_URL || '';
-
   const BLOG_JSON_LD = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',

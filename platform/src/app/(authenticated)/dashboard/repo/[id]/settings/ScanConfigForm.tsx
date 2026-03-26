@@ -70,7 +70,7 @@ export function ScanConfigForm({
 
         setSettings(result.data);
         toast.success('Configuration imported successfully!');
-      } catch (err) {
+      } catch (_err) {
         toast.error('Failed to parse configuration file');
       }
     };
@@ -90,7 +90,7 @@ export function ScanConfigForm({
       linkElement.setAttribute('download', exportFileDefaultName);
       linkElement.click();
       toast.success('Configuration exported as aiready.json');
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to export configuration');
     }
   };

@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import {
   Clock,
   Hash,
-  ChevronRight,
   Users,
   DollarSign,
   Zap,
@@ -13,17 +11,11 @@ import {
   ShieldCheck,
   Globe,
 } from 'lucide-react';
-import Modal from '../../../components/Modal';
-import LeadForm from '../../../components/LeadForm';
 import Navbar from '../../../components/Navbar';
 import Breadcrumbs from '../../../components/Breadcrumbs';
 import JsonLd from '../../../components/JsonLd';
 
 export default function BlogPost() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const closeModal = () => setIsModalOpen(false);
-  const apiUrl = process.env.NEXT_PUBLIC_LEAD_API_URL || '';
-
   const BLOG_JSON_LD = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
