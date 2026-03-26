@@ -78,6 +78,16 @@ version-patch: ## Bump spoke patch version (0.1.0 -> 0.1.1). Usage: make version
 	@cd packages/$(SPOKE) && pnpm version patch --no-git-tag-version 2>/dev/null || true
 	@$(call log_success,Version bumped to $$(cd packages/$(SPOKE) && node -p "require('./package.json').version"))
 
+version-patch-vscode: ## Bump VS Code extension patch version
+	@$(call log_step,Bumping VS Code extension patch version...)
+	@cd vscode-extension && pnpm version patch --no-git-tag-version
+	@$(call log_success,Version bumped to $$(cd vscode-extension && node -p "require('./package.json').version"))
+
+version-patch-all: ## Bump all spokes patch version
+	@for spoke in $(NPM_PUBLISH_SPOKES); do \
+		$(MAKE) version-patch SPOKE=$$spoke; \
+	done
+
 version-minor: ## Bump spoke minor version (0.1.0 -> 0.2.0). Usage: make version-minor SPOKE=pattern-detect
 	$(call require_spoke)
 	@$(call log_step,Bumping @aiready/$(SPOKE) minor version...)
