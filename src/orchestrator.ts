@@ -20,6 +20,7 @@ export const TOOL_PACKAGE_MAP: Record<string, string> = {
   [ToolName.DocDrift]: '@aiready/doc-drift',
   [ToolName.DependencyHealth]: '@aiready/deps',
   [ToolName.ChangeAmplification]: '@aiready/change-amplification',
+  [ToolName.ContractEnforcement]: '@aiready/contract-enforcement',
   // Aliases handled by registry
   patterns: '@aiready/pattern-detect',
   duplicates: '@aiready/pattern-detect',
@@ -31,6 +32,7 @@ export const TOOL_PACKAGE_MAP: Record<string, string> = {
   testability: '@aiready/testability',
   'deps-health': '@aiready/deps',
   'change-amp': '@aiready/change-amplification',
+  contract: '@aiready/contract-enforcement',
 };
 
 /**
