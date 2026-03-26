@@ -3,6 +3,7 @@
  */
 
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { writeFileSync } from 'fs';
 import { resolve as resolvePath } from 'path';
 import {
@@ -219,3 +220,60 @@ ${chalk.bold('CI/CD Integration:')}
   Use --threshold and --fail-on to use AIReady as a quality gate in your CI pipelines.
   When running in GitHub Actions, it will automatically emit annotations for found issues.
 `;
+
+/**
+ * Define the scan command.
+ */
+export function defineScanCommand(program: Command) {
+  program
+    .command('scan')
+    .description(
+      'Run comprehensive AI-readiness analysis (patterns + context + consistency)'
+    )
+    .argument('[directory]', 'Directory to analyze', '.')
+    .option(
+      '-t, --tools <tools>',
+      'Tools to run (comma-separated: patterns,context,consistency,doc-drift,deps-health,aiSignalClarity,grounding,testability,changeAmplification)'
+    )
+    .option(
+      '--profile <type>',
+      'Scan profile to use (agentic, cost, logic, ui, security, onboarding)'
+    )
+    .option(
+      '--compare-to <path>',
+      'Compare results against a previous AIReady report JSON'
+    )
+    .option(
+      '--include <patterns>',
+      'File patterns to include (comma-separated)'
+    )
+    .option(
+      '--exclude <patterns>',
+      'File patterns to exclude (comma-separated)'
+    )
+    .option('-o, --output <format>', 'Output format: console, json', 'console')
+    .option('--output-file <path>', 'Output file path (for json)')
+    .option('--score', 'Calculate and display AI Readiness Score (0-100)')
+    .option('--no-score', 'Disable calculating AI Readiness Score')
+    .option('--weights <weights>', 'Custom scoring weights')
+    .option(
+      '--threshold <score>',
+      'Fail CI/CD if score below threshold (0-100)'
+    )
+    .option(
+      '--ci',
+      'CI mode: GitHub Actions annotations, no colors, fail on threshold'
+    )
+    .option(
+      '--fail-on <level>',
+      'Fail on issues: critical, major, any',
+      'critical'
+    )
+    .option('--api-key <key>', 'Platform API key for automatic upload')
+    .option('--upload', 'Automatically upload results to the platform')
+    .option('--server <url>', 'Custom platform URL')
+    .addHelpText('after', SCAN_HELP_TEXT)
+    .action(async (directory, options) => {
+      await scanAction(directory, options);
+    });
+}

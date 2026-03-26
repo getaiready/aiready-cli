@@ -6,13 +6,11 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import {
-  scanAction,
-  SCAN_HELP_TEXT,
+  defineScanCommand,
   initAction,
-  patternsAction,
-  PATTERNS_HELP_TEXT,
-  contextAction,
-  consistencyAction,
+  definePatternsCommand,
+  defineContextCommand,
+  defineConsistencyCommand,
   visualizeAction,
   VISUALIZE_HELP_TEXT,
   VISUALISE_HELP_TEXT,
@@ -68,67 +66,19 @@ CONFIGURATION:
   Config files (searched upward): aiready.json, .aiready.json, aiready.config.*
   CLI options override config file settings
 
-  Example aiready.json:
-  {
-    "scan": { "exclude": ["**/dist/**", "**/node_modules/**"] },
-    "tools": {
-      "pattern-detect": { "minSimilarity": 0.5 },
-      "context-analyzer": { "maxContextBudget": 15000 }
-    },
-    "output": { "format": "json", "directory": ".aiready" }
-  }
-
 VERSION: ${packageJson.version}
 DOCUMENTATION: https://aiready.dev/docs/cli
 GITHUB: https://github.com/caopengau/aiready-cli
 LANDING: https://github.com/caopengau/aiready-landing`
   );
 
-// Scan command - Run comprehensive AI-readiness analysis
-program
-  .command('scan')
-  .description(
-    'Run comprehensive AI-readiness analysis (patterns + context + consistency)'
-  )
-  .argument('[directory]', 'Directory to analyze', '.')
-  .option(
-    '-t, --tools <tools>',
-    'Tools to run (comma-separated: patterns,context,consistency,doc-drift,deps-health,aiSignalClarity,grounding,testability,changeAmplification)'
-  )
-  .option(
-    '--profile <type>',
-    'Scan profile to use (agentic, cost, logic, ui, security, onboarding)'
-  )
-  .option(
-    '--compare-to <path>',
-    'Compare results against a previous AIReady report JSON'
-  )
-  .option('--include <patterns>', 'File patterns to include (comma-separated)')
-  .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
-  .option('-o, --output <format>', 'Output format: console, json', 'console')
-  .option('--output-file <path>', 'Output file path (for json)')
-  .option('--score', 'Calculate and display AI Readiness Score (0-100)')
-  .option('--no-score', 'Disable calculating AI Readiness Score')
-  .option('--weights <weights>', 'Custom scoring weights')
-  .option('--threshold <score>', 'Fail CI/CD if score below threshold (0-100)')
-  .option(
-    '--ci',
-    'CI mode: GitHub Actions annotations, no colors, fail on threshold'
-  )
-  .option(
-    '--fail-on <level>',
-    'Fail on issues: critical, major, any',
-    'critical'
-  )
-  .option('--api-key <key>', 'Platform API key for automatic upload')
-  .option('--upload', 'Automatically upload results to the platform')
-  .option('--server <url>', 'Custom platform URL')
-  .addHelpText('after', SCAN_HELP_TEXT)
-  .action(async (directory, options) => {
-    await scanAction(directory, options);
-  });
+// Core analysis commands
+defineScanCommand(program);
+definePatternsCommand(program);
+defineContextCommand(program);
+defineConsistencyCommand(program);
 
-// Init command - Generate default configuration
+// Init command
 program
   .command('init')
   .description('Generate a default configuration (aiready.json)')
@@ -143,86 +93,7 @@ program
     await initAction({ force: options.force, format, full: options.full });
   });
 
-// Patterns command - Detect duplicate code patterns
-program
-  .command('patterns')
-  .description('Detect duplicate code patterns that confuse AI models')
-  .argument('[directory]', 'Directory to analyze', '.')
-  .option('-s, --similarity <number>', 'Minimum similarity score (0-1)', '0.40')
-  .option('-l, --min-lines <number>', 'Minimum lines to consider', '5')
-  .option(
-    '--max-candidates <number>',
-    'Maximum candidates per block (performance tuning)'
-  )
-  .option(
-    '--min-shared-tokens <number>',
-    'Minimum shared tokens for candidates (performance tuning)'
-  )
-  .option(
-    '--full-scan',
-    'Disable smart defaults for comprehensive analysis (slower)'
-  )
-  .option('--include <patterns>', 'File patterns to include (comma-separated)')
-  .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
-  .option('-o, --output <format>', 'Output format: console, json', 'console')
-  .option('--output-file <path>', 'Output file path (for json)')
-  .option('--score', 'Calculate and display AI Readiness Score (0-100)')
-  .option('--no-score', 'Disable calculating AI Readiness Score')
-  .addHelpText('after', PATTERNS_HELP_TEXT)
-  .action(async (directory, options) => {
-    await patternsAction(directory, options);
-  });
-
-// Context command - Analyze context window costs
-program
-  .command('context')
-  .description('Analyze context window costs and dependency fragmentation')
-  .argument('[directory]', 'Directory to analyze', '.')
-  .option('--max-depth <number>', 'Maximum acceptable import depth', '5')
-  .option(
-    '--max-context <number>',
-    'Maximum acceptable context budget (tokens)',
-    '10000'
-  )
-  .option('--include <patterns>', 'File patterns to include (comma-separated)')
-  .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
-  .option('-o, --output <format>', 'Output format: console, json', 'console')
-  .option('--output-file <path>', 'Output file path (for json)')
-  .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
-  .option('--no-score', 'Disable calculating AI Readiness Score')
-  .action(async (directory, options) => {
-    await contextAction(directory, options);
-  });
-
-// Consistency command - Check naming conventions
-program
-  .command('consistency')
-  .description('Check naming conventions and architectural consistency')
-  .argument('[directory]', 'Directory to analyze', '.')
-  .option('--naming', 'Check naming conventions (default: true)')
-  .option('--no-naming', 'Skip naming analysis')
-  .option('--patterns', 'Check code patterns (default: true)')
-  .option('--no-patterns', 'Skip pattern analysis')
-  .option(
-    '--min-severity <level>',
-    'Minimum severity: info|minor|major|critical',
-    'info'
-  )
-  .option('--include <patterns>', 'File patterns to include (comma-separated)')
-  .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
-  .option(
-    '-o, --output <format>',
-    'Output format: console, json, markdown',
-    'console'
-  )
-  .option('--output-file <path>', 'Output file path (for json/markdown)')
-  .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
-  .option('--no-score', 'Disable calculating AI Readiness Score')
-  .action(async (directory, options) => {
-    await consistencyAction(directory, options);
-  });
-
-// Visualise command (British spelling alias)
+// Visualization commands
 program
   .command('visualise')
   .description('Alias for visualize (British spelling)')
@@ -252,7 +123,6 @@ program
     await visualizeAction(directory, options);
   });
 
-// Visualize command - Generate interactive visualization
 program
   .command('visualize')
   .description('Generate interactive visualization from an AIReady report')
@@ -282,7 +152,7 @@ program
     await visualizeAction(directory, options);
   });
 
-// Change Amplification command
+// Utility commands
 program
   .command('change-amplification')
   .description('Analyze graph metrics for change amplification')
@@ -295,7 +165,6 @@ program
     await changeAmplificationAction(directory, options);
   });
 
-// Testability command
 program
   .command('testability')
   .description('Analyze test coverage and AI readiness')
@@ -309,7 +178,6 @@ program
     await testabilityAction(directory, options);
   });
 
-// Contract Enforcement command
 program
   .command('contract')
   .description('Analyze structural contract enforcement and defensive coding')
@@ -327,7 +195,6 @@ program
     await contractEnforcementAction(directory, options);
   });
 
-// Upload command - Upload report JSON to platform
 program
   .command('upload')
   .description('Upload an AIReady report JSON to the platform')
@@ -340,7 +207,6 @@ program
     await uploadAction(file, options);
   });
 
-// Remediate command - Suggest AI-ready refactors
 program
   .command('remediate')
   .description('Suggest AI-ready refactors based on a scan report')

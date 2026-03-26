@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { printTerminalHeader } from '@aiready/core';
 import { executeToolAction, BaseCommandOptions } from './scan-helpers';
 import {
@@ -14,6 +15,62 @@ interface PatternsOptions extends BaseCommandOptions {
   fullScan?: boolean;
 }
 
+export const PATTERNS_HELP_TEXT = `
+EXAMPLES:
+  $ aiready patterns                                 # Default analysis
+  $ aiready patterns --similarity 0.6               # Stricter matching
+  $ aiready patterns --min-lines 10                 # Larger patterns only
+`;
+
+/**
+ * Define the patterns command structure.
+ *
+ * @param program - Commander program instance
+ */
+export function definePatternsCommand(program: Command) {
+  program
+    .command('patterns')
+    .description('Detect duplicate code patterns that confuse AI models')
+    .argument('[directory]', 'Directory to analyze', '.')
+    .option(
+      '-s, --similarity <number>',
+      'Minimum similarity score (0-1)',
+      '0.40'
+    )
+    .option('-l, --min-lines <number>', 'Minimum lines to consider', '5')
+    .option(
+      '--max-candidates <number>',
+      'Maximum candidates per block (performance tuning)'
+    )
+    .option(
+      '--min-shared-tokens <number>',
+      'Minimum shared tokens for candidates (performance tuning)'
+    )
+    .option(
+      '--full-scan',
+      'Disable smart defaults for comprehensive analysis (slower)'
+    )
+    .option(
+      '--include <patterns>',
+      'File patterns to include (comma-separated)'
+    )
+    .option(
+      '--exclude <patterns>',
+      'File patterns to exclude (comma-separated)'
+    )
+    .option('-o, --output <format>', 'Output format: console, json', 'console')
+    .option('--output-file <path>', 'Output file path (for json)')
+    .option('--score', 'Calculate and display AI Readiness Score (0-100)')
+    .option('--no-score', 'Disable calculating AI Readiness Score')
+    .addHelpText('after', PATTERNS_HELP_TEXT)
+    .action(async (directory, options) => {
+      await patternsAction(directory, options);
+    });
+}
+
+/**
+ * Executes pattern analysis action.
+ */
 export async function patternsAction(
   directory: string,
   options: PatternsOptions
@@ -111,10 +168,3 @@ export async function patternsAction(
     },
   });
 }
-
-export const PATTERNS_HELP_TEXT = `
-EXAMPLES:
-  $ aiready patterns                                 # Default analysis
-  $ aiready patterns --similarity 0.6               # Stricter matching
-  $ aiready patterns --min-lines 10                 # Larger patterns only
-`;

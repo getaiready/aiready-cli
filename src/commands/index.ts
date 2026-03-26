@@ -2,11 +2,15 @@
  * Command exports for CLI
  */
 
-export { scanAction, SCAN_HELP_TEXT } from './scan';
+export { scanAction, defineScanCommand, SCAN_HELP_TEXT } from './scan';
 export { initAction } from './init';
-export { patternsAction, PATTERNS_HELP_TEXT } from './patterns';
-export { contextAction } from './context';
-export { consistencyAction } from './consistency';
+export {
+  patternsAction,
+  definePatternsCommand,
+  PATTERNS_HELP_TEXT,
+} from './patterns';
+export { contextAction, defineContextCommand } from './context';
+export { consistencyAction, defineConsistencyCommand } from './consistency';
 export {
   visualizeAction,
   VISUALIZE_HELP_TEXT,

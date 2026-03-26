@@ -1,12 +1,11 @@
 import chalk from 'chalk';
-import { writeFileSync } from 'fs';
-import {
-  resolveOutputPath,
-  formatToolScore,
-  resolveOutputFormat,
-} from '@aiready/core';
+import { Command } from 'commander';
+import { printTerminalHeader } from '@aiready/core';
 import { executeToolAction, BaseCommandOptions } from './scan-helpers';
-import { getReportTimestamp, generateMarkdownReport } from '../utils';
+import {
+  renderSubSection,
+  renderToolScoreFooter,
+} from '../utils/terminal-renderers';
 
 interface ConsistencyOptions extends BaseCommandOptions {
   naming?: boolean;
@@ -14,6 +13,49 @@ interface ConsistencyOptions extends BaseCommandOptions {
   minSeverity?: string;
 }
 
+/**
+ * Define the consistency command.
+ *
+ * @param program - Commander program instance
+ */
+export function defineConsistencyCommand(program: Command) {
+  program
+    .command('consistency')
+    .description('Check naming conventions and architectural consistency')
+    .argument('[directory]', 'Directory to analyze', '.')
+    .option('--naming', 'Check naming conventions (default: true)')
+    .option('--no-naming', 'Skip naming analysis')
+    .option('--patterns', 'Check code patterns (default: true)')
+    .option('--no-patterns', 'Skip pattern analysis')
+    .option(
+      '--min-severity <level>',
+      'Minimum severity: info|minor|major|critical',
+      'info'
+    )
+    .option(
+      '--include <patterns>',
+      'File patterns to include (comma-separated)'
+    )
+    .option(
+      '--exclude <patterns>',
+      'File patterns to exclude (comma-separated)'
+    )
+    .option(
+      '-o, --output <format>',
+      'Output format: console, json, markdown',
+      'console'
+    )
+    .option('--output-file <path>', 'Output file path (for json/markdown)')
+    .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
+    .option('--no-score', 'Disable calculating AI Readiness Score')
+    .action(async (directory, options) => {
+      await consistencyAction(directory, options);
+    });
+}
+
+/**
+ * Action handler for consistency analysis.
+ */
 export async function consistencyAction(
   directory: string,
   options: ConsistencyOptions
@@ -21,11 +63,11 @@ export async function consistencyAction(
   return await executeToolAction(directory, options, {
     toolName: 'naming-consistency',
     label: 'Consistency analysis',
-    emoji: '🔍',
+    emoji: '📏',
     defaults: {
-      checkNaming: true,
-      checkPatterns: true,
-      minSeverity: 'info' as const,
+      checkNaming: options.naming !== false,
+      checkPatterns: options.patterns !== false,
+      minSeverity: options.minSeverity || 'info',
       include: undefined,
       exclude: undefined,
       output: { format: 'console', file: undefined },
@@ -36,136 +78,81 @@ export async function consistencyAction(
       minSeverity: opts.minSeverity,
     }),
     importTool: async () => {
-      const { analyzeConsistency, calculateConsistencyScore } =
+      const { analyzeConsistency, generateSummary, calculateConsistencyScore } =
         await import('@aiready/consistency');
       return {
-        analyze: analyzeConsistency as any,
-        generateSummary: (report: any) => report.summary,
-        calculateScore: (summary: any, _resultsCount?: number) => {
-          // Calculate score based on results in report
-          // This requires the full report which is results in our generic action
-          return calculateConsistencyScore(
-            summary.results?.flatMap((r: any) => r.issues) ?? [],
-            summary.summary.filesAnalyzed
-          );
+        analyze: async (opts) => {
+          const report = await analyzeConsistency(opts as any);
+          // Return the full report so renderConsole can access summary/results
+          return report as any;
         },
+        generateSummary,
+        calculateScore: calculateConsistencyScore as any,
       };
     },
-    renderConsole: ({ results, summary, elapsedTime, score, finalOptions }) => {
-      const report = results as any;
-      const { format: outputFormat, file: userOutputFile } =
-        resolveOutputFormat(options, finalOptions as any);
+    renderConsole: ({ results: report, summary, elapsedTime, score }) => {
+      printTerminalHeader('CONSISTENCY ANALYSIS SUMMARY');
 
-      if (outputFormat === 'markdown') {
-        const markdown = generateMarkdownReport(report, elapsedTime);
-        const outputPath = resolveOutputPath(
-          userOutputFile,
-          `aiready-report-${getReportTimestamp()}.md`,
-          directory
-        );
-        writeFileSync(outputPath, markdown);
-        console.log(chalk.green(`✅ Report saved to ${outputPath}`));
-        return;
-      }
-
-      console.log(chalk.bold('\n📊 Summary\n'));
-      console.log(`Files Analyzed: ${chalk.cyan(summary.filesAnalyzed)}`);
-      console.log(`Total Issues: ${chalk.yellow(summary.totalIssues)}`);
-      console.log(`  Naming: ${chalk.yellow(summary.namingIssues)}`);
-      console.log(`  Patterns: ${chalk.yellow(summary.patternIssues)}`);
       console.log(
-        `  Architecture: ${chalk.yellow(summary.architectureIssues ?? 0)}`
+        chalk.white(`📁 Files analyzed: ${chalk.bold(summary.filesAnalyzed)}`)
       );
-      console.log(`Analysis Time: ${chalk.gray(elapsedTime + 's')}\n`);
+      console.log(
+        chalk.white(`⚠  Total issues: ${chalk.bold(summary.totalIssues)}`)
+      );
+      console.log(
+        chalk.gray(`⏱  Analysis time: ${chalk.bold(elapsedTime + 's')}`)
+      );
 
-      if (summary.totalIssues === 0) {
-        console.log(
-          chalk.green(
-            '✨ No consistency issues found! Your codebase is well-maintained.\n'
+      if (summary.totalIssues > 0 && report.results) {
+        renderSubSection('Issues Breakdown');
+        const sortedIssues = [...report.results]
+          .flatMap((file: any) =>
+            (file.issues || []).map((issue: any) => ({
+              ...issue,
+              file: file.fileName,
+            }))
           )
-        );
-      } else {
-        const namingResults = report.results.filter((r: any) =>
-          r.issues.some((i: any) => i.category === 'naming')
-        );
-        const patternResults = report.results.filter((r: any) =>
-          r.issues.some((i: any) => i.category === 'patterns')
-        );
+          .sort((a: any, b: any) => {
+            const levels: Record<string, number> = {
+              critical: 4,
+              major: 3,
+              minor: 2,
+              info: 1,
+            };
+            return (levels[b.severity] || 0) - (levels[a.severity] || 0);
+          })
+          .slice(0, 10);
 
-        if (namingResults.length > 0) {
-          console.log(chalk.bold('🏷️  Naming Issues\n'));
-          let shown = 0;
-          for (const namingFileResult of namingResults) {
-            if (shown >= 5) break;
-            for (const issue of namingFileResult.issues) {
-              if (shown >= 5) break;
-              const severityColor =
-                issue.severity === 'critical'
-                  ? chalk.red
-                  : issue.severity === 'major'
-                    ? chalk.yellow
-                    : issue.severity === 'minor'
-                      ? chalk.blue
-                      : chalk.gray;
-              console.log(
-                `${severityColor(issue.severity.toUpperCase())} ${chalk.dim(`${issue.location.file}:${issue.location.line}`)}`
-              );
-              console.log(`  ${issue.message}`);
-              if (issue.suggestion) {
-                console.log(
-                  `  ${chalk.dim('→')} ${chalk.italic(issue.suggestion)}`
-                );
-              }
-              console.log();
-              shown++;
-            }
+        sortedIssues.forEach((issue: any) => {
+          const icon =
+            issue.severity === 'critical'
+              ? '🔴'
+              : issue.severity === 'major'
+                ? '🟡'
+                : '🔵';
+          const color =
+            issue.severity === 'critical'
+              ? chalk.red
+              : issue.severity === 'major'
+                ? chalk.yellow
+                : chalk.blue;
+
+          console.log(
+            `  ${icon} ${color(issue.severity.toUpperCase())}: ${chalk.white(issue.file)}${issue.line ? `:${issue.line}` : ''}`
+          );
+          console.log(`     ${issue.message}`);
+          if (issue.suggestion) {
+            console.log(chalk.dim(`     💡 ${issue.suggestion}`));
           }
-        }
-
-        if (patternResults.length > 0) {
-          console.log(chalk.bold('🔄 Pattern Issues\n'));
-          let shown = 0;
-          for (const patternFileResult of patternResults) {
-            if (shown >= 5) break;
-            for (const issue of patternFileResult.issues) {
-              if (shown >= 5) break;
-              const severityColor =
-                issue.severity === 'critical'
-                  ? chalk.red
-                  : issue.severity === 'major'
-                    ? chalk.yellow
-                    : issue.severity === 'minor'
-                      ? chalk.blue
-                      : chalk.gray;
-              console.log(
-                `${severityColor(issue.severity.toUpperCase())} ${chalk.dim(`${issue.location.file}:${issue.location.line}`)}`
-              );
-              console.log(`  ${issue.message}`);
-              if (issue.suggestion) {
-                console.log(
-                  `  ${chalk.dim('→')} ${chalk.italic(issue.suggestion)}`
-                );
-              }
-              console.log();
-              shown++;
-            }
-          }
-        }
-
-        if (report.recommendations?.length > 0) {
-          console.log(chalk.bold('💡 Recommendations\n'));
-          report.recommendations.forEach((rec: string, i: number) => {
-            console.log(`${i + 1}. ${rec}`);
-          });
           console.log();
-        }
+        });
+      } else {
+        console.log(
+          chalk.green('\n✨ Great! No consistency issues detected.\n')
+        );
       }
 
-      if (score) {
-        console.log(chalk.bold('\n📊 AI Readiness Score (Consistency)\n'));
-        console.log(formatToolScore(score));
-        console.log();
-      }
+      renderToolScoreFooter(score);
     },
   });
 }
