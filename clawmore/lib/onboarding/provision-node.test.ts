@@ -26,6 +26,7 @@ vi.mock('../aws/governance', () => ({
 vi.mock('../db', () => ({
   createManagedAccountRecord: vi.fn().mockResolvedValue({}),
   ensureUserMetadata: vi.fn().mockResolvedValue({}),
+  updateProvisioningStatus: vi.fn().mockResolvedValue({}),
 }));
 
 // Mock Libsodium
