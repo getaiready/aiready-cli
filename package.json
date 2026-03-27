@@ -1,7 +1,7 @@
 {
   "name": "@aiready/cli",
   "version": "0.15.4",
-  "description": "Assess and improve your codebase's AI-readiness. Get an AI Readiness Score (0-100) and detect semantic duplicates, context fragmentation, and naming inconsistencies.",
+  "description": "The unified CLI for Agentic Readiness. Optimize codebases for AI agents like Cursor, Windsurf, and Claude. Detect semantic duplicates, analyze context fragmentation, and improve agentic leverage.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -52,6 +52,13 @@
   "keywords": [
     "aiready",
     "cli",
+    "Agentic Readiness",
+    "Model Context Protocol",
+    "MCP",
+    "Cursor",
+    "Windsurf",
+    "Claude",
+    "Copilot",
     "ai-readiness",
     "code-analysis",
     "semantic-duplicates",
@@ -60,8 +67,6 @@
     "code-quality",
     "static-analysis",
     "developer-tools",
-    "mcp",
-    "model-context-protocol",
     "vscode-extension"
   ],
   "author": "AIReady Team",

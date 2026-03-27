@@ -126,10 +126,18 @@ program
   .command('init')
   .description('Generate a default configuration (aiready.json)')
   .option(CLI_CONSTANTS.OPTIONS.FORCE, 'Overwrite existing configuration file')
-  .option(CLI_CONSTANTS.OPTIONS.JS, 'Generate configuration as a JavaScript file (aiready.config.js)')
-  .option(CLI_CONSTANTS.OPTIONS.FULL, 'Generate a full configuration with all available options')
+  .option(
+    CLI_CONSTANTS.OPTIONS.JS,
+    'Generate configuration as a JavaScript file (aiready.config.js)'
+  )
+  .option(
+    CLI_CONSTANTS.OPTIONS.FULL,
+    'Generate a full configuration with all available options'
+  )
   .action(async (options) => {
-    const format = options.js ? CLI_CONSTANTS.FORMATS.JS : CLI_CONSTANTS.FORMATS.JSON;
+    const format = options.js
+      ? CLI_CONSTANTS.FORMATS.JS
+      : CLI_CONSTANTS.FORMATS.JSON;
     await initAction({ force: !!options.force, format, full: !!options.full });
   });
 
@@ -137,7 +145,11 @@ program
 program
   .command(CLI_CONSTANTS.ALIASES.VISUALISE)
   .description('Alias for visualize (British spelling)')
-  .argument('[directory]', 'Directory to analyze', CLI_CONSTANTS.DEFAULT_DIRECTORY)
+  .argument(
+    '[directory]',
+    'Directory to analyze',
+    CLI_CONSTANTS.DEFAULT_DIRECTORY
+  )
   .option(
     CLI_CONSTANTS.OPTIONS.REPORT,
     'Report path (auto-detects latest .aiready/aiready-report-*.json if not provided)'
@@ -171,7 +183,11 @@ program
 program
   .command(CLI_CONSTANTS.ALIASES.VISUALIZE)
   .description('Generate interactive visualization from an AIReady report')
-  .argument('[directory]', 'Directory to analyze', CLI_CONSTANTS.DEFAULT_DIRECTORY)
+  .argument(
+    '[directory]',
+    'Directory to analyze',
+    CLI_CONSTANTS.DEFAULT_DIRECTORY
+  )
   .option(
     CLI_CONSTANTS.OPTIONS.REPORT,
     'Report path (auto-detects latest .aiready/aiready-report-*.json if not provided)'
@@ -206,10 +222,24 @@ program
 program
   .command('change-amplification')
   .description('Analyze graph metrics for change amplification')
-  .argument('[directory]', 'Directory to analyze', CLI_CONSTANTS.DEFAULT_DIRECTORY)
-  .option(CLI_CONSTANTS.OPTIONS.INCLUDE, 'File patterns to include (comma-separated)')
-  .option(CLI_CONSTANTS.OPTIONS.EXCLUDE, 'File patterns to exclude (comma-separated)')
-  .option('-o, --output <format>', 'Output format: console, json', CLI_CONSTANTS.FORMATS.CONSOLE)
+  .argument(
+    '[directory]',
+    'Directory to analyze',
+    CLI_CONSTANTS.DEFAULT_DIRECTORY
+  )
+  .option(
+    CLI_CONSTANTS.OPTIONS.INCLUDE,
+    'File patterns to include (comma-separated)'
+  )
+  .option(
+    CLI_CONSTANTS.OPTIONS.EXCLUDE,
+    'File patterns to exclude (comma-separated)'
+  )
+  .option(
+    '-o, --output <format>',
+    'Output format: console, json',
+    CLI_CONSTANTS.FORMATS.CONSOLE
+  )
   .option(CLI_CONSTANTS.OPTIONS.OUTPUT_FILE, 'Output file path (for json)')
   .action(async (directory, options) => {
     await changeAmplificationAction(directory, options);
@@ -218,11 +248,29 @@ program
 program
   .command('testability')
   .description('Analyze test coverage and AI readiness')
-  .argument('[directory]', 'Directory to analyze', CLI_CONSTANTS.DEFAULT_DIRECTORY)
-  .option(CLI_CONSTANTS.OPTIONS.MIN_COVERAGE, 'Minimum acceptable coverage ratio', '0.3')
-  .option(CLI_CONSTANTS.OPTIONS.INCLUDE, 'File patterns to include (comma-separated)')
-  .option(CLI_CONSTANTS.OPTIONS.EXCLUDE, 'File patterns to exclude (comma-separated)')
-  .option('-o, --output <format>', 'Output format: console, json', CLI_CONSTANTS.FORMATS.CONSOLE)
+  .argument(
+    '[directory]',
+    'Directory to analyze',
+    CLI_CONSTANTS.DEFAULT_DIRECTORY
+  )
+  .option(
+    CLI_CONSTANTS.OPTIONS.MIN_COVERAGE,
+    'Minimum acceptable coverage ratio',
+    '0.3'
+  )
+  .option(
+    CLI_CONSTANTS.OPTIONS.INCLUDE,
+    'File patterns to include (comma-separated)'
+  )
+  .option(
+    CLI_CONSTANTS.OPTIONS.EXCLUDE,
+    'File patterns to exclude (comma-separated)'
+  )
+  .option(
+    '-o, --output <format>',
+    'Output format: console, json',
+    CLI_CONSTANTS.FORMATS.CONSOLE
+  )
   .option(CLI_CONSTANTS.OPTIONS.OUTPUT_FILE, 'Output file path (for json)')
   .action(async (directory, options) => {
     await testabilityAction(directory, options);
@@ -231,15 +279,29 @@ program
 program
   .command('contract')
   .description('Analyze structural contract enforcement and defensive coding')
-  .argument('[directory]', 'Directory to analyze', CLI_CONSTANTS.DEFAULT_DIRECTORY)
+  .argument(
+    '[directory]',
+    'Directory to analyze',
+    CLI_CONSTANTS.DEFAULT_DIRECTORY
+  )
   .option(
     CLI_CONSTANTS.OPTIONS.MIN_CHAIN_DEPTH,
     'Minimum optional chain depth to flag',
     '3'
   )
-  .option(CLI_CONSTANTS.OPTIONS.INCLUDE, 'File patterns to include (comma-separated)')
-  .option(CLI_CONSTANTS.OPTIONS.EXCLUDE, 'File patterns to exclude (comma-separated)')
-  .option('-o, --output <format>', 'Output format: console, json', CLI_CONSTANTS.FORMATS.CONSOLE)
+  .option(
+    CLI_CONSTANTS.OPTIONS.INCLUDE,
+    'File patterns to include (comma-separated)'
+  )
+  .option(
+    CLI_CONSTANTS.OPTIONS.EXCLUDE,
+    'File patterns to exclude (comma-separated)'
+  )
+  .option(
+    '-o, --output <format>',
+    'Output format: console, json',
+    CLI_CONSTANTS.FORMATS.CONSOLE
+  )
   .option(CLI_CONSTANTS.OPTIONS.OUTPUT_FILE, 'Output file path (for json)')
   .action(async (directory, options) => {
     await contractEnforcementAction(directory, options);
@@ -260,9 +322,16 @@ program
 program
   .command('remediate')
   .description('Suggest AI-ready refactors based on a scan report')
-  .argument('[directory]', 'Directory to remediate', CLI_CONSTANTS.DEFAULT_DIRECTORY)
+  .argument(
+    '[directory]',
+    'Directory to remediate',
+    CLI_CONSTANTS.DEFAULT_DIRECTORY
+  )
   .option(CLI_CONSTANTS.OPTIONS.REPORT, 'AIReady report JSON file')
-  .option(CLI_CONSTANTS.OPTIONS.TOOL, 'Filter by tool: patterns, context, consistency')
+  .option(
+    CLI_CONSTANTS.OPTIONS.TOOL,
+    'Filter by tool: patterns, context, consistency'
+  )
   .option(CLI_CONSTANTS.OPTIONS.SERVER, 'Custom platform URL')
   .addHelpText('after', REMEDIATE_HELP_TEXT)
   .action(async (directory, options) => {
@@ -274,7 +343,10 @@ program
   .description('Report a bug or provide feedback (Agent-friendly)')
   .argument('[message]', 'Short description of the issue')
   .option(CLI_CONSTANTS.OPTIONS.TYPE, 'Issue type: bug, feature, metric', 'bug')
-  .option(CLI_CONSTANTS.OPTIONS.SUBMIT, 'Submit the issue directly using the GitHub CLI (gh)')
+  .option(
+    CLI_CONSTANTS.OPTIONS.SUBMIT,
+    'Submit the issue directly using the GitHub CLI (gh)'
+  )
   .addHelpText('after', BUG_HELP_TEXT)
   .action(async (message, options) => {
     await bugAction(message, { ...options, submit: !!options.submit });
