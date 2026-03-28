@@ -32,6 +32,7 @@ RELEASE_PUSH              ?= 1
 RELEASE_HUB_DOWNSTREAM    ?= 1
 RELEASE_ALL_PLATFORM_E2E  ?= 0
 RELEASE_ALL_DOWNSTREAM    ?= 1
+RELEASE_DISTRIBUTION      ?= 1
 
 .PHONY: check-changes check-dependency-updates release-one release-all release-dev release-status \
 	release-landing release-landing-dev release-landing-prod \
@@ -39,7 +40,8 @@ RELEASE_ALL_DOWNSTREAM    ?= 1
 	release-clawmore release-clawmore-dev release-clawmore-prod \
 	release-spoke-% release-help \
 	release-checks-spoke release-checks-all-spokes \
-	release-checks-landing release-checks-platform release-checks-clawmore
+	release-checks-landing release-checks-platform release-checks-clawmore \
+	update-distribution update-homebrew
 
 ###############################################################################
 # Internal macros
@@ -331,8 +333,47 @@ release-all: ## Release all npm spokes: TYPE=patch|minor|major
 	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(call log_step,Phase 5: Publish core...) && $(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(CORE_SPOKE) && $(MAKE) -C $(ROOT_DIR) publish SPOKE=$(CORE_SPOKE) OWNER=$(OWNER),publish core)
 	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(call log_step,Phase 6: Publish middle spokes in parallel...) && $(MAKE) $(MAKE_PARALLEL) $(addprefix release-spoke-,$(MIDDLE_SPOKES)),publish middle spokes)
 	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(call log_step,Phase 7: Publish CLI...) && $(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(CLI_SPOKE) && $(MAKE) -C $(ROOT_DIR) publish SPOKE=$(CLI_SPOKE) OWNER=$(OWNER),publish cli)
+	@$(call run_if_enabled,$(RELEASE_DISTRIBUTION),$(call log_step,Phase 8: Update distribution channels...) && $(MAKE) -C $(ROOT_DIR) update-distribution,distribution channels)
 	@$(call run_if_enabled,$(RELEASE_PUSH),$(MAKE) sync,sync and push)
 	@$(call log_success,All spokes released: core -> middle -> cli)
+
+###############################################################################
+# Distribution Channel Updates
+###############################################################################
+
+update-distribution: ## Update all distribution channels (Homebrew, Docker, etc.)
+	@$(call log_step,Updating Homebrew formula...)
+	@$(MAKE) update-homebrew
+	@$(call log_step,Distribution channels updated (Homebrew, Docker auto-updates from npm))
+	@$(call log_success,Distribution channels updated)
+
+update-homebrew: ## Update Homebrew formula to latest CLI version
+	@$(call log_step,Getting latest CLI version from npm...)
+	@latest_cli=$$(npm view @aiready/cli version 2>/dev/null); \
+	if [ -z "$$latest_cli" ]; then \
+		$(call log_error,Failed to get latest CLI version from npm); \
+		exit 1; \
+	fi; \
+	$(call log_info,Latest CLI version: $$latest_cli)
+	@$(call log_step,Downloading tarball and computing SHA256...)
+	@tarball_url=$$(npm view @aiready/cli@$$latest_cli dist.tarball 2>/dev/null); \
+	if [ -z "$$tarball_url" ]; then \
+		$(call log_error,Failed to get tarball URL); \
+		exit 1; \
+	fi; \
+	sha256=$$(curl -s "$$tarball_url" | shasum -a 256 | cut -d' ' -f1); \
+	if [ -z "$$sha256" ]; then \
+		$(call log_error,Failed to compute SHA256); \
+		exit 1; \
+	fi; \
+	$(call log_info,SHA256: $$sha256)
+	@$(call log_step,Updating Homebrew formula...)
+	@sed -i '' "s|url \".*\"|url \"https://registry.npmjs.org/@aiready/cli/-/cli-$$latest_cli.tgz\"|g" homebrew/aiready.rb; \
+	sed -i '' "s|sha256 \".*\"|sha256 \"$$sha256\"|g" homebrew/aiready.rb
+	@$(call log_step,Committing Homebrew formula update...)
+	@git add homebrew/aiready.rb && \
+		git commit -m "chore: update Homebrew formula to v$$latest_cli" || true
+	@$(call log_success,Homebrew formula updated)
 
 ###############################################################################
 # Dev pipeline + Status
