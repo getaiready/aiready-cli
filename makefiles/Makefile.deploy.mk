@@ -339,26 +339,45 @@ landing-cleanup: ## Clean up stale AWS resources from old deployments
 
 ##@ Decentralized Monitoring
 
+# Internal macro for wrangler with standard envs
+define wrangler_cmd
+	(cd $(1) && \
+	export CLOUDFLARE_API_TOKEN=$$( [ -n "$(CLOUDFLARE_API_TOKEN)" ] && echo "$(CLOUDFLARE_API_TOKEN)" || grep "CLOUDFLARE_API_TOKEN" ../../landing/.env 2>/dev/null | cut -d= -f2- ); \
+	export CLOUDFLARE_ACCOUNT_ID=$$( [ -n "$(CLOUDFLARE_ACCOUNT_ID)" ] && echo "$(CLOUDFLARE_ACCOUNT_ID)" || grep "CLOUDFLARE_ACCOUNT_ID" ../../landing/.env 2>/dev/null | cut -d= -f2- ); \
+	if [ -z "$$CLOUDFLARE_API_TOKEN" ]; then $(call log_error,Missing CLOUDFLARE_API_TOKEN); exit 1; fi; \
+	npx wrangler $(2) -c wrangler.toml)
+endef
+
+monitor-secrets: ## Set AWS secrets for all health monitors
+	@$(call log_step,Setting AWS secrets for health monitors)
+	@AWS_KEY=$$(aws configure get aws_access_key_id --profile $(AWS_PROFILE)); \
+	AWS_SEC=$$(aws configure get aws_secret_access_key --profile $(AWS_PROFILE)); \
+	if [ -z "$$AWS_KEY" ]; then $(call log_error,Could not retrieve AWS keys for profile $(AWS_PROFILE)); exit 1; fi; \
+	for monitor in landing/monitor platform/monitor clawmore/monitor; do \
+		$(call log_info,Updating secrets for $$monitor...); \
+		echo "$$AWS_KEY" | $(call wrangler_cmd,$$monitor,secret put AWS_ACCESS_KEY_ID); \
+		echo "$$AWS_SEC" | $(call wrangler_cmd,$$monitor,secret put AWS_SECRET_ACCESS_KEY); \
+	done
+	@$(call log_success,AWS secrets updated for all monitors)
+
+deploy-monitors-all: monitor-secrets ## Deploy all health monitors (sets secrets first)
+	@$(call log_step,Deploying all health monitors)
+	@$(call wrangler_cmd,landing/monitor,deploy)
+	@$(call wrangler_cmd,platform/monitor,deploy)
+	@$(call wrangler_cmd,clawmore/monitor,deploy)
+	@$(call log_success,All health monitors deployed)
+
 deploy-landing-monitor: ## Deploy Cloudflare health monitor for landing
 	@$(call log_step,Deploying landing health monitor)
-	@cd landing/monitor && \
-		set -a && [ -f ../.env ] && . ../.env || true && set +a && \
-		npx wrangler deploy --name aiready-landing-monitor
+	@$(call wrangler_cmd,landing/monitor,deploy)
 
 deploy-clawmore-monitor: ## Deploy Cloudflare health monitor for ClawMore
 	@$(call log_step,Deploying clawmore health monitor)
-	@cd clawmore/monitor && \
-		set -a && [ -f ../../landing/.env ] && . ../../landing/.env || true && set +a && \
-		npx wrangler deploy --name aiready-clawmore-monitor
+	@$(call wrangler_cmd,clawmore/monitor,deploy)
 
 deploy-platform-monitor: ## Deploy Cloudflare health monitor for Platform
 	@$(call log_step,Deploying platform health monitor)
-	@cd platform/monitor && \
-		set -a && [ -f ../../landing/.env ] && . ../../landing/.env || true && set +a && \
-		npx wrangler deploy --name aiready-platform-monitor
-
-deploy-monitors-all: deploy-landing-monitor deploy-clawmore-monitor deploy-platform-monitor ## Deploy all project-specific health monitors
-	@$(call log_success,All project monitors deployed)
+	@$(call wrangler_cmd,platform/monitor,deploy)
 
 monitor-logs-landing: ## Show landing monitor logs
 	@cd landing/monitor && pnpm wrangler logs

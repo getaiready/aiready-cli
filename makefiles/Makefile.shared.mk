@@ -98,7 +98,7 @@ verify-aws-account:
 # Notifications (defaults for solo founder)
 SES_TO_EMAIL ?= caopengau@gmail.com
 
-# Cloudflare DNS (optional; do not commit secrets)
+# Cloudflare DNS and Workers (optional; do not commit secrets)
 CLOUDFLARE_API_TOKEN ?=
 CLOUDFLARE_ACCOUNT_ID ?=
 CLOUDFLARE_ZONE_ID ?=
