@@ -244,6 +244,8 @@ program
     CLI_CONSTANTS.FORMATS.CONSOLE
   )
   .option(CLI_CONSTANTS.OPTIONS.OUTPUT_FILE, 'Output file path (for json)')
+  .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
+  .option('--no-score', 'Disable calculating AI Readiness Score')
   .action(async (directory, options) => {
     await changeAmplificationAction(directory, options);
   });
@@ -275,6 +277,8 @@ program
     CLI_CONSTANTS.FORMATS.CONSOLE
   )
   .option(CLI_CONSTANTS.OPTIONS.OUTPUT_FILE, 'Output file path (for json)')
+  .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
+  .option('--no-score', 'Disable calculating AI Readiness Score')
   .action(async (directory, options) => {
     await testabilityAction(directory, options);
   });
@@ -306,6 +310,8 @@ program
     CLI_CONSTANTS.FORMATS.CONSOLE
   )
   .option(CLI_CONSTANTS.OPTIONS.OUTPUT_FILE, 'Output file path (for json)')
+  .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
+  .option('--no-score', 'Disable calculating AI Readiness Score')
   .action(async (directory, options) => {
     await contractEnforcementAction(directory, options);
   });

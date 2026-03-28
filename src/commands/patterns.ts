@@ -60,7 +60,7 @@ export function definePatternsCommand(program: Command) {
     )
     .option('-o, --output <format>', 'Output format: console, json', 'console')
     .option('--output-file <path>', 'Output file path (for json)')
-    .option('--score', 'Calculate and display AI Readiness Score (0-100)')
+    .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
     .option('--no-score', 'Disable calculating AI Readiness Score')
     .addHelpText('after', PATTERNS_HELP_TEXT)
     .action(async (directory, options) => {
