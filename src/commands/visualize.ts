@@ -83,7 +83,7 @@ export async function visualizeAction(
     process.env.AIREADY_VISUALIZER_CONFIG = envVisualizerConfig;
 
     console.log('Building graph from report...');
-    const { GraphBuilder } = await import('@aiready/visualizer/graph');
+    const { GraphBuilder } = await import('@aiready/visualizer');
     const graph = GraphBuilder.buildFromReport(report, dirPath);
 
     // Check if --dev mode is requested and available
