@@ -7,21 +7,30 @@ import type { ToolScoringOutput } from '@aiready/core';
 import { buildToolScoringOutput } from '../../utils/helpers';
 import { runConfiguredToolAction } from './configured-tool-action';
 
+interface DocDriftOptions {
+  staleMonths?: number;
+  include?: string;
+  exclude?: string;
+  output?: string;
+  outputFile?: string;
+  score?: boolean;
+}
+
 export async function docDriftAction(
   directory: string,
-  options: any
+  options: DocDriftOptions
 ): Promise<ToolScoringOutput | undefined> {
   const { analyzeDocDrift } = await import('@aiready/doc-drift');
 
   return runConfiguredToolAction(directory, options, {
     defaults: { staleMonths: 6 },
-    analyze: analyzeDocDrift as any,
+    analyze: analyzeDocDrift,
     getExtras: (cmdOptions, merged) => ({
       staleMonths: cmdOptions.staleMonths ?? merged.staleMonths ?? 6,
     }),
     score: (toolReport): ToolScoringOutput =>
-      buildToolScoringOutput('doc-drift', toolReport as any),
-    render: (report: any, scoring) => {
+      buildToolScoringOutput('doc-drift', toolReport),
+    render: (report, scoring) => {
       const { summary } = report;
       const ratingColors: Record<string, (s: string) => string> = {
         minimal: chalk.green,
@@ -45,22 +54,31 @@ export async function docDriftAction(
   });
 }
 
+interface DepsHealthOptions {
+  trainingCutoffYear?: number;
+  include?: string;
+  exclude?: string;
+  output?: string;
+  outputFile?: string;
+  score?: boolean;
+}
+
 export async function depsHealthAction(
   directory: string,
-  options: any
+  options: DepsHealthOptions
 ): Promise<ToolScoringOutput | undefined> {
   const { analyzeDeps } = await import('@aiready/deps');
 
   return runConfiguredToolAction(directory, options, {
     defaults: { trainingCutoffYear: 2023 },
-    analyze: analyzeDeps as any,
+    analyze: analyzeDeps,
     getExtras: (cmdOptions, merged) => ({
       trainingCutoffYear:
         cmdOptions.trainingCutoffYear ?? merged.trainingCutoffYear ?? 2023,
     }),
     score: (toolReport): ToolScoringOutput =>
-      buildToolScoringOutput('dependency-health', toolReport as any),
-    render: (report: any, scoring) => {
+      buildToolScoringOutput('dependency-health', toolReport),
+    render: (report, scoring) => {
       const { summary } = report;
       const ratingColors: Record<string, (s: string) => string> = {
         excellent: chalk.green,
@@ -86,21 +104,30 @@ export async function depsHealthAction(
   });
 }
 
+interface AiSignalClarityOptions {
+  minSeverity?: string;
+  include?: string;
+  exclude?: string;
+  output?: string;
+  outputFile?: string;
+  score?: boolean;
+}
+
 export async function aiSignalClarityAction(
   directory: string,
-  options: any
+  options: AiSignalClarityOptions
 ): Promise<ToolScoringOutput | undefined> {
   const { analyzeAiSignalClarity, calculateAiSignalClarityScore } =
     await import('@aiready/ai-signal-clarity');
 
   return runConfiguredToolAction(directory, options, {
     defaults: { minSeverity: 'info' },
-    analyze: analyzeAiSignalClarity as any,
+    analyze: analyzeAiSignalClarity,
     getExtras: (cmdOptions, merged) => ({
       minSeverity: cmdOptions.minSeverity ?? merged.minSeverity ?? 'info',
     }),
-    score: (toolReport) => calculateAiSignalClarityScore(toolReport as any),
-    render: (report: any, scoring) => {
+    score: (toolReport) => calculateAiSignalClarityScore(toolReport),
+    render: (report, scoring) => {
       const { summary } = report;
       const ratingColors: Record<string, (s: string) => string> = {
         minimal: chalk.green,
