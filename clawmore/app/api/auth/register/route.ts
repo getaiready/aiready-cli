@@ -118,6 +118,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Send welcome email (don't block the response)
+    sendWelcomeEmail(normalizedEmail, name).catch(console.error);
+
     return NextResponse.json({
       success: true,
       message: 'Account created. Proceed to checkout.',

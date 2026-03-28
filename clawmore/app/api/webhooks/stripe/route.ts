@@ -3,7 +3,11 @@ import Stripe from 'stripe';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { ProvisioningOrchestrator } from '../../../../lib/onboarding/provision-node';
-import { sendApprovalEmail } from '../../../../lib/email';
+import {
+  sendApprovalEmail,
+  sendPaymentFailedEmail,
+  sendSubscriptionCancelledEmail,
+} from '../../../../lib/email';
 
 const dbClient = new DynamoDBClient({
   region: process.env.AWS_REGION || 'ap-southeast-2',
