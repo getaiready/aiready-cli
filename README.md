@@ -33,28 +33,24 @@ AIReady helps teams **assess, visualize, and prepare** repositories for better A
 
 ## 🌟 The AIReady Ecosystem
 
-| Integration       | Package                                                                          | Description                                     |
-| ----------------- | -------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **CLI**           | [`@aiready/cli`](https://www.npmjs.com/package/@aiready/cli)                     | Unified command-line interface                  |
-| **VS Code**       | [`aiready`](https://marketplace.visualstudio.com/items?itemName=pengcao.aiready) | Real-time AI readiness analysis in VS Code      |
-| **GitHub Action** | [`aiready-action`](https://github.com/marketplace/actions/aiready-action)        | CI/CD integration for automated scans           |
-| **MCP Server**    | [`@aiready/mcp-server`](https://www.npmjs.com/package/@aiready/mcp-server)       | Model Context Protocol server for AI assistants |
-| **Skills**        | [`@aiready/skills`](https://github.com/caopengau/aiready-skills)                 | AI-friendly coding practices for agents         |
-| **Docker**        | [`aiready/cli`](https://hub.docker.com/r/aiready/cli)                            | Containerized CLI                               |
-| **Homebrew**      | `brew install caopengau/aiready/aiready`                                         | macOS package                                   |
+| Integration           | Package                                                                          | Description                                                    |
+| --------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| **CLI**               | [`@aiready/cli`](https://www.npmjs.com/package/@aiready/cli)                     | Unified command-line interface                                 |
+| **MCP Server**        | [`@aiready/mcp-server`](https://www.npmjs.com/package/@aiready/mcp-server)       | **Cursor-Ready**: Bridge AI agents to the Platform Swarm       |
+| **Remediation Swarm** | [Platform](https://platform.getaiready.dev)                                      | **AI-to-AI Fixes**: Automated refactors via specialized agents |
+| **GitHub Action**     | [`aiready-action`](https://github.com/marketplace/actions/aiready-action)        | **No-Regression**: CI/CD gate for AI leverage                  |
+| **VS Code**           | [`aiready`](https://marketplace.visualstudio.com/items?itemName=pengcao.aiready) | Real-time AI readiness analysis in VS Code                     |
 
 ## ✨ Features
 
-- **AI Readiness Score** - Get a 0-100 score indicating how AI-ready your codebase is
-- **Semantic Duplicate Detection** - Find duplicate patterns that waste AI context window tokens
-- **Context Analysis** - Analyze context window costs, import depth, and dependency fragmentation
-- **Consistency Checks** - Ensure naming conventions and pattern consistency
-- **Documentation Drift** - Track documentation freshness vs code churn
-- **Testability Assessment** - Measure code testability for AI agents
-- **Agent Grounding** - Evaluate how well code aids AI agents
-- **Contract Enforcement** - Measure structural type safety and boundary validation
-- **Interactive Visualization** - Generate force-directed graph visualizations
-- **CI/CD Integration** - Quality gates for AI readiness in your pipeline
+- **AI Readiness Score** - Get a 0-100 score indicating how AI-ready your codebase is.
+- **🛡️ AI-Regression Guardrail** - Block PRs that reduce your AI leverage (GitHub Action).
+- **🤖 Remediation Swarm** - Automatically fix AI-readiness issues using the platform's specialized agents.
+- **🔌 Cursor-Ready MCP Server** - Let your AI assistant (Cursor, Windsurf, Claude) find and _remediate_ code issues directly in your IDE.
+- **Semantic Duplicate Detection** - Find duplicate patterns that waste AI context window tokens.
+- **Context Analysis** - Analyze context window costs, import depth, and dependency fragmentation.
+- **Consistency Checks** - Ensure naming conventions and pattern consistency.
+- **Agent Grounding** - Evaluate how well code aids AI agents and autonomous workflows.
 
 ## 📋 Commands
 
@@ -67,6 +63,17 @@ aiready scan .
 aiready scan . --output report.json
 aiready scan . --threshold 70
 ```
+
+### Remediation
+
+See suggested fixes for detected issues:
+
+```bash
+aiready remediate                  # Show remediation options for latest report
+aiready remediate --tool patterns  # Focus on pattern consolidation fixes
+```
+
+> **Note:** Advanced automated remediation requires an [AIReady Platform](https://platform.getaiready.dev) subscription and an API key.
 
 ### Individual Tools
 
