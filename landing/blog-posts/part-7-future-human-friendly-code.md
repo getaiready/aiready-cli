@@ -58,10 +58,10 @@ The AIReady CLI will always be open-source. We built it in public, and we want y
 
 - **Run the scan:** `npx aiready analyze`
 - **Visualize your debt:** `npx aiready visualise`
-- **Contribute:** Join us on [GitHub](https://github.com/caopengau/aiready-cli).
+- **Contribute:** Join us on [GitHub](https://github.com/getaiready/aiready-cli).
 
 Thank you for following along with this series. The tsunami is here, but together, we can learn to surf it.
 
 ---
 
-_Peng Cao is the founder of [receiptclaimer](https://receiptclaimer.com) and creator of [aiready](https://github.com/caopengau/aiready-cli), an open-source suite for measuring and optimising codebases for AI adoption._
+_Peng Cao is the founder of [receiptclaimer](https://receiptclaimer.com) and creator of [aiready](https://github.com/getaiready/aiready-cli), an open-source suite for measuring and optimising codebases for AI adoption._

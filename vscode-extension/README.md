@@ -124,17 +124,17 @@ Click on any tool score in the sidebar's **Summary** view to open the **AIReady 
 ## Links
 
 - [Documentation](https://getaiready.dev/docs)
-- [GitHub (CLI)](https://github.com/caopengau/aiready-cli)
-- [GitHub (Extension)](https://github.com/caopengau/aiready-vscode-extension)
-- [Issues](https://github.com/caopengau/aiready-vscode-extension/issues)
+- [GitHub (CLI)](https://github.com/getaiready/aiready-cli)
+- [GitHub (Extension)](https://github.com/getaiready/aiready-vscode-extension)
+- [Issues](https://github.com/getaiready/aiready-vscode-extension/issues)
 - [npm @aiready/cli](https://www.npmjs.com/package/@aiready/cli)
 
 ## Community
 
 - 💬 [Discord](https://discord.gg/aiready) - Join our community
-- 🐛 [GitHub Issues](https://github.com/caopengau/aiready/issues) - Report bugs
-- 💡 [GitHub Discussions](https://github.com/caopengau/aiready/discussions) - Share ideas
-- 📝 [Contributing](https://github.com/caopengau/aiready/blob/main/CONTRIBUTING.md) - Learn how to contribute
+- 🐛 [GitHub Issues](https://github.com/getaiready/aiready-vscode-extension/issues) - Report bugs
+- 💡 [GitHub Discussions](https://github.com/getaiready/aiready-vscode-extension/discussions) - Share ideas
+- 📝 [Contributing](https://github.com/getaiready/aiready-vscode-extension/blob/main/CONTRIBUTING.md) - Learn how to contribute
 
 ---
 

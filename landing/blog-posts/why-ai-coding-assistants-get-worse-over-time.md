@@ -55,7 +55,7 @@ AI-generated code that doesn't understand your patterns:
 
 ## The Solution: AI Readiness
 
-We built [AIReady](https://github.com/caopengau/aiready) — an open-source tool that measures and improves how well your codebase works with AI.
+We built [AIReady](https://github.com/getaiready/aiready-cli) — an open-source tool that measures and improves how well your codebase works with AI.
 
 ### How It Works
 
@@ -115,7 +115,7 @@ aiready scan . --score
 
 We're building this in the open:
 
-- **GitHub:** [github.com/caopengau/aiready](https://github.com/caopengau/aiready)
+- **GitHub:** [github.com/getaiready/aiready-cli](https://github.com/getaiready/aiready-cli)
 - **Discord:** [discord.gg/aiready](https://discord.gg/aiready)
 - **Website:** [getaiready.dev](https://getaiready.dev)
 

@@ -86,7 +86,7 @@ export default function DashboardLayout({
               Integrations
             </p>
             <a
-              href="https://github.com/caopengau/serverlessclaw"
+              href="https://github.com/serverlessclaw/serverlessclaw"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-between px-4 py-3 text-emerald-500 hover:bg-emerald-500/10 rounded-xl text-xs font-bold transition-all group border border-transparent hover:border-emerald-500/20"

@@ -6,7 +6,7 @@ ClawMore is the premium layer of the **AIReady Empire**, providing autonomous co
 
 ## 🚀 The AIReady Empire
 
-1.  **LAYER 1: OPEN SOURCE**: [AIReady CLI](https://github.com/caopengau/aiready), [MCP Server](https://github.com/caopengau/aiready/tree/main/packages/mcp-server), and 10 Analysis Tools.
+1.  **LAYER 1: OPEN SOURCE**: [AIReady CLI](https://github.com/getaiready/aiready-cli), [MCP Server](https://github.com/getaiready/aiready-mcp-server), and 10 Analysis Tools.
 2.  **LAYER 2: ACTIVATION**: [Platform Dashboard](https://getaiready.dev/dashboard) for trend tracking and remediation.
 3.  **LAYER 3: MONETIZATION**: **ClawMore** - Autonomous evolution for managed AWS infrastructure.
 

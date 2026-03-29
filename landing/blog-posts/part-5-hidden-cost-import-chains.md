@@ -698,9 +698,9 @@ npx @aiready/cli scan --score
 
 **Resources:**
 
-- GitHub: [github.com/caopengau/aiready-cli](https://github.com/caopengau/aiready-cli)
+- GitHub: [github.com/getaiready/aiready-cli](https://github.com/getaiready/aiready-cli)
 - Docs: [aiready.dev](https://aiready.dev)
-- Report issues: [github.com/caopengau/aiready-cli/issues](https://github.com/caopengau/aiready-cli/issues)
+- Report issues: [github.com/getaiready/aiready-cli/issues](https://github.com/getaiready/aiready-cli/issues)
 
 ---
 
@@ -708,4 +708,4 @@ npx @aiready/cli scan --score
 
 ---
 
-_Peng Cao is the founder of [receiptclaimer](https://receiptclaimer.com) and creator of [aiready](https://github.com/caopengau/aiready-cli), an open-source suite for measuring and optimizing codebases for AI adoption._
+_Peng Cao is the founder of [receiptclaimer](https://receiptclaimer.com) and creator of [aiready](https://github.com/getaiready/aiready-cli), an open-source suite for measuring and optimizing codebases for AI adoption._

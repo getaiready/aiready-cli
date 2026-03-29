@@ -203,7 +203,7 @@ Over the next few weeks, I'm going to break down:
 - **How to optimize** your codebase so AI tools work _with_ your patterns instead of against them
 - **Real case study** of how we refactored receiptclaimer and quantified the results
 
-I built [aiready](https://github.com/caopengau/aiready-cli) to solve this problem for my own team. It's open source, configurable, and designed for the AI-first development workflow.
+I built [aiready](https://github.com/getaiready/aiready-cli) to solve this problem for my own team. It's open source, configurable, and designed for the AI-first development workflow.
 
 Because here's what I learned: **Making your codebase AI-ready doesn't just make AI better. It makes your code better for humans too.**
 
@@ -226,7 +226,7 @@ npx @aiready/context-analyzer ./src
 
 ---
 
-_Peng Cao is the founder of [receiptclaimer](https://receiptclaimer.com) and creator of [aiready](https://github.com/caopengau/aiready-cli), an open-source suite for measuring and optimizing codebases for AI adoption. He's been writing code for 15 years and learning to work with AI assistants for the last 2._
+_Peng Cao is the founder of [receiptclaimer](https://receiptclaimer.com) and creator of [aiready](https://github.com/getaiready/aiready-cli), an open-source suite for measuring and optimizing codebases for AI adoption. He's been writing code for 15 years and learning to work with AI assistants for the last 2._
 
 > [!TIP]
 > **Ready for Autonomous Infrastructure?**

@@ -81,10 +81,10 @@ Over the coming weeks, we will be doing a **Deep Dive Series** into each of thes
 
 ---
 
-- GitHub: [github.com/caopengau/aiready-cli](https://github.com/caopengau/aiready-cli)
+- GitHub: [github.com/getaiready/aiready-cli](https://github.com/getaiready/aiready-cli)
 - Platform: [platform.aiready.dev](https://platform.aiready.dev)
 - Docs: [aiready.dev/docs](https://aiready.dev/docs)
 
 ---
 
-_Peng Cao is the creator of [aiready](https://github.com/caopengau/aiready-cli), an open-source suite for measuring and optimizing codebases for AI adoption._
+_Peng Cao is the creator of [aiready](https://github.com/getaiready/aiready-cli), an open-source suite for measuring and optimizing codebases for AI adoption._

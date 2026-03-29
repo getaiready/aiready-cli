@@ -1,7 +1,7 @@
 # AIReady GitHub Action
 
 [![GitHub Marketplace](https://img.shields.io/badge/GitHub-Marketplace-blue?logo=github)](https://github.com/marketplace/actions/aiready-check)
-[![Version](https://img.shields.io/github/v/release/caopengau/aiready-action?label=version)](https://github.com/caopengau/aiready-action/releases)
+[![Version](https://img.shields.io/github/v/release/getaiready/aiready-action?label=version)](https://github.com/getaiready/aiready-action/releases)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Block PRs that break your AI context budget.** Run AI readiness analysis in your CI/CD pipeline.
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: caopengau/aiready-action@v1
+      - uses: getaiready/aiready-action@v1
         with:
           threshold: '70'
           fail-on-regression: 'true' # 🛡️ New: Block if score drops
@@ -67,13 +67,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: caopengau/aiready-action@v1
+      - uses: getaiready/aiready-action@v1
 ```
 
 ### Strict Mode (Fail on Any Issue)
 
 ```yaml
-- uses: caopengau/aiready-action@v1
+- uses: getaiready/aiready-action@v1
   with:
     threshold: '80'
     fail-on: 'major'
@@ -82,7 +82,7 @@ jobs:
 ### Specific Tools Only
 
 ```yaml
-- uses: caopengau/aiready-action@v1
+- uses: getaiready/aiready-action@v1
   with:
     tools: 'patterns,context' # Skip consistency check
 ```
@@ -90,7 +90,7 @@ jobs:
 ### Upload to SaaS for History
 
 ```yaml
-- uses: caopengau/aiready-action@v1
+- uses: getaiready/aiready-action@v1
   with:
     threshold: '70'
     upload-to-saas: 'true'
@@ -131,8 +131,8 @@ npx @aiready/cli scan .
 
 - 📚 [Documentation](https://getaiready.dev/docs)
 - 🌐 [Website](https://getaiready.dev)
-- 💬 [Discussions](https://github.com/caopengau/aiready/discussions)
-- 🐛 [Report Bug](https://github.com/caopengau/aiready/issues)
+- 💬 [Discussions](https://github.com/getaiready/aiready/discussions)
+- 🐛 [Report Bug](https://github.com/getaiready/aiready/issues)
 
 ## License
 

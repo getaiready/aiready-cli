@@ -78,10 +78,10 @@ npx sst dev
 
 This is the landing page for AIReady. For contributions to the core tools, visit:
 
-- [@aiready/cli](https://github.com/caopengau/aiready-cli) - Unified CLI for all tools
-- [@aiready/pattern-detect](https://github.com/caopengau/aiready-pattern-detect) - Semantic duplicate detection
-- [@aiready/context-analyzer](https://github.com/caopengau/aiready-context-analyzer) - Context window analysis
-- [@aiready/consistency](https://github.com/caopengau/aiready-consistency) - Code consistency checker
+- [@aiready/cli](https://github.com/getaiready/aiready-cli) - Unified CLI for all tools
+- [@aiready/pattern-detect](https://github.com/getaiready/aiready-pattern-detect) - Semantic duplicate detection
+- [@aiready/context-analyzer](https://github.com/getaiready/aiready-context-analyzer) - Context window analysis
+- [@aiready/consistency](https://github.com/getaiready/aiready-consistency) - Code consistency checker
 
 ## License
 

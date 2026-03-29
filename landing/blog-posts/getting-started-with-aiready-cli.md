@@ -191,7 +191,7 @@ Let's see how AIReady helped improve a real project:
 1. **Join the community:** [Discord](https://discord.gg/aiready)
 2. **Track trends:** [Platform](https://platform.getaiready.dev)
 3. **Read more:** [AI Engineering Handbook](./docs/AI_ENGINEERING_HANDBOOK.md)
-4. **Contribute:** [GitHub](https://github.com/caopengau/aiready)
+4. **Contribute:** [GitHub](https://github.com/getaiready/aiready-cli)
 
 ## Common Questions
 

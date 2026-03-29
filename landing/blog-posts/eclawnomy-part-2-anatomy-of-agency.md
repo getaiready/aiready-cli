@@ -46,7 +46,7 @@ In our next post, we’ll talk about the "Physics" of the Eclawnomy: How to host
 
 **Deep Dive:**
 
-- See our [Agentic Skills](https://github.com/caopengau/aiready/tree/main/packages/skills) repository.
+- See our [Agentic Skills](https://github.com/getaiready/aiready-skills) repository.
 - Learn more about the [Model Context Protocol](https://modelcontextprotocol.io).
 
 _Peng Cao is the creator of the **Eclawnomy** and founder of AIReady._

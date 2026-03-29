@@ -4,7 +4,7 @@ Thank you for your interest in contributing to AIReady Consistency Checker! We w
 
 ## 🐛 Reporting Issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/caopengau/aiready-consistency/issues) with:
+Found a bug or have a feature request? [Open an issue](https://github.com/getaiready/aiready-consistency/issues) with:
 
 - Clear description of the problem or feature
 - Sample code that demonstrates the issue
@@ -147,7 +147,7 @@ This package is part of the AIReady monorepo. If contributing to the monorepo:
 
 ## 📚 Resources
 
-- [AIReady CLI](https://github.com/caopengau/aiready-cli)
+- [AIReady CLI](https://github.com/getaiready/aiready-cli)
 - [AIReady Documentation](.github/copilot-instructions.md)
 - [TypeScript Best Practices](https://github.com/labs42io/clean-code-typescript)
 

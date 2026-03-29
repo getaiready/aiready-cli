@@ -4,7 +4,7 @@ Thank you for your interest in contributing to AIReady Pattern Detection! We wel
 
 ## 🐛 Reporting Issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/caopengau/aiready-pattern-detect/issues) with:
+Found a bug or have a feature request? [Open an issue](https://github.com/getaiready/aiready-pattern-detect/issues) with:
 
 - Clear description of the problem or feature
 - Sample code that demonstrates the issue

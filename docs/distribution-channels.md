@@ -170,12 +170,12 @@ git init
 git add .
 git commit -m "Initial release"
 git branch -M main
-git remote add origin https://github.com/caopengau/aiready-action.git
+git remote add origin https://github.com/getaiready/aiready-action.git
 git push -u origin main
 gh release create v1 --title "v1.0.0" --notes "Initial release"
 
 # 5. Publish to Marketplace
-# Go to: https://github.com/caopengau/aiready-action
+# Go to: https://github.com/getaiready/aiready-action
 # Click "Release" → "Publish this Action to the GitHub Marketplace"
 ```
 

@@ -70,10 +70,10 @@ They complement each other - use both for best results.
 
 ## Support
 
-- GitHub: https://github.com/caopengau/aiready-cli
-- Issues: https://github.com/caopengau/aiready-cli/issues
+- GitHub: https://github.com/getaiready/aiready-cli
+- Issues: https://github.com/getaiready/aiready-cli/issues
 - npm: https://www.npmjs.com/package/@aiready/cli
-- Documentation: https://github.com/caopengau/aiready-cli#readme
+- Documentation: https://github.com/getaiready/aiready-cli#readme
 
 ## Use Cases
 
@@ -129,7 +129,7 @@ AIReady generates detailed JSON and Markdown reports including:
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](https://github.com/caopengau/aiready-cli/blob/main/CONTRIBUTING.md)
+Contributions welcome! See [CONTRIBUTING.md](https://github.com/getaiready/aiready-cli/blob/main/CONTRIBUTING.md)
 
 ## License
 

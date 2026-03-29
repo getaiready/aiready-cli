@@ -46,7 +46,7 @@ The team with the most "Agentic Ready" codebase—the one with the lowest Naviga
 **Don't wait for the competition.** Start quantifying your AI Economics today:
 `npx @aiready/cli scan --score`
 
-_Peng Cao is the founder of [aiready](https://github.com/caopengau/aiready-cli)._
+_Peng Cao is the founder of [aiready](https://github.com/getaiready/aiready-cli)._
 
 > [!TIP]
 > **Ready for Autonomous Infrastructure?**

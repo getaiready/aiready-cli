@@ -47,4 +47,4 @@ In the next post, we’ll do a deep dissection: **The Anatomy of Agency.** We’
 - Explore the [OpenClaw](https://github.com/openclaw) ecosystem.
 - Check out [ServerlessClaw](https://github.com/caopengau/serverlessclaw) (our cheeky framework for $0 idle cost).
 
-_Peng Cao is the founder of [aiready](https://github.com/caopengau/aiready-cli) and the creator of the **Eclawnomy**._
+_Peng Cao is the founder of [aiready](https://github.com/getaiready/aiready-cli) and the creator of the **Eclawnomy**._

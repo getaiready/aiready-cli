@@ -35,7 +35,7 @@ This package follows a modular design with granular exports for tree-shaking:
 
 ## 🐛 Reporting Issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/caopengau/aiready-components/issues) with:
+Found a bug or have a feature request? [Open an issue](https://github.com/getaiready/aiready-components/issues) with:
 
 - Clear description of the problem or feature
 - Steps to reproduce (for bugs)

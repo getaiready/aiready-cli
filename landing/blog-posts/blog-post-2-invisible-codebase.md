@@ -375,7 +375,7 @@ Until then, run the tools. Measure your codebase. See how invisible it really is
 
 **Try it yourself:**
 
-- GitHub: [github.com/caopengau/aiready-cli](https://github.com/caopengau/aiready-cli)
+- GitHub: [github.com/getaiready/aiready-cli](https://github.com/getaiready/aiready-cli)
 - Docs: [aiready.dev](https://aiready.dev)
 
 **Want to support this work?**

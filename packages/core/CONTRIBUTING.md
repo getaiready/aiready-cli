@@ -4,7 +4,7 @@ Thank you for your interest in contributing to AIReady Core! We welcome bug repo
 
 ## 🐛 Reporting Issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/caopengau/aiready-core/issues) with:
+Found a bug or have a feature request? [Open an issue](https://github.com/getaiready/aiready-core/issues) with:
 
 - Clear description of the problem or feature
 - Steps to reproduce (for bugs)
@@ -15,7 +15,7 @@ Found a bug or have a feature request? [Open an issue](https://github.com/caopen
 
 ```bash
 # Clone your fork
-git clone https://github.com/caopengau/aiready-core
+git clone https://github.com/getaiready/aiready-core
 cd aiready-core
 
 # Install dependencies

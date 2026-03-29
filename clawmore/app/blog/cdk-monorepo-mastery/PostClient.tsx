@@ -301,7 +301,7 @@ export class ClawSpineStack extends cdk.Stack {
                 </h3>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                   <Link
-                    href="https://github.com/caopengau/serverlessclaw"
+                    href="https://github.com/serverlessclaw/serverlessclaw"
                     className="px-10 py-4 bg-white text-black font-black uppercase text-xs tracking-[0.2em] hover:bg-cyber-blue transition-all"
                   >
                     Fork the Repository

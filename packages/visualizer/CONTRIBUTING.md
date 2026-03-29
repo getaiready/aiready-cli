@@ -37,7 +37,7 @@ The Visualizer follows a **hub-and-spoke** pattern:
 
 ## 🐛 Reporting Issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/caopengau/aiready-visualizer/issues) with:
+Found a bug or have a feature request? [Open an issue](https://github.com/getaiready/aiready-visualizer/issues) with:
 
 - Clear description of the problem or feature
 - Steps to reproduce (for bugs)

@@ -13,7 +13,7 @@ The Context Analyzer measures and optimizes **context window usage** - how much 
 
 ## 🐛 Reporting Issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/caopengau/aiready-context-analyzer/issues) with:
+Found a bug or have a feature request? [Open an issue](https://github.com/getaiready/aiready-context-analyzer/issues) with:
 
 - Clear description of the problem or feature
 - Sample code that demonstrates the issue

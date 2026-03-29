@@ -124,7 +124,7 @@ pnpm run build
 make publish-skills
 
 # This creates a subtree split and pushes to:
-# https://github.com/caopengau/aiready-skills
+# https://github.com/getaiready/aiready-skills
 ```
 
 ### To skills.sh
