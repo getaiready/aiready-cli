@@ -177,6 +177,31 @@ export async function visualizeAction(
             watchTimeout = setTimeout(copyReportToViz, 100);
           });
 
+          const port = 5173; // Default Vite port
+          const addr = `http://localhost:${port}/`;
+
+          console.log('\n' + chalk.cyan('┌' + '─'.repeat(50) + '┐'));
+          console.log(
+            chalk.cyan('│') +
+              chalk.bold('  🌐  AIReady Visualization Ready!                ') +
+              chalk.cyan('│')
+          );
+          console.log(chalk.cyan('│' + ' '.repeat(50) + '│'));
+          console.log(
+            chalk.cyan('│') +
+              '  👉  Click to open: ' +
+              chalk.green.underline(addr) +
+              ' '.repeat(50 - 21 - addr.length) +
+              chalk.cyan('│')
+          );
+          console.log(chalk.cyan('│' + ' '.repeat(50) + '│'));
+          console.log(
+            chalk.cyan('│') +
+              chalk.dim('  (Press Ctrl+C to stop)                          ') +
+              chalk.cyan('│')
+          );
+          console.log(chalk.cyan('└' + '─'.repeat(50) + '┘') + '\n');
+
           const envForSpawn = {
             ...process.env,
             AIREADY_REPORT_PATH: reportPath,
