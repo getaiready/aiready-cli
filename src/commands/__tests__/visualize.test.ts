@@ -43,8 +43,25 @@ describe('Visualize CLI Action', () => {
 
   it('should generate HTML from specified report', async () => {
     await visualizeAction('.', { report: 'report.json' });
+    expect(core.ensureDir).toHaveBeenCalledWith(
+      expect.stringContaining('visualization.html')
+    );
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       expect.stringContaining('visualization.html'),
+      '<html></html>',
+      'utf8'
+    );
+  });
+
+  it('should create output directory if it does not exist', async () => {
+    const customOutput = 'nested/dir/viz.html';
+    await visualizeAction('.', { report: 'report.json', output: customOutput });
+
+    expect(core.ensureDir).toHaveBeenCalledWith(
+      expect.stringContaining(customOutput)
+    );
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining(customOutput),
       '<html></html>',
       'utf8'
     );
