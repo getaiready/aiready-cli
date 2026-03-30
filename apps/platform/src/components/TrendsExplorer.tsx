@@ -6,6 +6,7 @@ import { TrendingUpIcon } from './Icons';
 import { TrendChart } from './trends/TrendChart';
 import { InsightCard } from './trends/InsightCard';
 import { RecentScans } from './trends/RecentScans';
+import { fetchRepoHistory } from '@/lib/api/history';
 
 interface Props {
   repos: Repository[];
@@ -27,11 +28,8 @@ export default function TrendsExplorer({ repos }: Props) {
   async function fetchHistory(repoId: string) {
     try {
       setLoading(true);
-      const res = await fetch(`/api/repos/${repoId}/history?limit=30`);
-      const data = await res.json();
-      if (res.ok) {
-        setHistory(data.analyses.reverse());
-      }
+      const data = await fetchRepoHistory(repoId, 30);
+      setHistory(data);
     } catch (_err) {
       console.error('Failed to fetch history:', _err);
     } finally {
