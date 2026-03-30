@@ -95,7 +95,3 @@ lint-staged: ## Run lint-staged on changed files
 	@$(call log_info,Running lint-staged...)
 	@$(PNPM) $(SILENT_PNPM) lint-staged
 
-debug-spokes:
-	@echo "ALL_SPOKES: $(ALL_SPOKES)"
-	@echo "ROOT_DIR: $(ROOT_DIR)"
-	@echo "CWD: $$(pwd)"
