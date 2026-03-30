@@ -1,30 +1,63 @@
 'use client';
 
 import Script from 'next/script';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import AnimatedHero from '../components/AnimatedHero';
-import { Benefits } from '../components/Benefits';
 import FloatingElements from '../components/FloatingElements';
-import ChartsClient from '../components/ChartsClient';
-import RequestForm from '../components/RequestForm';
-import LiveScanDemo from '../components/LiveScanDemo';
 import { Header } from '../components/Header';
-import { Features } from '../components/Features';
-import { AIReadinessScore } from '../components/AIReadinessScore';
-import { NotAnotherLinter } from '../components/NotAnotherLinter';
-import { Testimonials } from '../components/Testimonials';
-import { CTA } from '../components/CTA';
-import { FAQ } from '../components/FAQ';
-import { Footer } from '../components/Footer';
-import { ConsultantsSection } from '../components/ConsultantsSection';
-import { AIOptimizedContent } from '../components/AIOptimizedContent';
 import Modal from '../components/Modal';
+import RequestForm from '../components/RequestForm';
 import {
   generateBreadcrumbSchema,
   generateWebsiteSchema,
   generateProductSchema,
   generateHowToSchema,
 } from '../lib/seo';
+
+// Dynamic imports for below-the-fold components
+const Benefits = dynamic(() =>
+  import('../components/Benefits').then((mod) => ({ default: mod.Benefits }))
+);
+const ChartsClient = dynamic(() => import('../components/ChartsClient'));
+const LiveScanDemo = dynamic(() => import('../components/LiveScanDemo'));
+const Features = dynamic(() =>
+  import('../components/Features').then((mod) => ({ default: mod.Features }))
+);
+const AIReadinessScore = dynamic(() =>
+  import('../components/AIReadinessScore').then((mod) => ({
+    default: mod.AIReadinessScore,
+  }))
+);
+const NotAnotherLinter = dynamic(() =>
+  import('../components/NotAnotherLinter').then((mod) => ({
+    default: mod.NotAnotherLinter,
+  }))
+);
+const Testimonials = dynamic(() =>
+  import('../components/Testimonials').then((mod) => ({
+    default: mod.Testimonials,
+  }))
+);
+const CTA = dynamic(() =>
+  import('../components/CTA').then((mod) => ({ default: mod.CTA }))
+);
+const FAQ = dynamic(() =>
+  import('../components/FAQ').then((mod) => ({ default: mod.FAQ }))
+);
+const Footer = dynamic(() =>
+  import('../components/Footer').then((mod) => ({ default: mod.Footer }))
+);
+const ConsultantsSection = dynamic(() =>
+  import('../components/ConsultantsSection').then((mod) => ({
+    default: mod.ConsultantsSection,
+  }))
+);
+const AIOptimizedContent = dynamic(() =>
+  import('../components/AIOptimizedContent').then((mod) => ({
+    default: mod.AIOptimizedContent,
+  }))
+);
 
 export default function HomePage() {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);

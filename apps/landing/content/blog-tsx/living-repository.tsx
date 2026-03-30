@@ -35,7 +35,7 @@ const Post = () => (
       By using a monorepo structure (like <strong>AIReady</strong>), we organize
       our engine into discrete, reusable packages. The infrastructure package
       contains the blueprint (written in <strong>AWS CDK</strong> or{' '}
-      <strong>SST Ion</strong>) that defines exactly how these pieces fit
+      <strong>SST v4</strong>) that defines exactly how these pieces fit
       together.
     </p>
 

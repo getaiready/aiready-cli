@@ -12,7 +12,7 @@ An autonomous engineering system isn't just code; it's a complex web of infrastr
 
 ## The Monorepo Blueprint
 
-By using a monorepo structure (like **AIReady**), we organize our engine into discrete, reusable packages. The infrastructure package contains the blueprint (written in **AWS CDK** or **SST Ion**) that defines exactly how these pieces fit together.
+By using a monorepo structure (like **AIReady**), we organize our engine into discrete, reusable packages. The infrastructure package contains the blueprint (written in **AWS CDK** or **SST v4**) that defines exactly how these pieces fit together.
 
 ```typescript
 export class NeuralSpineStack extends Stack {

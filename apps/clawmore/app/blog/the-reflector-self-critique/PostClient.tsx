@@ -241,7 +241,7 @@ export default function BlogPost() {
                   </p>
                   <p className="text-zinc-200 leading-relaxed text-lg mt-6">
                     But once a mutation is planned, how do we deploy it safely?
-                    In the next post, we'll explore **SST Ion & The Coder
+                    In the next post, we'll explore **SST v4 & The Coder
                     Loop**—the mechanism that closes the gap between reasoning
                     and deployment.
                   </p>
@@ -264,7 +264,7 @@ export default function BlogPost() {
                           PART 04 // JIT_INFRASTRUCTURE
                         </div>
                         <div className="text-2xl font-black italic group-hover:text-white transition-colors">
-                          SST Ion & The Coder Loop
+                          SST v4 & The Coder Loop
                         </div>
                       </div>
                     </div>

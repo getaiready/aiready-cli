@@ -1,81 +1,57 @@
 /**
  * Posts registry - manages blog post registrations.
- * This file centralizes the registry logic to reduce change amplification.
+ * Metadata is stored statically (small footprint), content is loaded dynamically.
  */
 
-export type BlogPostMeta = {
-  slug: string;
-  title: string;
-  date: string;
-  excerpt: string;
-  author: string;
-  tags?: string[];
-  readingTime: string;
-  cover: string;
-  ogImage?: string;
-};
+import { allPostMeta } from './all-meta';
+import { type BlogPostMeta, type BlogPostEntry } from './types';
 
-export type BlogPostEntry<T = any> = {
-  slug: string;
-  title: string;
-  date: string;
-  excerpt: string;
-  author: string;
-  tags: string[];
-  readingTime: string;
-  cover: string;
-  ogImage: string;
-  Content: T;
-};
-
-// Registry for lazy-loaded posts
-const postRegistry: Record<
-  string,
-  () => Promise<{ default: any; meta: BlogPostMeta }>
-> = {};
+// Re-export types for convenience
+export type { BlogPostMeta, BlogPostEntry } from './types';
 
 /**
- * Register a blog post for lazy loading.
- * This allows posts to be added without modifying the central index.
+ * Get all blog post metadata (static, no content loaded)
  */
-export function registerPost(
-  slug: string,
-  loader: () => Promise<{ default: any; meta: BlogPostMeta }>
-) {
-  postRegistry[slug] = loader;
+export function getAllPostMeta(): BlogPostMeta[] {
+  return [...allPostMeta].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
 }
 
 /**
- * Get all registered blog posts.
- * Uses dynamic imports to minimize initial bundle size and coupling.
+ * Get a blog post by slug (loads content dynamically)
  */
-export async function getPosts(): Promise<BlogPostEntry[]> {
-  const posts: BlogPostEntry[] = [];
+export async function getPostBySlug(
+  slug: string
+): Promise<BlogPostEntry | null> {
+  // Import content loaders dynamically to avoid circular dependencies
+  const { contentLoaders } = await import('./content-loaders');
 
-  for (const [slug, loader] of Object.entries(postRegistry)) {
-    try {
-      const { default: Content, meta } = await loader();
-      posts.push({
-        slug: meta.slug,
-        title: meta.title,
-        date: meta.date,
-        excerpt: meta.excerpt,
-        author: meta.author,
-        tags: meta.tags || [],
-        readingTime: meta.readingTime,
-        cover: meta.cover,
-        ogImage: meta.ogImage || meta.cover,
-        Content,
-      });
-    } catch (error) {
-      console.error(`Failed to load post: ${slug}`, error);
-    }
+  const meta = allPostMeta.find((m) => m.slug === slug);
+  if (!meta) return null;
+
+  const loader = contentLoaders[slug];
+  if (!loader) return null;
+
+  try {
+    const { default: Content } = await loader();
+
+    return {
+      slug: meta.slug,
+      title: meta.title,
+      date: meta.date,
+      excerpt: meta.excerpt,
+      author: meta.author,
+      tags: meta.tags || [],
+      readingTime: meta.readingTime,
+      cover: meta.cover,
+      ogImage: meta.ogImage || meta.cover,
+      Content,
+    };
+  } catch (error) {
+    console.error(`Failed to load post content: ${slug}`, error);
+    return null;
   }
-
-  // Sort by date descending
-  return posts.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
 }
 
 /**

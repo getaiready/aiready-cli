@@ -34,7 +34,7 @@ As autonomous systems scale, organizing them by hand becomes a recipe for failur
 
 The monorepo (like **AIReady**) becomes the source of truth for the entire ecosystem.
 
-- **Neural Spine Infrastructure**: Written in AWS CDK or SST Ion, defining the event-driven backbone.
+- **Neural Spine Infrastructure**: Written in AWS CDK or SST v4, defining the event-driven backbone.
 - **Discrete Packages**: Keeping the reasoning engine, the gateway, and the domain logic in focused, navigable units.
 - **Linkable reasoning**: Every commit contains a link back to the agent's logic and the human's approval.
 

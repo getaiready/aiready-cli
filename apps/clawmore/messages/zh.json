@@ -47,7 +47,7 @@
       },
       {
         "label": "执行操作 (EXECUTION_OPS)",
-        "desc": "Coder（编码员）实施且 SST Ion 部署基础设施"
+        "desc": "Coder（编码员）实施且 SST v4 部署基础设施"
       },
       {
         "label": "GIT 持久化",

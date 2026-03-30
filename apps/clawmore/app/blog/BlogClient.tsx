@@ -24,7 +24,7 @@ const BLOG_POSTS = [
     slug: 'safety-isolation-sst',
     title: 'Safety First: Isolating Intelligence with SST',
     excerpt:
-      'Hard boundaries for autonomous agents. How we use AWS account vending and SST Ion to secure the Eclawnomy.',
+      'Hard boundaries for autonomous agents. How we use AWS account vending and SST v4 to secure the Eclawnomy.',
     date: 'Apr 01, 2026',
     readTime: '7 min read',
     hash: 'isolation',
@@ -231,7 +231,7 @@ const BLOG_POSTS = [
   },
   {
     slug: 'sst-ion-coder-loop',
-    title: 'SST Ion & The Coder Loop',
+    title: 'SST v4 & The Coder Loop',
     excerpt:
       'Closing the gap between LLM reasoning and Pulumi-based deployment. Sub-second infrastructure mutations through serverless AI automation and orchestration.',
     date: 'Mar 24, 2026',

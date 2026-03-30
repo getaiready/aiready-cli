@@ -1,0 +1,135 @@
+{
+  "$schema": "https://getaiready.dev/schema.json",
+  "threshold": 75,
+  "scan": {
+    "include": [
+      "src/**/*.ts",
+      "src/**/*.js",
+      "lib/**/*.ts",
+      "packages/*/src/**/*.ts"
+    ],
+    "exclude": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/*.test.ts",
+      "**/*.spec.ts"
+    ],
+    "tools": [
+      "pattern-detect",
+      "context-analyzer",
+      "naming-consistency",
+      "ai-signal-clarity",
+      "agent-grounding",
+      "testability-index",
+      "doc-drift",
+      "dependency-health",
+      "change-amplification"
+    ]
+  },
+  "output": {
+    "format": "console",
+    "showBreakdown": true,
+    "saveTo": "aiready-report.json"
+  },
+  "scoring": {
+    "profile": "balanced"
+  },
+  "tools": {
+    "pattern-detect": {
+      "minSimilarity": 0.4,
+      "minLines": 5,
+      "minSharedTokens": 8,
+      "approx": true,
+      "batchSize": 100,
+      "maxCandidatesPerBlock": 100,
+      "maxResults": 10,
+      "minClusterFiles": 3,
+      "minClusterTokenCost": 1000,
+      "outputFormat": "console"
+    },
+    "context-analyzer": {
+      "maxContextBudget": 25000,
+      "minCohesion": 0.4,
+      "maxDepth": 7,
+      "maxFragmentation": 0.7,
+      "focus": "all",
+      "includeNodeModules": false
+    },
+    "naming-consistency": {
+      "checkNaming": true,
+      "checkPatterns": true,
+      "checkArchitecture": true,
+      "minSeverity": "info",
+      "shortWords": ["id", "db", "ui", "ai"],
+      "acceptedAbbreviations": [
+        "API",
+        "JSON",
+        "CSV",
+        "HTML",
+        "CSS",
+        "HTTP",
+        "URL",
+        "SDK",
+        "CLI",
+        "AI",
+        "ML",
+        "ID",
+        "DB",
+        "UI",
+        "UX",
+        "DOM",
+        "UUID",
+        "GUID",
+        "DEFAULT",
+        "MAX",
+        "MIN",
+        "config",
+        "INIT",
+        "SKILL",
+        "ENV",
+        "DEV",
+        "PROD",
+        "AWS",
+        "S3",
+        "ARN"
+      ],
+      "disableChecks": []
+    },
+    "ai-signal-clarity": {
+      "checkMagicLiterals": true,
+      "checkBooleanTraps": true,
+      "checkAmbiguousNames": true,
+      "checkUndocumentedExports": true,
+      "checkImplicitSideEffects": true,
+      "checkDeepCallbacks": true,
+      "checkOverloadedSymbols": true,
+      "checkLargeFiles": true
+    },
+    "agent-grounding": {
+      "maxRecommendedDepth": 4,
+      "readmeStaleDays": 90,
+      "additionalVagueNames": ["stuff", "misc", "temp", "test"]
+    },
+    "testability-index": {
+      "minCoverageRatio": 0.3,
+      "testPatterns": ["**/*.test.ts", "**/__tests__/**", "**/*.spec.ts"],
+      "maxDepth": 10
+    },
+    "doc-drift": {
+      "maxCommits": 50,
+      "staleMonths": 3
+    },
+    "dependency-health": {
+      "trainingCutoffYear": 2023
+    },
+    "change-amplification": {}
+  },
+  "visualizer": {
+    "groupingDirs": ["packages", "src", "lib"],
+    "graph": {
+      "maxNodes": 5000,
+      "maxEdges": 10000
+    }
+  }
+}

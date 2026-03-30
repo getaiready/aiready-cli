@@ -37,9 +37,9 @@ const Post = () => (
 
     <h2>The JIT Infrastructure Engine</h2>
     <p>
-      We chose <strong>SST Ion</strong> (built on Pulumi) because it allows for
+      We chose <strong>SST v4</strong> (built on Pulumi) because it allows for
       Just-In-Time (JIT) infrastructure mutations. Unlike traditional IaC tools
-      that require slow planning phases and manual approval, SST Ion gives our
+      that require slow planning phases and manual approval, SST v4 gives our
       autonomous agents the ability to define and deploy resources in a
       sub-second loop.
     </p>
@@ -52,9 +52,9 @@ const Post = () => (
     <h2>Verified Mutation (The Coder Gate)</h2>
     <p>
       The agent doesn&apos;t just push code and pray. It runs a local synthesis
-      check to ensure the SST Ion definition is valid. If the synthesis fails,
-      it emits a <code>REASONING_ERROR</code> back to the neural spine,
-      triggering a reflection loop for the architect to try again.
+      check to ensure the SST v4 definition is valid. If the synthesis fails, it
+      emits a <code>REASONING_ERROR</code> back to the neural spine, triggering
+      a reflection loop for the architect to try again.
     </p>
 
     <div className="bg-slate-900 rounded-2xl p-8 my-12 border border-slate-800">

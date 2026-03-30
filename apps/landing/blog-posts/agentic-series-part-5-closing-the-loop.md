@@ -14,13 +14,13 @@ In an autonomous engineering system, we treat deployment as a first-class citize
 
 ## The JIT Infrastructure Engine
 
-We chose **SST Ion** (built on Pulumi) because it allows for Just-In-Time (JIT) infrastructure mutations. Unlike traditional IaC tools that require slow planning phases and manual approval, SST Ion gives our autonomous agents the ability to define and deploy resources in a sub-second loop.
+We chose **SST v4** (built on Pulumi) because it allows for Just-In-Time (JIT) infrastructure mutations. Unlike traditional IaC tools that require slow planning phases and manual approval, SST v4 gives our autonomous agents the ability to define and deploy resources in a sub-second loop.
 
 When the architect agent pulses a `PATCH_PLANNED` event, the coder agent ingests the intent and translates it into TypeScript-based infrastructure code that is immediately deployable.
 
 ## Verified Mutation (The Coder Gate)
 
-The agent doesn't just push code and pray. It runs a local synthesis check to ensure the SST Ion definition is valid. If the synthesis fails, it emits a `REASONING_ERROR` back to the neural spine, triggering a reflection loop for the architect to try again.
+The agent doesn't just push code and pray. It runs a local synthesis check to ensure the SST v4 definition is valid. If the synthesis fails, it emits a `REASONING_ERROR` back to the neural spine, triggering a reflection loop for the architect to try again.
 
 ```typescript
 // Synthesizing JIT Concurrency Scaling...

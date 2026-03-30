@@ -1,24 +1,15 @@
 /**
- * Blog posts registry using lazy loading to reduce change amplification.
- * Each blog post registers itself, decoupling the index from direct imports.
+ * Blog posts index - exports metadata only (small footprint).
+ * Content is loaded dynamically when needed via getPostBySlug().
+ * This keeps context budget low while maintaining full functionality.
  */
+import { allPostMeta } from './all-meta';
 
-import {
-  registerPost,
-  createPostEntry,
-  type BlogPostEntry,
-} from './posts-registry';
+// Re-export types and functions
+export type { BlogPostMeta, BlogPostEntry } from './types';
+export { getPostBySlug } from './posts-registry';
 
-// Re-export types and functions from registry
-export {
-  registerPost,
-  createPostEntry,
-  type BlogPostEntry,
-} from './posts-registry';
-
-// Import blog posts in groups to reduce change amplification
-import { group1Posts } from './group1';
-import { group2Posts } from './group2';
-
-// Static posts array for backward compatibility
-export const posts: BlogPostEntry[] = [...group1Posts, ...group2Posts];
+// Export sorted metadata (small footprint - no React components)
+export const posts = [...allPostMeta].sort(
+  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+);

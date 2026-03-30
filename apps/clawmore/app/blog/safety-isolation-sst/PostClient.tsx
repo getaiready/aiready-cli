@@ -163,10 +163,10 @@ export default function BlogPost() {
                   <span className="text-cyber-purple font-mono text-sm not-italic">
                     {'/// 03'}
                   </span>
-                  SST Ion: Code-Aware Security
+                  SST v4: Code-Aware Security
                 </h2>
                 <p className="text-zinc-200 leading-relaxed text-lg">
-                  By using <strong>SST Ion</strong> (our preferred framework for{' '}
+                  By using <strong>SST v4</strong> (our preferred framework for{' '}
                   <em>serverlessclaw</em>), our security policies are literally
                   woven into the infrastructure code. We define the
                   &quot;Minimum viable permission&quot; for every agent role

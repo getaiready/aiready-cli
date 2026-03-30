@@ -28,7 +28,7 @@ const CODER_NODES = [
   },
   {
     id: 'sst',
-    data: { label: 'SST_ION_DEPLOYER', type: 'bus' },
+    data: { label: 'SST_V4_DEPLOYER', type: 'bus' },
     position: { x: 600, y: 0 },
   },
   {
@@ -66,7 +66,7 @@ export default function BlogPost() {
   const POST_JSON_LD = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
-    headline: 'SST Ion & The Coder Loop',
+    headline: 'SST v4 & The Coder Loop',
     description:
       'Closing the gap between LLM reasoning and Pulumi-based deployment. How we achieve sub-second infrastructure mutations.',
     datePublished: '2026-03-24',
@@ -74,8 +74,8 @@ export default function BlogPost() {
       '@type': 'Organization',
       name: 'ClawMore',
     },
-    image: '/blog-assets/sst-ion-coder-loop.png',
-    url: '/blog-assets/sst-ion-coder-loop',
+    image: '/blog-assets/sst-v4-coder-loop.png',
+    url: '/blog/sst-v4-coder-loop',
   };
 
   return (
@@ -105,7 +105,7 @@ export default function BlogPost() {
             </div>
 
             <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-8 italic leading-[1.1]">
-              SST Ion & The <br />
+              SST v4 & The <br />
               <span className="text-cyber-purple">Coder Loop</span>
             </h1>
 
@@ -116,8 +116,8 @@ export default function BlogPost() {
 
             <div className="mt-12 relative aspect-[21/9] w-full overflow-hidden border border-white/10 rounded-sm group">
               <img
-                src="/blog-assets/sst-ion-coder-loop.png"
-                alt="SST Ion & The Coder Loop"
+                src="/blog-assets/sst-v4-coder-loop.png"
+                alt="SST v4 & The Coder Loop"
                 className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -134,8 +134,8 @@ export default function BlogPost() {
               items={[
                 { label: 'BLOG', href: '/blog' },
                 {
-                  label: 'SST ION & THE CODER LOOP',
-                  href: '/blog/sst-ion-coder-loop',
+                  label: 'SST V4 & THE CODER LOOP',
+                  href: '/blog/sst-v4-coder-loop',
                 },
               ]}
             />
@@ -170,10 +170,10 @@ export default function BlogPost() {
                     The JIT Infrastructure Engine
                   </h2>
                   <p className="text-zinc-200 leading-relaxed text-lg">
-                    We chose **SST Ion** (built on Pulumi) because it allows for
+                    We chose **SST v4** (built on Pulumi) because it allows for
                     Just-In-Time (JIT) infrastructure mutations. Unlike
                     traditional IaC tools that require slow planning phases, SST
-                    Ion gives the Coder agent the ability to define and deploy
+                    v4 gives the Coder agent the ability to define and deploy
                     resources in a sub-second loop.
                   </p>
                   <p className="text-zinc-200 leading-relaxed text-lg mt-6">
@@ -198,7 +198,7 @@ export default function BlogPost() {
                   </h2>
                   <p className="text-zinc-200 leading-relaxed text-lg">
                     The Coder doesn't just push code. It runs a local synthesis
-                    check to ensure the SST Ion definition is valid. If the
+                    check to ensure the SST v4 definition is valid. If the
                     synthesis fails, the Coder emits a `REASONING_ERROR` back to
                     the neural spine, triggering a reflection loop for the
                     Architect to try again.
