@@ -1,13 +1,42 @@
 {
   "name": "@aiready/ast-mcp-server",
   "version": "0.1.0",
-  "description": "AST-aware codebase exploration MCP server for AIReady",
+  "description": "The AIReady AST-aware Model Context Protocol (MCP) Server. Explore and navigate multi-project TypeScript/JavaScript codebases with high precision using AST and type information.",
+  "keywords": [
+    "aiready",
+    "mcp",
+    "model-context-protocol",
+    "ast",
+    "typescript",
+    "javascript",
+    "codebase-exploration",
+    "codebase-navigation",
+    "ai-readiness",
+    "agent-grounding",
+    "ts-morph"
+  ],
+  "homepage": "https://github.com/getaiready/aiready-ast-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/getaiready/aiready-ast-mcp-server/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/getaiready/aiready-ast-mcp-server.git"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "bin": {
+    "ast-mcp-server": "./dist/index.js",
+    "aiready-ast-mcp": "./dist/index.js"
+  },
   "files": [
-    "dist"
+    "dist",
+    "smithery.yaml"
   ],
   "scripts": {
     "build": "tsup",

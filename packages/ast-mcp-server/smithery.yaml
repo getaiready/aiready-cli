@@ -1,0 +1,7 @@
+startCommand:
+  type: stdio
+  config:
+    command: npx
+    args:
+      - -y
+      - '@aiready/ast-mcp-server'

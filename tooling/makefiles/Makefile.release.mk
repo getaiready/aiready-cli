@@ -17,7 +17,7 @@ $(info DEBUG: ROOT_DIR is $(ROOT_DIR))
 include $(MAKEFILE_DIR)/Makefile.shared.mk
 include $(MAKEFILE_DIR)/Makefile.publish.mk
 
-OWNER         ?= caopengau
+# Use PUBLIC_OWNER and PRIVATE_OWNER from Makefile.publish.mk
 TARGET_BRANCH ?= main
 LANDING_DIR   := $(ROOT_DIR)/apps/landing
 PLATFORM_DIR  := $(ROOT_DIR)/apps/platform
@@ -119,7 +119,7 @@ endef
 release-spoke-%:
 	@$(call log_info,Releasing spoke @aiready/$*...); \
 	$(MAKE) npm-publish SPOKE=$* || exit 1; \
-	$(MAKE) publish SPOKE=$* OWNER=$(OWNER) || exit 1; \
+	$(MAKE) publish SPOKE=$* PUBLIC_OWNER=$(PUBLIC_OWNER) || exit 1; \
 	$(call log_success,Released @aiready/$*)
 
 release-checks-spoke: ## Shared checks for release-one (SPOKE required)
@@ -225,7 +225,7 @@ release-clawmore-prod: verify-aws-account ## Release ClawMore to production: TYP
 	@$(call run_if_enabled,$(RELEASE_DEPLOY),$(MAKE) -C $(ROOT_DIR) deploy-clawmore-prod,clawmore production deploy)
 	@$(call run_if_enabled,$(RELEASE_VERIFY),$(MAKE) -C $(ROOT_DIR) clawmore-verify || $(call log_warning,Verification timed out - may still be deploying),clawmore verify)
 	@$(call run_if_enabled,$(RELEASE_E2E),$(MAKE) -C $(ROOT_DIR) test-clawmore-e2e-prod,clawmore prod E2E)
-	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(MAKE) -C $(ROOT_DIR) publish-clawmore OWNER=$(OWNER),publish clawmore)
+	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(MAKE) -C $(ROOT_DIR) publish-clawmore PRIVATE_OWNER=$(PRIVATE_OWNER),publish clawmore)
 	@$(call run_if_enabled,$(RELEASE_PUSH),$(MAKE) sync,sync and push)
 	@$(call log_success,Release finished for clawmore)
 
@@ -253,7 +253,7 @@ release-landing-prod: ## Release landing to production: TYPE=patch|minor|major
 	@$(call run_if_enabled,$(RELEASE_BUILD),cd $(LANDING_DIR) && pnpm build,landing build)
 	@$(call run_if_enabled,$(RELEASE_DEPLOY),$(MAKE) -C $(ROOT_DIR) deploy-landing-prod,landing production deploy)
 	@$(call run_if_enabled,$(RELEASE_VERIFY),$(MAKE) -C $(ROOT_DIR) landing-verify VERIFY_RETRIES=3 VERIFY_WAIT=10 || $(call log_warning,Verification timed out - CloudFront may still be propagating),landing verify)
-	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(MAKE) -C $(ROOT_DIR) publish-landing OWNER=$(OWNER),publish landing)
+	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(MAKE) -C $(ROOT_DIR) publish-landing PUBLIC_OWNER=$(PUBLIC_OWNER),publish landing)
 	@$(call run_if_enabled,$(RELEASE_PUSH),$(MAKE) sync,sync and push)
 	@$(call log_success,Release finished for @aiready/landing)
 
@@ -290,7 +290,7 @@ release-vscode: ## Release VS Code extension: TYPE=patch|minor|major
 	@$(MAKE) -C $(ROOT_DIR) version-vscode-$(TYPE)
 	@$(call commit_and_tag_app,$(EXTENSION_DIR),vscode-extension,vscode-extension,vscode-extension)
 	@$(call run_if_enabled,$(RELEASE_BUILD),cd $(EXTENSION_DIR) && pnpm build,vscode build)
-	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(MAKE) -C $(ROOT_DIR) publish-vscode TYPE=$(TYPE) && $(MAKE) -C $(ROOT_DIR) publish-vscode-sync OWNER=$(OWNER),publish vscode)
+	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(MAKE) -C $(ROOT_DIR) publish-vscode TYPE=$(TYPE) && $(MAKE) -C $(ROOT_DIR) publish-vscode-sync PUBLIC_OWNER=$(PUBLIC_OWNER) && $(MAKE) -C $(ROOT_DIR) publish-action-sync PUBLIC_OWNER=$(PUBLIC_OWNER) OWNER=$(OWNER),publish vscode)
 	@$(call run_if_enabled,$(RELEASE_DISTRIBUTION),$(MAKE) -C $(ROOT_DIR) update-distribution,distribution channels)
 	@$(call run_if_enabled,$(RELEASE_PUSH),$(MAKE) sync,sync and push)
 	@$(call log_success,Release finished for VS Code extension)
@@ -324,7 +324,7 @@ release-one: ## Release one npm spoke: SPOKE=name TYPE=patch|minor|major
 	@$(MAKE) -C $(ROOT_DIR) $(call bump_target_for_type,$(TYPE)) SPOKE=$(SPOKE)
 	@$(call commit_and_tag)
 	@$(call run_if_enabled,$(RELEASE_PRECHECKS),$(MAKE) -C $(ROOT_DIR) release-checks-spoke SPOKE=$(SPOKE),spoke checks)
-	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(SPOKE) && $(MAKE) -C $(ROOT_DIR) publish SPOKE=$(SPOKE) OWNER=$(OWNER),publish spoke)
+	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(SPOKE) && $(MAKE) -C $(ROOT_DIR) publish SPOKE=$(SPOKE) PUBLIC_OWNER=$(PUBLIC_OWNER),publish spoke)
 	@$(call run_if_enabled,$(RELEASE_DISTRIBUTION),$(MAKE) -C $(ROOT_DIR) update-distribution,distribution channels)
 	@$(call run_if_enabled,$(RELEASE_PUSH),$(MAKE) sync,sync and push)
 	@$(call log_success,Release finished for @aiready/$(SPOKE))
@@ -345,9 +345,9 @@ release-all: ## Release all npm spokes: TYPE=patch|minor|major
 		version=$$(node -p "require('$(ROOT_DIR)/packages/$$spoke/package.json').version"); \
 		cd $(ROOT_DIR) && git tag -f -a "$$spoke-v$$version" -m "Release @aiready/$$spoke v$$version" || true; \
 	done
-	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(call log_step,Phase 5: Publish core...) && $(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(CORE_SPOKE) && $(MAKE) -C $(ROOT_DIR) publish SPOKE=$(CORE_SPOKE) OWNER=$(OWNER),publish core)
+	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(call log_step,Phase 5: Publish core...) && $(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(CORE_SPOKE) && $(MAKE) -C $(ROOT_DIR) publish SPOKE=$(CORE_SPOKE) PUBLIC_OWNER=$(PUBLIC_OWNER),publish core)
 	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(call log_step,Phase 6: Publish middle spokes in parallel...) && $(MAKE) $(MAKE_PARALLEL) $(addprefix release-spoke-,$(filter-out $(CORE_SPOKE) $(CLI_SPOKE),$(NPM_PUBLISH_SPOKES))),publish middle spokes)
-	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(call log_step,Phase 7: Publish CLI...) && $(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(CLI_SPOKE) && $(MAKE) -C $(ROOT_DIR) publish SPOKE=$(CLI_SPOKE) OWNER=$(OWNER),publish cli)
+	@$(call run_if_enabled,$(RELEASE_PUBLISH),$(call log_step,Phase 7: Publish CLI...) && $(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(CLI_SPOKE) && $(MAKE) -C $(ROOT_DIR) publish SPOKE=$(CLI_SPOKE) PUBLIC_OWNER=$(PUBLIC_OWNER),publish cli)
 	@$(call run_if_enabled,$(RELEASE_DISTRIBUTION),$(call log_step,Phase 8: Update distribution channels...) && $(MAKE) -C $(ROOT_DIR) update-distribution,distribution channels)
 	@$(call run_if_enabled,$(RELEASE_PUSH),$(MAKE) sync,sync and push)
 	@$(call log_success,All spokes released: core -> middle -> cli)

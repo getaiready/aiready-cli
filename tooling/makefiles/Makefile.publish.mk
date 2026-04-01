@@ -19,8 +19,9 @@ REPO_ROOT := $(abspath $(MAKEFILE_DIR)/..)
         npm-publish-core npm-publish-pattern-detect npm-publish-skills \
         pull sync-from-spoke sync deploy push
 
-# Default owner for GitHub repos
-OWNER ?= caopengau
+# Default owners for GitHub repos
+PUBLIC_OWNER  ?= getaiready
+PRIVATE_OWNER ?= caopengau
 # Default branch name to push to
 TARGET_BRANCH ?= main
 
@@ -125,7 +126,7 @@ npm-publish: npm-check ## Publish spoke to npm. Usage: make npm-publish SPOKE=pa
 publish: ## Publish spoke to GitHub. Usage: make publish SPOKE=pattern-detect [OWNER=username]
 	$(call require_spoke)
 	@$(call log_step,Publishing @aiready/$(SPOKE) to GitHub...)
-	@url="https://github.com/$(OWNER)/aiready-$(SPOKE).git"; \
+	@url="https://github.com/$(or $(OWNER),$(PUBLIC_OWNER))/aiready-$(SPOKE).git"; \
 	remote="aiready-$(SPOKE)"; \
 	branch="publish-$(SPOKE)"; \
 	spk_dir="$(call SPOKE_DIR,$(SPOKE))"; \
@@ -151,7 +152,7 @@ publish: ## Publish spoke to GitHub. Usage: make publish SPOKE=pattern-detect [O
 
 # Convenience aliases for specific spokes
 publish-core: ## Publish @aiready/core to GitHub (shortcut for: make publish SPOKE=core)
-	@$(MAKE) publish SPOKE=core OWNER=$(OWNER)
+	@$(MAKE) publish SPOKE=core PUBLIC_OWNER=$(PUBLIC_OWNER)
 
 publish-paks: ## Publish agent skills to Playbooks.com (Paks registry)
 	@$(call log_step,Publishing agent skills to Playbooks.com...)
@@ -165,7 +166,7 @@ publish-paks: ## Publish agent skills to Playbooks.com (Paks registry)
 	if [ -n "$$PAKS_TOKEN" ]; then \
 		paks login --token $$PAKS_TOKEN --non-interactive 2>/dev/null || paks login --token $$PAKS_TOKEN; \
 	fi; \
-	$(MAKE) publish SPOKE=skills OWNER=$(OWNER); \
+	$(MAKE) publish SPOKE=skills PUBLIC_OWNER=$(PUBLIC_OWNER); \
 	version=$$(node -p "require('./packages/skills/package.json').version"); \
 	tag="$$version"; \
 	url="https://github.com/$(OWNER)/aiready-skills.git"; \
@@ -181,22 +182,22 @@ publish-paks: ## Publish agent skills to Playbooks.com (Paks registry)
 	@$(call log_success,Published skills to Playbooks.com using tag $$version)
 
 publish-pattern-detect: ## Publish @aiready/pattern-detect to GitHub (shortcut for: make publish SPOKE=pattern-detect)
-	@$(MAKE) publish SPOKE=pattern-detect OWNER=$(OWNER)
+	@$(MAKE) publish SPOKE=pattern-detect PUBLIC_OWNER=$(PUBLIC_OWNER)
 
 publish-context-analyzer: ## Publish @aiready/context-analyzer to GitHub (shortcut for: make publish SPOKE=context-analyzer)
-	@$(MAKE) publish SPOKE=context-analyzer OWNER=$(OWNER)
+	@$(MAKE) publish SPOKE=context-analyzer PUBLIC_OWNER=$(PUBLIC_OWNER)
 
 publish-cli: ## Publish @aiready/cli to GitHub (shortcut for: make publish SPOKE=cli)
-	@$(MAKE) publish SPOKE=cli OWNER=$(OWNER)
+	@$(MAKE) publish SPOKE=cli PUBLIC_OWNER=$(PUBLIC_OWNER)
 
 publish-skills: ## Publish @aiready/skills to GitHub (shortcut for: make publish SPOKE=skills)
-	@$(MAKE) publish SPOKE=skills OWNER=$(OWNER)
+	@$(MAKE) publish SPOKE=skills PUBLIC_OWNER=$(PUBLIC_OWNER)
 
 publish-mcp-server: ## Publish @aiready/mcp-server to GitHub
-	@$(MAKE) publish SPOKE=mcp-server OWNER=$(OWNER)
+	@$(MAKE) publish SPOKE=mcp-server PUBLIC_OWNER=$(PUBLIC_OWNER)
 
 publish-contract-enforcement: ## Publish @aiready/contract-enforcement to GitHub
-	@$(MAKE) publish SPOKE=contract-enforcement OWNER=$(OWNER)
+	@$(MAKE) publish SPOKE=contract-enforcement PUBLIC_OWNER=$(PUBLIC_OWNER)
 
 npm-publish-core: ## Publish @aiready/core to npm (shortcut for: make npm-publish SPOKE=core)
 	@$(MAKE) npm-publish SPOKE=core OTP=$(OTP)
@@ -250,7 +251,7 @@ npm-publish-all: build npm-publish-core npm-publish-pattern-detect npm-publish-c
 sync-from-spoke: ## Sync changes from spoke repo back to monorepo. Usage: make sync-from-spoke SPOKE=pattern-detect
 	$(call require_spoke)
 	@$(call log_step,Syncing changes from aiready-$(SPOKE) back to monorepo...)
-	@url="https://github.com/$(OWNER)/aiready-$(SPOKE).git"; \
+	@url="https://github.com/$(PUBLIC_OWNER)/aiready-$(SPOKE).git"; \
 	remote="aiready-$(SPOKE)"; \
 	spk_dir="$(call SPOKE_DIR,$(SPOKE))"; \
 	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
@@ -269,7 +270,7 @@ push-all: sync ## Alias for sync (push monorepo + publish all spokes)
 # Sync changes from platform repo back to monorepo
 sync-platform: ## Sync changes from aiready-platform back to monorepo
 	@$(call log_step,Syncing changes from aiready-platform back to monorepo...)
-	@url="https://github.com/$(OWNER)/aiready-platform.git"; \
+	@url="https://github.com/$(PRIVATE_OWNER)/aiready-platform.git"; \
 	remote="aiready-platform"; \
 	branch="main"; \
 	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
@@ -279,9 +280,9 @@ sync-platform: ## Sync changes from aiready-platform back to monorepo
 	git subtree pull --prefix=apps/platform "$$remote" "$$branch" --squash -m "chore: sync platform from private repo"; \
 	$(call log_success,Synced changes from aiready-platform)
 
-publish-platform: ## Publish platform to GitHub. Usage: make publish-platform [OWNER=username]
+publish-platform: ## Publish platform to GitHub. Usage: make publish-platform [PRIVATE_OWNER=username]
 	@$(call log_step,Publishing platform to GitHub...)
-	@url="https://github.com/$(OWNER)/aiready-platform.git"; \
+	@url="https://github.com/$(PRIVATE_OWNER)/aiready-platform.git"; \
 	remote="aiready-platform"; \
 	branch="publish-platform"; \
 	target_branch="main"; \
@@ -311,7 +312,7 @@ publish-platform: ## Publish platform to GitHub. Usage: make publish-platform [O
 # Sync changes from landing repo back to monorepo
 sync-landing: ## Sync changes from aiready-landing back to monorepo
 	@$(call log_step,Syncing changes from aiready-landing back to monorepo...)
-	@url="https://github.com/$(OWNER)/aiready-landing.git"; \
+	@url="https://github.com/$(PUBLIC_OWNER)/aiready-landing.git"; \
 	remote="aiready-landing"; \
 	branch="main"; \
 	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
@@ -321,9 +322,9 @@ sync-landing: ## Sync changes from aiready-landing back to monorepo
 	git subtree pull --prefix=apps/landing "$$remote" "$$branch" --squash -m "chore: sync landing page from public repo"; \
 	$(call log_success,Synced changes from aiready-landing)
 
-publish-landing: ## Publish landing page to GitHub. Usage: make publish-landing [OWNER=username]
+publish-landing: ## Publish landing page to GitHub. Usage: make publish-landing [PUBLIC_OWNER=username]
 	@$(call log_step,Publishing landing page to GitHub...)
-	@url="https://github.com/$(OWNER)/aiready-landing.git"; \
+	@url="https://github.com/$(PUBLIC_OWNER)/aiready-landing.git"; \
 	remote="aiready-landing"; \
 	branch="publish-landing"; \
 	target_branch="main"; \
@@ -354,7 +355,7 @@ publish-landing: ## Publish landing page to GitHub. Usage: make publish-landing 
 # Sync changes from clawmore repo back to monorepo
 sync-clawmore: ## Sync changes from aiready-clawmore back to monorepo
 	@$(call log_step,Syncing changes from aiready-clawmore back to monorepo...)
-	@url="https://github.com/$(OWNER)/aiready-clawmore.git"; \
+	@url="https://github.com/$(PRIVATE_OWNER)/aiready-clawmore.git"; \
 	remote="aiready-clawmore"; \
 	branch="main"; \
 	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
@@ -365,9 +366,9 @@ sync-clawmore: ## Sync changes from aiready-clawmore back to monorepo
 	$(call log_success,Synced changes from aiready-clawmore)
 
 
-publish-clawmore: ## Publish clawmore to GitHub. Usage: make publish-clawmore [OWNER=username]
+publish-clawmore: ## Publish clawmore to GitHub. Usage: make publish-clawmore [PRIVATE_OWNER=username]
 	@$(call log_step,Publishing clawmore to GitHub...)
-	@url="https://github.com/$(OWNER)/aiready-clawmore.git"; \
+	@url="https://github.com/$(PRIVATE_OWNER)/aiready-clawmore.git"; \
 	remote="aiready-clawmore"; \
 	branch="publish-clawmore"; \
 	target_branch="main"; \
@@ -421,7 +422,7 @@ github-sync-spoke-%:
 		fi; \
 		if [ "$$should_sync" = "true" ]; then \
 			$(call log_info,Syncing $*...); \
-			$(MAKE) publish SPOKE=$* OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
+			$(MAKE) publish SPOKE=$* PUBLIC_OWNER=$(PUBLIC_OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
 		fi; \
 	fi
 
@@ -433,7 +434,7 @@ github-sync-landing:
 	fi; \
 	if [ "$$should_sync" = "true" ]; then \
 		$(call log_step,Syncing landing page repository...); \
-		$(MAKE) publish-landing OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
+		$(MAKE) publish-landing PUBLIC_OWNER=$(PUBLIC_OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
 	fi
 
 .PHONY: github-sync-platform
@@ -444,7 +445,7 @@ github-sync-platform:
 	fi; \
 	if [ "$$should_sync" = "true" ]; then \
 		$(call log_step,Syncing platform repository...); \
-		$(MAKE) publish-platform OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
+		$(MAKE) publish-platform PRIVATE_OWNER=$(PRIVATE_OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
 	fi
 
 .PHONY: github-sync-clawmore
@@ -455,7 +456,7 @@ github-sync-clawmore:
 	fi; \
 	if [ "$$should_sync" = "true" ]; then \
 		$(call log_step,Syncing ClawMore repository...); \
-		$(MAKE) publish-clawmore OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
+		$(MAKE) publish-clawmore PRIVATE_OWNER=$(PRIVATE_OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
 	fi
 
 
@@ -467,7 +468,7 @@ github-sync-vscode:
 	fi; \
 	if [ "$$should_sync" = "true" ]; then \
 		$(call log_step,Syncing VS Code extension repository...); \
-		$(MAKE) publish-vscode-sync OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
+		$(MAKE) publish-vscode-sync PUBLIC_OWNER=$(PUBLIC_OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
 	fi
 
 .PHONY: github-sync-action
@@ -478,14 +479,14 @@ github-sync-action:
 	fi; \
 	if [ "$$should_sync" = "true" ]; then \
 		$(call log_step,Syncing GitHub Action repository...); \
-		$(MAKE) publish-action-sync OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
+		$(MAKE) publish-action-sync PUBLIC_OWNER=$(PUBLIC_OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)'; \
 	fi
 
 
 
-publish-vscode-sync: ## Sync VS Code extension to GitHub. Usage: make publish-vscode-sync [OWNER=username]
+publish-vscode-sync: ## Sync VS Code extension to GitHub. Usage: make publish-vscode-sync [PUBLIC_OWNER=username]
 	@$(call log_step,Publishing VS Code extension to GitHub...)
-	@url="https://github.com/$(OWNER)/aiready-vscode.git"; \
+	@url="https://github.com/$(PUBLIC_OWNER)/aiready-vscode.git"; \
 	remote="aiready-vscode"; \
 	branch="publish-vscode"; \
 	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
@@ -508,9 +509,9 @@ publish-vscode-sync: ## Sync VS Code extension to GitHub. Usage: make publish-vs
 		$(call log_success,Spoke tag pushed: $$spoke_tag); \
 	fi
 
-publish-action-sync: ## Sync GitHub Action to standalone repo. Usage: make publish-action-sync [OWNER=username]
+publish-action-sync: ## Sync GitHub Action to standalone repo. Usage: make publish-action-sync [PUBLIC_OWNER=username]
 	@$(call log_step,Publishing GitHub Action to standalone repo...)
-	@url="https://github.com/$(OWNER)/aiready-action.git"; \
+	@url="https://github.com/$(PUBLIC_OWNER)/aiready-action.git"; \
 	remote="aiready-action"; \
 	branch="publish-action"; \
 	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
@@ -564,7 +565,7 @@ publish-skill-smithery: ## Publish a specific skill to Smithery (Usage: make pub
 		exit 1; \
 	fi; \
 	$(call log_step,Publishing skill '$(SKILL)' to GitHub for Smithery...); \
-	url="https://github.com/$(OWNER)/$(SKILL).git"; \
+	url="https://github.com/$(PUBLIC_OWNER)/$(SKILL).git"; \
 	remote="$(SKILL)"; \
 	branch="publish-skill-$(SKILL)"; \
 	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
