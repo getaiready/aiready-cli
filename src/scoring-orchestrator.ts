@@ -4,6 +4,7 @@ import {
   calculateOverallScore,
   calculateTokenBudget,
 } from '@aiready/core';
+import { TOOL_PACKAGE_MAP } from './constants';
 import type {
   ToolScoringOutput,
   ScoringResult,
@@ -36,11 +37,32 @@ export class ScoringOrchestrator {
     const toolScores: Map<string, ToolScoringOutput> = new Map();
 
     for (const toolId of results.summary.toolsRun) {
-      const provider = this.registry.get(toolId as ToolName);
-      if (!provider) continue;
+      let provider = this.registry.get(toolId as ToolName);
+
+      // 1. Fallback to find() for alias/canonical mismatch
+      if (!provider) {
+        provider = this.registry.find(toolId);
+      }
+
+      // 2. Dynamic loading if still not found (handles registry isolation issues)
+      if (!provider) {
+        const packageName =
+          TOOL_PACKAGE_MAP[toolId] ??
+          (toolId.startsWith('@aiready/') ? toolId : `@aiready/${toolId}`);
+
+        try {
+          // If we are in the same process, importing will populate the global registry
+          await import(packageName);
+          provider = this.registry.find(toolId);
+        } catch (err) {
+          console.warn(
+            `⚠️  Warning: Could not dynamically load tool '${toolId}' for scoring.`
+          );
+        }
+      }
 
       const output = results[toolId];
-      if (!output) continue;
+      if (!output || !provider) continue;
 
       try {
         const toolScore = provider.score(output, options);
