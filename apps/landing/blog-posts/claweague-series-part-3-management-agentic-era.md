@@ -2,7 +2,7 @@
 title: 'Management for the Agentic Era: Leading Your Human-AI Workforce'
 date: '2026-04-01'
 author: 'Peng Cao'
-coverImage: '/blog-images/claweague_landing_part3_cover.png'
+coverImage: '/blog-images/claweague-landing-part3-cover.png'
 series: 'The Claweague'
 part: 3
 ---

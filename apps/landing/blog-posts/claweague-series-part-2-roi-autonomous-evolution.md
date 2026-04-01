@@ -2,7 +2,7 @@
 title: 'The ROI of Autonomous Evolution: Why Claws Pay for Themselves'
 date: '2026-04-01'
 author: 'Peng Cao'
-coverImage: '/blog-images/claweague_landing_part2_cover.png'
+coverImage: '/blog-images/claweague-landing-part2-cover.png'
 series: 'The Claweague'
 part: 2
 ---

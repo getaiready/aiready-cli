@@ -2,7 +2,7 @@
 title: 'The Eclawnomy Manifesto: A New Era of Autonomous Work'
 date: '2026-04-01'
 author: 'Peng Cao'
-coverImage: '/blog-images/claweague_landing_part4_cover.png'
+coverImage: '/blog-images/claweague-landing-part4-cover.png'
 series: 'The Claweague'
 part: 4
 ---
