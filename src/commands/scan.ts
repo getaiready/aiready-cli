@@ -182,9 +182,11 @@ async function handleGatekeeper(
     emitIssuesAsAnnotations(report.results);
   }
 
-  if (threshold && scoringResult.overall < threshold) {
-    shouldFail = true;
-    failReason = `Score ${scoringResult.overall} < threshold ${threshold}`;
+  if (failOnLevel !== 'none') {
+    if (threshold && scoringResult.overall < threshold) {
+      shouldFail = true;
+      failReason = `Score ${scoringResult.overall} < threshold ${threshold}`;
+    }
   }
 
   if (failOnLevel !== 'none' && !shouldFail) {

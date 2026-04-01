@@ -151,7 +151,7 @@ describe('Scan CLI Action', () => {
     expect(core.handleJSONOutput).toHaveBeenCalled();
   });
 
-  it('fails when score is below threshold from config', async () => {
+  it('does NOT fail when score is below threshold but failOn is none', async () => {
     const exitSpy = vi
       .spyOn(process, 'exit')
       .mockImplementation((() => {}) as any);
@@ -159,7 +159,28 @@ describe('Scan CLI Action', () => {
     vi.mocked(core.loadMergedConfig).mockResolvedValue({
       tools: ['pattern-detect'],
       threshold: 90, // Higher than the mocked score of 80
-      failOn: 'none', // Disable fail-on to test threshold specifically
+      failOn: 'none',
+      rootDir: '/test',
+    });
+
+    await scanAction('.', { score: true });
+
+    expect(exitSpy).not.toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('✅ SCAN PASSED')
+    );
+    exitSpy.mockRestore();
+  });
+
+  it('fails when score is below threshold and failOn is NOT none', async () => {
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation((() => {}) as any);
+
+    vi.mocked(core.loadMergedConfig).mockResolvedValue({
+      tools: ['pattern-detect'],
+      threshold: 90, // Higher than the mocked score of 80
+      failOn: 'major',
       rootDir: '/test',
     });
 
