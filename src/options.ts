@@ -53,14 +53,14 @@ export interface ToolOutput {
   results: Array<{
     fileName: string;
     issues?: Issue[];
-    [key: string]: any;
+    [key: string]: unknown;
   }>;
-  summary?: Record<string, any>;
+  summary?: Record<string, unknown>;
   metadata?: {
-    config?: Record<string, any>;
-    [key: string]: any;
+    config?: Record<string, unknown>;
+    [key: string]: unknown;
   };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -69,7 +69,7 @@ export interface ToolOutput {
  */
 export interface UnifiedAnalysisResult {
   // Dynamic keys based on ToolName
-  [key: string]: any;
+  [key: string]: unknown;
 
   summary: {
     totalFiles: number;
