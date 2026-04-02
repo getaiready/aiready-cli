@@ -23,19 +23,12 @@ export { KeyBuilder } from './ddb/key-builder';
 export { UpdateBuilder } from './ddb/update-builder';
 export { dbConfig } from './ddb/env-config';
 
-// Export services
-export { UserService } from './services/user-service';
-export { BillingService } from './services/billing-service';
-export { AccountLifecycleService } from './services/account-lifecycle-service';
-export { AccountManagementService } from './services/account-management-service';
-export {
-  MutationService,
-  type CreateMutationInput,
-} from './services/mutation-service';
-export {
-  InnovationService,
-  type CreateInnovationPatternInput,
-} from './services/innovation-service';
+// Export input types for client code
+export { type CreateMutationInput } from './services/mutation-service';
+export { type CreateInnovationPatternInput } from './services/innovation-service';
+
+// NOTE: Service classes are not exported - they're internal to this module.
+// Use the facade functions below or createServices() if you need dependency injection.
 
 // Import service classes
 import { UserService } from './services/user-service';
