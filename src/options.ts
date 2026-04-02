@@ -68,8 +68,8 @@ export interface ToolOutput {
  * Contains tool-specific outputs, scoring, and a high-level summary.
  */
 export interface UnifiedAnalysisResult {
-  // Dynamic keys based on ToolName
-  [key: string]: unknown;
+  // Dynamic keys based on ToolName (tool outputs vary by tool)
+  [key: string]: any;
 
   summary: {
     totalFiles: number;
