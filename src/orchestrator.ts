@@ -5,6 +5,7 @@ import {
   COMMON_FINE_TUNING_OPTIONS,
   type ScanOptions as CoreScanOptions,
 } from '@aiready/core';
+import chalk from 'chalk';
 import type { UnifiedAnalysisOptions, UnifiedAnalysisResult } from './options';
 
 import { TOOL_PACKAGE_MAP } from './constants';
@@ -102,7 +103,9 @@ export class UnifiedOrchestrator {
           provider = this.registry.find(toolName);
         } catch (err) {
           console.log(
-            `❌ Failed to dynamically load tool ${toolName} (${packageName}):`,
+            chalk.red(
+              `❌ Failed to dynamically load tool ${toolName} (${packageName}):`
+            ),
             (err as Error).message
           );
         }
@@ -110,7 +113,9 @@ export class UnifiedOrchestrator {
 
       if (!provider) {
         console.warn(
-          `⚠️  Warning: Tool provider for '${toolName}' not found. Skipping.`
+          chalk.yellow(
+            `⚠️  Warning: Tool provider for '${toolName}' not found. Skipping.`
+          )
         );
         continue;
       }
@@ -192,7 +197,10 @@ export class UnifiedOrchestrator {
         );
         result.summary.totalIssues += issueCount;
       } catch (err) {
-        console.error(`❌ Error running tool '${provider.id}':`, err);
+        console.error(
+          chalk.red(`❌ Error running tool '${provider.id}':`),
+          err
+        );
       }
     }
 
