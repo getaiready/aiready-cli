@@ -6,11 +6,7 @@
 
 import chalk from 'chalk';
 import { Command } from 'commander';
-import {
-  printTerminalHeader,
-  Severity,
-  type ToolScoringOutput,
-} from '@aiready/core';
+import { printTerminalHeader, type ToolScoringOutput } from '@aiready/core';
 import {
   executeToolAction,
   type BaseCommandOptions,
