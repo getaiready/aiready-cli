@@ -31,7 +31,8 @@
     "type-check": "tsc --noEmit",
     "format-check": "prettier --check . --ignore-path ../../.prettierignore",
     "format": "prettier --write . --ignore-path ../../.prettierignore",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@aiready/agent-grounding": "workspace:*",
