@@ -15,8 +15,8 @@ const meta = {
   ],
   readingTime: '5 min read',
   slug: 'evolution-roi',
-  cover: '/blog-images/evolution-roi-cover.png',
-  ogImage: '',
+  cover: '/agentic-shift-series-13.png',
+  ogImage: '/agentic-shift-series-13.png',
 };
 
 export default meta;

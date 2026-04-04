@@ -14,7 +14,7 @@ const Post = () => (
 
     <div className="my-8 max-w-4xl mx-auto">
       <img
-        src="/blog-images/evolution-roi-cover.png"
+        src="/agentic-shift-series-13.png"
         alt="Evolution ROI - cover"
         className="w-full rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800"
       />
