@@ -157,11 +157,16 @@ async function handleGatekeeper(
 ) {
   if (!scoringResult) return;
 
-  const isCI = options.ci ?? process.env.CI === 'true';
-  const defaultFailOn = isCI ? 'critical' : 'none';
   const threshold = options.threshold
     ? parseInt(options.threshold)
     : (finalOptions.threshold as number | undefined);
+
+  const isCI = options.ci ?? process.env.CI === 'true';
+
+  // AIReady is a quality gate. If a threshold is defined, it should be enforced by default
+  // unless explicitly disabled with --fail-on none.
+  const defaultFailOn = isCI || threshold !== undefined ? 'critical' : 'none';
+
   const failOnLevel =
     options.failOn ??
     (finalOptions.failOn as string | undefined) ??

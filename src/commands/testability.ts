@@ -19,6 +19,67 @@ interface TestabilityOptions {
   score?: boolean;
 }
 
+const testabilityConfig = {
+  defaults: {
+    rootDir: '',
+    minCoverageRatio: 0.3,
+    include: undefined,
+    exclude: undefined,
+    output: { format: 'console', file: undefined },
+  },
+  getCliOptions: (opts: TestabilityOptions) => ({
+    minCoverageRatio: opts.minCoverage
+      ? parseFloat(opts.minCoverage)
+      : undefined,
+  }),
+  importTool: async () => {
+    const tool = await import('@aiready/testability');
+    return {
+      analyze: tool.analyzeTestability,
+      generateSummary: (report: any) => report.summary,
+      calculateScore: (data: any) => {
+        const score = tool.calculateTestabilityScore(data);
+        return {
+          ...score,
+          toolName: 'testability-index',
+          rawMetrics: data,
+          factors: [],
+          recommendations: (score.recommendations || []).map(
+            (action: string) => ({
+              action,
+              estimatedImpact: 10,
+              priority: 'medium' as const,
+            })
+          ),
+        };
+      },
+    };
+  },
+  renderConsole: ({ results, summary, score }: any) => {
+    renderToolHeader('Testability', '🧪', score?.score || 0, summary.rating);
+    renderSafetyRating(summary.aiChangeSafetyRating);
+
+    const rawData = results.rawData || results;
+    console.log(
+      chalk.dim(
+        `     Coverage: ${Math.round(summary.coverageRatio * 100)}%  (${rawData.testFiles} test / ${rawData.sourceFiles} source files)`
+      )
+    );
+
+    if (summary.aiChangeSafetyRating === 'blind-risk') {
+      console.log(
+        chalk.red.bold(
+          '\n     ⚠️  NO TESTS — AI changes to this codebase are completely unverifiable!\n'
+        )
+      );
+    }
+
+    if (score) {
+      renderToolScoreFooter(score);
+    }
+  },
+};
+
 export function defineTestabilityCommand(program: import('commander').Command) {
   defineToolCommand(program, {
     name: 'testability',
@@ -33,71 +94,7 @@ export function defineTestabilityCommand(program: import('commander').Command) {
         defaultValue: '0.3',
       },
     ],
-    actionConfig: {
-      defaults: {
-        rootDir: '',
-        minCoverageRatio: 0.3,
-        include: undefined,
-        exclude: undefined,
-        output: { format: 'console', file: undefined },
-      },
-      getCliOptions: (opts: TestabilityOptions) => ({
-        minCoverageRatio: opts.minCoverage
-          ? parseFloat(opts.minCoverage)
-          : undefined,
-      }),
-      importTool: async () => {
-        const tool = await import('@aiready/testability');
-        return {
-          analyze: tool.analyzeTestability,
-          generateSummary: (report: any) => report.summary,
-          calculateScore: (data: any) => {
-            const score = tool.calculateTestabilityScore(data);
-            return {
-              ...score,
-              toolName: 'testability-index',
-              rawMetrics: data,
-              factors: [],
-              recommendations: (score.recommendations || []).map(
-                (action: string) => ({
-                  action,
-                  estimatedImpact: 10,
-                  priority: 'medium',
-                })
-              ),
-            };
-          },
-        };
-      },
-      renderConsole: ({ results, summary, score }: any) => {
-        renderToolHeader(
-          'Testability',
-          '🧪',
-          score?.score || 0,
-          summary.rating
-        );
-        renderSafetyRating(summary.aiChangeSafetyRating);
-
-        const rawData = results.rawData || results;
-        console.log(
-          chalk.dim(
-            `     Coverage: ${Math.round(summary.coverageRatio * 100)}%  (${rawData.testFiles} test / ${rawData.sourceFiles} source files)`
-          )
-        );
-
-        if (summary.aiChangeSafetyRating === 'blind-risk') {
-          console.log(
-            chalk.red.bold(
-              '\n     ⚠️  NO TESTS — AI changes to this codebase are completely unverifiable!\n'
-            )
-          );
-        }
-
-        if (score) {
-          renderToolScoreFooter(score);
-        }
-      },
-    },
+    actionConfig: testabilityConfig,
   });
 }
 
@@ -111,62 +108,6 @@ export async function testabilityAction(
     toolName: 'testability-index',
     label: 'Testability analysis',
     emoji: '🧪',
-    defaults: {
-      rootDir: '',
-      minCoverageRatio: 0.3,
-      include: undefined,
-      exclude: undefined,
-    },
-    getCliOptions: (opts) => ({
-      minCoverageRatio: opts.minCoverage
-        ? parseFloat(opts.minCoverage)
-        : undefined,
-    }),
-    importTool: async () => {
-      const tool = await import('@aiready/testability');
-      return {
-        analyze: tool.analyzeTestability,
-        generateSummary: (report: any) => report.summary,
-        calculateScore: (data: any) => {
-          const score = tool.calculateTestabilityScore(data);
-          return {
-            ...score,
-            toolName: 'testability-index',
-            rawMetrics: data,
-            factors: [],
-            recommendations: (score.recommendations || []).map(
-              (action: string) => ({
-                action,
-                estimatedImpact: 10,
-                priority: 'medium',
-              })
-            ),
-          };
-        },
-      };
-    },
-    renderConsole: ({ results, summary, score }) => {
-      renderToolHeader('Testability', '🧪', score?.score || 0, summary.rating);
-      renderSafetyRating(summary.aiChangeSafetyRating);
-
-      const rawData = results.rawData || results;
-      console.log(
-        chalk.dim(
-          `     Coverage: ${Math.round(summary.coverageRatio * 100)}%  (${rawData.testFiles} test / ${rawData.sourceFiles} source files)`
-        )
-      );
-
-      if (summary.aiChangeSafetyRating === 'blind-risk') {
-        console.log(
-          chalk.red.bold(
-            '\n     ⚠️  NO TESTS — AI changes to this codebase are completely unverifiable!\n'
-          )
-        );
-      }
-
-      if (score) {
-        renderToolScoreFooter(score);
-      }
-    },
+    ...testabilityConfig,
   });
 }
