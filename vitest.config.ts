@@ -11,6 +11,21 @@ export default defineConfig(
         packagesRootRelative: '..',
         useIndexEntrypoints: true,
       }),
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/cypress/**',
+        '**/.{idea,git,cache,output,temp}/**',
+      ],
+      coverage: {
+        exclude: [
+          'coverage/**',
+          'dist/**',
+          '**/*.d.ts',
+          '**/*.config.*',
+          '**/__tests__/**',
+        ],
+      },
     },
   })
 );

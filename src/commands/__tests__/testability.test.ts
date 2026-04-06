@@ -44,4 +44,28 @@ describe('Testability CLI Action', () => {
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
+
+  it('should warn when AI change safety rating is blind-risk', async () => {
+    const testability = await import('@aiready/testability');
+    vi.spyOn(testability, 'analyzeTestability' as any).mockResolvedValueOnce({
+      summary: {
+        score: 0,
+        rating: 'poor',
+        aiChangeSafetyRating: 'blind-risk',
+        coverageRatio: 0,
+      },
+      rawData: { testFiles: 0, sourceFiles: 5 },
+    });
+
+    const core = await import('@aiready/core');
+    vi.spyOn(core, 'resolveOutputFormat' as any).mockReturnValue({
+      format: 'console',
+      file: undefined,
+    });
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await testabilityAction('.', { output: 'console' });
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('NO TESTS'));
+    logSpy.mockRestore();
+  });
 });
