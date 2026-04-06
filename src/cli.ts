@@ -139,6 +139,10 @@ program
     CLI_CONSTANTS.OPTIONS.FULL,
     'Generate a full configuration with all available options'
   )
+  /**
+   * Initializes the AIReady configuration file.
+   * Supports JSON and JavaScript formats, with optional full configuration.
+   */
   .action(async (options) => {
     const format = options.js
       ? CLI_CONSTANTS.FORMATS.JS
@@ -176,6 +180,10 @@ program
     true
   )
   .addHelpText('after', VISUALISE_HELP_TEXT)
+  /**
+   * Generates a visualization for the AIReady report.
+   * Supporting British spelling alias 'visualise'.
+   */
   .action(async (directory, options) => {
     await visualizeAction(directory, {
       ...options,
@@ -248,6 +256,10 @@ program
   .option(CLI_CONSTANTS.OPTIONS.OUTPUT_FILE, 'Output file path (for json)')
   .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
   .option('--no-score', 'Disable calculating AI Readiness Score')
+  /**
+   * Analyzes the graph metrics to determine the impact of changes (blast radius).
+   * Calculates the AI Readiness Score by default.
+   */
   .action(async (directory, options) => {
     await changeAmplificationAction(directory, options);
   });
@@ -281,6 +293,10 @@ program
   .option(CLI_CONSTANTS.OPTIONS.OUTPUT_FILE, 'Output file path (for json)')
   .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
   .option('--no-score', 'Disable calculating AI Readiness Score')
+  /**
+   * Analyzes the testability of the codebase, focusing on AI agent feedback loops.
+   * Evaluates coverage and verification friction.
+   */
   .action(async (directory, options) => {
     await testabilityAction(directory, options);
   });
@@ -314,6 +330,10 @@ program
   .option(CLI_CONSTANTS.OPTIONS.OUTPUT_FILE, 'Output file path (for json)')
   .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
   .option('--no-score', 'Disable calculating AI Readiness Score')
+  /**
+   * Validates API contracts and structural enforcement.
+   * Ensures defensive coding patterns are followed.
+   */
   .action(async (directory, options) => {
     await contractEnforcementAction(directory, options);
   });
