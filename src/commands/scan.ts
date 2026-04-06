@@ -4,14 +4,15 @@
 
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { writeFileSync } from 'fs';
-import { resolve as resolvePath } from 'path';
+import { writeFileSync, readFileSync, existsSync } from 'fs';
+import { resolve as resolvePath, join, relative } from 'path';
 import {
   handleJSONOutput,
   handleCLIError,
   resolveOutputPath,
   getRepoMetadata,
   emitIssuesAsAnnotations,
+  Severity,
 } from '@aiready/core';
 import type { UnifiedReport, ScoringResult } from '@aiready/core';
 import { getReportTimestamp, warnIfGraphCapExceeded } from '../utils';
@@ -71,7 +72,10 @@ export async function scanAction(directory: string, options: ScanOptions) {
       repository: repoMetadata,
     };
 
-    // Output persistence
+    // 4. Apply Baseline & Severity Overrides
+    applyGatingRules(outputData, options, finalOptions, resolvedDir);
+
+    // 5. Output persistence
     const finalOptionsRecord = finalOptions as Record<string, unknown>;
     const outputConfig = finalOptionsRecord.output as
       | Record<string, unknown>
@@ -108,13 +112,13 @@ export async function scanAction(directory: string, options: ScanOptions) {
 
     await warnIfGraphCapExceeded(outputData, resolvedDir);
 
-    // 4. Gatekeeper Logic (Thresholds & CI Failures)
+    // 6. Gatekeeper Logic (Thresholds & CI Failures)
     await handleGatekeeper(
       outputData,
       scoringResult,
       options,
       finalOptions,
-      results
+      resolvedDir
     );
 
     // 5. Deep Link to Platform
@@ -146,6 +150,111 @@ export async function scanAction(directory: string, options: ScanOptions) {
 }
 
 /**
+ * Applies baseline filtering and severity overrides to the report.
+ */
+function applyGatingRules(
+  report: UnifiedReport,
+  options: ScanOptions,
+  finalOptions: Record<string, unknown>,
+  resolvedDir: string
+) {
+  // 1. Load Baseline if requested
+  const baselineHashes = new Set<string>();
+  if (options.baseline) {
+    const baselinePath = join(resolvedDir, '.aiready', 'baseline.json');
+    if (existsSync(baselinePath)) {
+      try {
+        const baseline = JSON.parse(readFileSync(baselinePath, 'utf-8'));
+        if (baseline.results) {
+          baseline.results.forEach((fileRes: any) => {
+            const relPath = relative(
+              resolvedDir,
+              resolvePath(resolvedDir, fileRes.fileName || fileRes.filePath)
+            );
+            if (fileRes.issues) {
+              fileRes.issues.forEach((issue: any) => {
+                baselineHashes.add(
+                  getIssueHash(issue, issue.toolId || 'unknown', relPath)
+                );
+              });
+            }
+          });
+        }
+        console.log(
+          chalk.dim(
+            `   Loaded baseline with ${baselineHashes.size} existing issues to filter.`
+          )
+        );
+      } catch (err) {
+        console.warn(
+          chalk.yellow(
+            `   Warning: Failed to load baseline from ${baselinePath}`
+          )
+        );
+      }
+    } else {
+      console.warn(
+        chalk.yellow(`   Warning: Baseline file not found at ${baselinePath}`)
+      );
+    }
+  }
+
+  // 2. Apply Severity Overrides and Filter Baseline
+  let criticalCount = 0;
+  let majorCount = 0;
+  let minorCount = 0;
+
+  report.results.forEach((fileRes: any) => {
+    const relPath = relative(
+      resolvedDir,
+      resolvePath(resolvedDir, fileRes.fileName || fileRes.filePath)
+    );
+    const filteredIssues = (fileRes.issues || []).filter((issue: any) => {
+      // a. Apply Severity Overrides
+      const toolId = issue.toolId || 'unknown';
+      const category = issue.category || '';
+      const toolConfig = (finalOptions.tools as any)?.[toolId] || {};
+      const overrides = toolConfig.severityOverrides || {};
+
+      if (overrides[category]) {
+        issue.severity = overrides[category];
+      }
+
+      // b. Baseline Filtering
+      if (options.baseline) {
+        const hash = getIssueHash(issue, toolId, relPath);
+        if (baselineHashes.has(hash)) {
+          return false; // Skip existing issue
+        }
+      }
+      return true;
+    });
+
+    fileRes.issues = filteredIssues;
+    filteredIssues.forEach((i: any) => {
+      const s = i.severity?.toLowerCase();
+      if (s === 'critical') criticalCount++;
+      else if (s === 'major') majorCount++;
+      else if (s === 'minor') minorCount++;
+    });
+  });
+
+  // Update summary counts
+  report.summary.criticalIssues = criticalCount;
+  report.summary.majorIssues = majorCount;
+  report.summary.minorIssues = minorCount;
+
+  if (options.baseline && baselineHashes.size > 0) {
+    const totalRemaining = criticalCount + majorCount + minorCount;
+    console.log(
+      chalk.green(
+        `   Baseline filtering applied: ${totalRemaining} new issues remaining.`
+      )
+    );
+  }
+}
+
+/**
  * Handles threshold checks and CI failures based on scan results.
  */
 async function handleGatekeeper(
@@ -153,7 +262,7 @@ async function handleGatekeeper(
   scoringResult: ScoringResult | undefined,
   options: ScanOptions,
   finalOptions: Record<string, unknown>,
-  results: Record<string, unknown>
+  resolvedDir: string
 ) {
   if (!scoringResult) return;
 
@@ -175,16 +284,14 @@ async function handleGatekeeper(
   let shouldFail = false;
   let failReason = '';
 
-  const report = mapToUnifiedReport(results, scoringResult);
-
   // Emit annotations only in CI
-  if (isCI && report.results && report.results.length > 0) {
+  if (isCI && outputData.results && outputData.results.length > 0) {
     console.log(
       chalk.cyan(
-        `\n📝 Emitting GitHub Action annotations for ${report.results.length} issues...`
+        `\n📝 Emitting GitHub Action annotations for ${outputData.results.length} issues...`
       )
     );
-    emitIssuesAsAnnotations(report.results);
+    emitIssuesAsAnnotations(outputData.results);
   }
 
   if (failOnLevel !== 'none') {
@@ -195,15 +302,15 @@ async function handleGatekeeper(
   }
 
   if (failOnLevel !== 'none' && !shouldFail) {
-    if (failOnLevel === 'critical' && report.summary.criticalIssues > 0) {
+    if (failOnLevel === 'critical' && outputData.summary.criticalIssues > 0) {
       shouldFail = true;
-      failReason = `Found ${report.summary.criticalIssues} critical issues`;
+      failReason = `Found ${outputData.summary.criticalIssues} critical issues`;
     } else if (
       failOnLevel === 'major' &&
-      report.summary.criticalIssues + report.summary.majorIssues > 0
+      outputData.summary.criticalIssues + outputData.summary.majorIssues > 0
     ) {
       shouldFail = true;
-      failReason = `Found ${report.summary.criticalIssues} critical and ${report.summary.majorIssues} major issues`;
+      failReason = `Found ${outputData.summary.criticalIssues} critical and ${outputData.summary.majorIssues} major issues`;
     }
   }
 
@@ -259,6 +366,11 @@ export function defineScanCommand(program: Command) {
       '--compare-to <path>',
       'Compare results against a previous AIReady report JSON'
     )
+    .option('--baseline', 'Filter findings against a debt-baseline file')
+    .option(
+      '-C, --changed-files-only',
+      'Only scan files changed in git (staged or unstaged)'
+    )
     .option(
       '--include <patterns>',
       'File patterns to include (comma-separated)'
@@ -288,4 +400,22 @@ export function defineScanCommand(program: Command) {
     .action(async (directory, options) => {
       await scanAction(directory, options);
     });
+}
+
+/**
+ * Generate a unique hash for an issue to identify it across scans.
+ * Excludes line numbers to handle code shifts.
+ */
+function getIssueHash(
+  issue: any,
+  toolId: string,
+  relativePath: string
+): string {
+  const parts = [
+    toolId,
+    issue.category || issue.type || '',
+    relativePath,
+    (issue.message || '').trim().toLowerCase(),
+  ];
+  return parts.join('|');
 }

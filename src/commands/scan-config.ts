@@ -53,6 +53,7 @@ export async function resolveScanConfig(
   const cliOverrides: any = {
     include: options.include?.split(','),
     exclude: options.exclude?.split(','),
+    changedFilesOnly: options.changedFilesOnly,
   };
   if (profileTools) cliOverrides.tools = profileTools;
 

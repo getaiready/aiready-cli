@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 
 import {
   defineScanCommand,
+  defineBaselineCommand,
   initAction,
   definePatternsCommand,
   defineContextCommand,
@@ -120,6 +121,7 @@ LANDING: ${CLI_CONSTANTS.LANDING_URL}`
 
 // Core analysis commands
 defineScanCommand(program);
+defineBaselineCommand(program);
 definePatternsCommand(program);
 defineContextCommand(program);
 defineConsistencyCommand(program);

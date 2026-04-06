@@ -222,6 +222,7 @@ export function mapToUnifiedReport(
       totalFilesSet.add(r.fileName);
       allResults.push(r);
       r.issues?.forEach((i: any) => {
+        i.toolId = toolId; // Inject toolId for gating/baseline logic
         if (i.severity === Severity.Critical || i.severity === 'critical')
           criticalCount++;
         if (i.severity === Severity.Major || i.severity === 'major')

@@ -3,6 +3,7 @@
  */
 
 export { scanAction, defineScanCommand, SCAN_HELP_TEXT } from './scan';
+export { createBaselineAction, defineBaselineCommand } from './baseline';
 export { initAction } from './init';
 export {
   patternsAction,

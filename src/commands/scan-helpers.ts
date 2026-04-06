@@ -32,6 +32,8 @@ export interface ScanOptions {
   apiKey?: string;
   upload?: boolean;
   server?: string;
+  baseline?: boolean;
+  changedFilesOnly?: boolean;
 }
 
 /**
