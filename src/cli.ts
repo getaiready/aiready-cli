@@ -25,6 +25,7 @@ import {
   bugAction,
   BUG_HELP_TEXT,
 } from './commands';
+import { getDirname } from '@aiready/core';
 
 /**
  * CLI Constants for configuration and help text.
@@ -71,14 +72,14 @@ const CLI_CONSTANTS = {
 
 /**
  * Get the current directory name, handling both ESM and CJS.
+ * @deprecated Use getDirname from @aiready/core instead.
  */
-const getDirname = () => {
-  if (typeof __dirname !== 'undefined') return __dirname;
-  return dirname(fileURLToPath(import.meta.url));
+const getDirnameLocal = () => {
+  return getDirname(import.meta.url);
 };
 
 const packageJson = JSON.parse(
-  readFileSync(join(getDirname(), '../package.json'), 'utf8')
+  readFileSync(join(getDirname(import.meta.url), '../package.json'), 'utf8')
 );
 
 const program = new Command();
