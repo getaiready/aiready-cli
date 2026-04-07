@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import {
   loadConfig,
   validateConfig,
+  DEFAULT_AUTO_EXCLUDE_PATTERNS,
   type ValidationWarning,
 } from '@aiready/core';
 import chalk from 'chalk';
