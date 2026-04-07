@@ -152,3 +152,70 @@ export {
   printTerminalHeader,
   chalk,
 };
+
+/**
+ * Standard configuration for a tool to reduce duplication in command files.
+ */
+export interface StandardToolConfig<TOptions = any> {
+  toolName: string;
+  importPath: string;
+  analyzeFnName: string;
+  scoreFnName?: string;
+  defaults?: Record<string, any>;
+  getCliOptions?: (opts: TOptions) => Record<string, any>;
+  render?: (params: { results: any; summary: any; score: any }) => void;
+}
+
+/**
+ * Creates a standard ToolActionConfig from a StandardToolConfig to reduce duplication.
+ */
+export function createStandardToolConfig<TOptions = any>(
+  config: StandardToolConfig<TOptions>
+): ToolActionConfig<any, any, any> {
+  return {
+    defaults: {
+      rootDir: '',
+      include: undefined,
+      exclude: undefined,
+      output: { format: 'console', file: undefined },
+      ...(config.defaults || {}),
+    },
+    getCliOptions: config.getCliOptions || (() => ({})),
+    importTool: async () => {
+      const tool = await import(config.importPath);
+      return {
+        analyze: tool[config.analyzeFnName],
+        generateSummary: (report: any) => report.summary,
+        calculateScore: (data: any) => {
+          if (!config.scoreFnName || !tool[config.scoreFnName]) {
+            return {
+              score: 0,
+              toolName: config.toolName,
+              rawMetrics: data,
+              factors: [],
+              recommendations: [],
+            };
+          }
+          const score = tool[config.scoreFnName](data);
+          return {
+            ...score,
+            toolName: config.toolName,
+            rawMetrics: data,
+            factors: score.factors || [],
+            recommendations: (score.recommendations || []).map(
+              (action: string | any) =>
+                typeof action === 'string'
+                  ? {
+                      action,
+                      estimatedImpact: 10,
+                      priority: 'medium' as const,
+                    }
+                  : action
+            ),
+          };
+        },
+      };
+    },
+    renderConsole: config.render || (() => {}),
+  };
+}

@@ -8,6 +8,7 @@ import {
   renderSafetyRating,
   renderToolScoreFooter,
   chalk,
+  createStandardToolConfig,
 } from './shared/command-builder';
 
 interface GroundingOptions {
@@ -20,45 +21,19 @@ interface GroundingOptions {
   score?: boolean;
 }
 
-const agentGroundingConfig = {
-  defaults: {
-    rootDir: '',
-    maxRecommendedDepth: 4,
-    readmeStaleDays: 90,
-    include: undefined,
-    exclude: undefined,
-    output: { format: 'console', file: undefined },
-  },
-  getCliOptions: (opts: GroundingOptions) => ({
+const agentGroundingConfig = createStandardToolConfig<GroundingOptions>({
+  toolName: 'agent-grounding',
+  importPath: '@aiready/agent-grounding',
+  analyzeFnName: 'analyzeAgentGrounding',
+  scoreFnName: 'calculateGroundingScore',
+  defaults: { maxRecommendedDepth: 4, readmeStaleDays: 90 },
+  getCliOptions: (opts) => ({
     maxRecommendedDepth: opts.maxDepth ? parseInt(opts.maxDepth) : undefined,
     readmeStaleDays: opts.readmeStaleDays
       ? parseInt(opts.readmeStaleDays)
       : undefined,
   }),
-  importTool: async () => {
-    const tool = await import('@aiready/agent-grounding');
-    return {
-      analyze: tool.analyzeAgentGrounding,
-      generateSummary: (report: any) => report.summary,
-      calculateScore: (data: any) => {
-        const score = tool.calculateGroundingScore(data);
-        return {
-          ...score,
-          toolName: 'agent-grounding',
-          rawMetrics: data,
-          factors: [],
-          recommendations: (score.recommendations || []).map(
-            (action: string) => ({
-              action,
-              estimatedImpact: 10,
-              priority: 'medium' as const,
-            })
-          ),
-        };
-      },
-    };
-  },
-  renderConsole: ({ _results, summary, score }: any) => {
+  render: ({ summary, score }) => {
     renderToolHeader(
       'Agent Grounding',
       '🧠',
@@ -77,7 +52,7 @@ const agentGroundingConfig = {
       renderToolScoreFooter(score);
     }
   },
-};
+});
 
 export function defineAgentGroundingCommand(
   program: import('commander').Command

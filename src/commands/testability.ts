@@ -8,6 +8,7 @@ import {
   renderSafetyRating,
   renderToolScoreFooter,
   chalk,
+  createStandardToolConfig,
 } from './shared/command-builder';
 
 interface TestabilityOptions {
@@ -19,43 +20,18 @@ interface TestabilityOptions {
   score?: boolean;
 }
 
-const testabilityConfig = {
-  defaults: {
-    rootDir: '',
-    minCoverageRatio: 0.3,
-    include: undefined,
-    exclude: undefined,
-    output: { format: 'console', file: undefined },
-  },
-  getCliOptions: (opts: TestabilityOptions) => ({
+const testabilityConfig = createStandardToolConfig<TestabilityOptions>({
+  toolName: 'testability-index',
+  importPath: '@aiready/testability',
+  analyzeFnName: 'analyzeTestability',
+  scoreFnName: 'calculateTestabilityScore',
+  defaults: { minCoverageRatio: 0.3 },
+  getCliOptions: (opts) => ({
     minCoverageRatio: opts.minCoverage
       ? parseFloat(opts.minCoverage)
       : undefined,
   }),
-  importTool: async () => {
-    const tool = await import('@aiready/testability');
-    return {
-      analyze: tool.analyzeTestability,
-      generateSummary: (report: any) => report.summary,
-      calculateScore: (data: any) => {
-        const score = tool.calculateTestabilityScore(data);
-        return {
-          ...score,
-          toolName: 'testability-index',
-          rawMetrics: data,
-          factors: [],
-          recommendations: (score.recommendations || []).map(
-            (action: string) => ({
-              action,
-              estimatedImpact: 10,
-              priority: 'medium' as const,
-            })
-          ),
-        };
-      },
-    };
-  },
-  renderConsole: ({ results, summary, score }: any) => {
+  render: ({ results, summary, score }) => {
     renderToolHeader('Testability', '🧪', score?.score || 0, summary.rating);
     renderSafetyRating(summary.aiChangeSafetyRating);
 
@@ -78,7 +54,7 @@ const testabilityConfig = {
       renderToolScoreFooter(score);
     }
   },
-};
+});
 
 export function defineTestabilityCommand(program: import('commander').Command) {
   defineToolCommand(program, {
