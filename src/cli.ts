@@ -24,6 +24,7 @@ import {
   REMEDIATE_HELP_TEXT,
   bugAction,
   BUG_HELP_TEXT,
+  defineValidateCommand,
 } from './commands';
 import { getDirname } from '@aiready/core';
 

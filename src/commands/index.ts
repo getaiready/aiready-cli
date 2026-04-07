@@ -29,3 +29,4 @@ export { contractEnforcementAction } from './contract-enforcement';
 export { uploadAction, UPLOAD_HELP_TEXT } from './upload';
 export { bugAction, BUG_HELP_TEXT } from './bug';
 export { remediateAction, REMEDIATE_HELP_TEXT } from './remediate';
+export { defineValidateCommand } from './validate';
