@@ -7,13 +7,52 @@ import type { ToolScoringOutput } from '@aiready/core';
 import { buildToolScoringOutput } from '../../utils/helpers';
 import { runConfiguredToolAction } from './configured-tool-action';
 
-interface DocDriftOptions {
-  staleMonths?: number;
+interface BaseToolOptions {
   include?: string;
   exclude?: string;
   output?: string;
   outputFile?: string;
   score?: boolean;
+}
+
+const StandardRatingColors: Record<string, (s: string) => string> = {
+  minimal: chalk.green,
+  excellent: chalk.green,
+  low: chalk.cyan,
+  good: chalk.blueBright,
+  moderate: chalk.yellow,
+  high: chalk.red,
+  poor: chalk.red,
+  severe: chalk.bgRed.white,
+  hazardous: chalk.bgRed.white,
+};
+
+function renderStandardToolResult(
+  label: string,
+  icon: string,
+  report: any,
+  scoring: ToolScoringOutput,
+  issueLabel: string,
+  successMsg: string,
+  isInverseScore: boolean = false
+) {
+  const { summary } = report;
+  const color = StandardRatingColors[summary.rating] ?? chalk.white;
+  const displayScore = isInverseScore ? 100 - scoring.score : scoring.score;
+
+  console.log(
+    `  ${icon} ${label}:  ${chalk.bold(displayScore + '/100' + (isInverseScore ? ' health' : ''))} (${color(summary.rating)}${isInverseScore ? ' risk' : ''})`
+  );
+
+  if (report.issues && report.issues.length > 0) {
+    console.log(chalk.dim(`     Found ${report.issues.length} ${issueLabel}.`));
+  } else if (report.issues) {
+    console.log(chalk.dim(`     ${successMsg}`));
+  }
+}
+
+interface DocDriftOptions extends BaseToolOptions {
+  staleMonths?: number;
 }
 
 export async function docDriftAction(
@@ -30,37 +69,21 @@ export async function docDriftAction(
     }),
     score: (toolReport): ToolScoringOutput =>
       buildToolScoringOutput('doc-drift', toolReport),
-    render: (report, scoring) => {
-      const { summary } = report;
-      const ratingColors: Record<string, (s: string) => string> = {
-        minimal: chalk.green,
-        low: chalk.cyan,
-        moderate: chalk.yellow,
-        high: chalk.red,
-        severe: chalk.bgRed.white,
-      };
-      const color = ratingColors[summary.rating] ?? chalk.white;
-      console.log(
-        `  📝 Documentation Drift:  ${chalk.bold(100 - scoring.score + '/100 health')} (${color(summary.rating)} risk)`
-      );
-      if (report.issues.length > 0) {
-        console.log(
-          chalk.dim(`     Found ${report.issues.length} drift issues.`)
-        );
-      } else {
-        console.log(chalk.dim(`     No documentation drift detected.`));
-      }
-    },
+    render: (report, scoring) =>
+      renderStandardToolResult(
+        'Documentation Drift',
+        '📝',
+        report,
+        scoring,
+        'drift issues',
+        'No documentation drift detected.',
+        true
+      ),
   });
 }
 
-interface DepsHealthOptions {
+interface DepsHealthOptions extends BaseToolOptions {
   trainingCutoffYear?: number;
-  include?: string;
-  exclude?: string;
-  output?: string;
-  outputFile?: string;
-  score?: boolean;
 }
 
 export async function depsHealthAction(
@@ -78,39 +101,20 @@ export async function depsHealthAction(
     }),
     score: (toolReport): ToolScoringOutput =>
       buildToolScoringOutput('dependency-health', toolReport),
-    render: (report, scoring) => {
-      const { summary } = report;
-      const ratingColors: Record<string, (s: string) => string> = {
-        excellent: chalk.green,
-        good: chalk.blueBright,
-        moderate: chalk.yellow,
-        poor: chalk.red,
-        hazardous: chalk.bgRed.white,
-      };
-      const color = ratingColors[summary.rating] ?? chalk.white;
-      console.log(
-        `  📦 Dependency Health:  ${chalk.bold(scoring.score + '/100 health')} (${color(summary.rating)})`
-      );
-      if (report.issues.length > 0) {
-        console.log(
-          chalk.dim(`     Found ${report.issues.length} dependency issues.`)
-        );
-      } else {
-        console.log(
-          chalk.dim(`     Dependencies look healthy for AI assistance.`)
-        );
-      }
-    },
+    render: (report, scoring) =>
+      renderStandardToolResult(
+        'Dependency Health',
+        '📦',
+        report,
+        scoring,
+        'dependency issues',
+        'Dependencies look healthy for AI assistance.'
+      ),
   });
 }
 
-interface AiSignalClarityOptions {
+interface AiSignalClarityOptions extends BaseToolOptions {
   minSeverity?: string;
-  include?: string;
-  exclude?: string;
-  output?: string;
-  outputFile?: string;
-  score?: boolean;
 }
 
 export async function aiSignalClarityAction(
@@ -128,18 +132,15 @@ export async function aiSignalClarityAction(
     }),
     score: (toolReport) => calculateAiSignalClarityScore(toolReport),
     render: (report, scoring) => {
-      const { summary } = report;
-      const ratingColors: Record<string, (s: string) => string> = {
-        minimal: chalk.green,
-        low: chalk.cyan,
-        moderate: chalk.yellow,
-        high: chalk.red,
-        severe: chalk.bgRed.white,
-      };
-      const color = ratingColors[summary.rating] ?? chalk.white;
-      console.log(
-        `  🧠 AI Signal Clarity:  ${chalk.bold(scoring.score + '/100')} (${color(summary.rating)})`
+      renderStandardToolResult(
+        'AI Signal Clarity',
+        '🧠',
+        report,
+        scoring,
+        '',
+        ''
       );
+      const { summary } = report;
       console.log(`     Top Risk: ${chalk.italic(summary.topRisk)}`);
       if (summary.totalSignals > 0) {
         console.log(
