@@ -148,9 +148,6 @@ export async function contractEnforcementAction(
   const { executeToolAction } = await import('./scan-helpers');
 
   return await executeToolAction(directory, options, {
-    toolName: 'contract-enforcement',
-    label: 'Contract enforcement analysis',
-    emoji: '🛡️',
     ...contractEnforcementConfig,
   });
 }
