@@ -32,10 +32,10 @@ vi.mock('@aiready/core', async (importOriginal) => {
 
 describe('AI Signal Clarity CLI Action', () => {
   it('should run analysis and return scoring', async () => {
-    const result = await aiSignalClarityAction('.', {
+    const result = (await aiSignalClarityAction('.', {
       output: 'json',
       score: true,
-    });
+    })) as any;
     expect(result?.scoring?.score).toBe(85);
   });
 });

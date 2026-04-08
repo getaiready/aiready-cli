@@ -26,7 +26,10 @@ vi.mock('@aiready/core', async (importOriginal) => {
 
 describe('Deps Health CLI Action', () => {
   it('should run analysis and return scoring', async () => {
-    const result = await depsHealthAction('.', { output: 'json', score: true });
+    const result = (await depsHealthAction('.', {
+      output: 'json',
+      score: true,
+    })) as any;
     expect(result?.scoring?.score).toBe(90);
   });
 });
