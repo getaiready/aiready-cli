@@ -140,6 +140,32 @@ export function defineToolCommand<
   });
 }
 
+/**
+ * Higher-level utility to define a standard tool command in one call.
+ * Combines StandardToolConfig with CLI command metadata.
+ */
+export function defineStandardTool<TOptions extends CommonToolOptions>(
+  program: Command,
+  config: StandardToolConfig<any> & {
+    name: string;
+    description: string;
+    options?: CommandOption[];
+    helpText?: string;
+  }
+): void {
+  const actionConfig = createStandardToolConfig(config);
+  defineToolCommand(program, {
+    name: config.name,
+    description: config.description,
+    toolName: config.toolName,
+    label: config.label,
+    emoji: config.emoji,
+    options: config.options,
+    helpText: config.helpText,
+    actionConfig,
+  });
+}
+
 // Re-export rendering utilities for convenience
 export {
   renderSubSection,
@@ -169,6 +195,11 @@ export interface StandardToolConfig<TOptions = Record<string, unknown>> {
     score?: ToolScoringOutput;
     finalOptions: TOptions;
   }) => void;
+  /** Custom score calculation if simple scoreFnName is not enough */
+  calculateScore?: (
+    data: unknown,
+    resultsCount?: number
+  ) => ToolScoringOutput | Promise<ToolScoringOutput>;
 }
 
 /**
@@ -244,7 +275,10 @@ export function createStandardToolConfig<TOptions = any>(
             return report.summary || report;
           }
         },
-        calculateScore: (data: any, resultsCount?: number) => {
+        calculateScore: async (data: any, resultsCount?: number) => {
+          if (config.calculateScore) {
+            return await config.calculateScore(data, resultsCount);
+          }
           const scoreFn = config.scoreFnName
             ? tool[config.scoreFnName]
             : undefined;

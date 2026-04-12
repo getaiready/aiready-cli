@@ -9,12 +9,12 @@ import { loadConfig, mergeConfigWithDefaults } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
 
 /**
- * Warn if graph caps may be exceeded for visualization.
+ * Print warnings if graph caps may be exceeded for visualization.
  *
  * @param report - The combined analysis report.
  * @param dirPath - Root directory to look for configuration.
  */
-export async function warnIfGraphCapExceeded(report: any, dirPath: string) {
+export async function printGraphCapWarnings(report: any, dirPath: string) {
   try {
     // Use dynamic import and loadConfig to get the raw visualizer config
     // Use dynamic import instead of require
@@ -153,13 +153,13 @@ export function buildToolScoringOutput(
 }
 
 /**
- * Load config and apply tool-level defaults.
+ * Creates configuration by applying tool-level defaults.
  *
  * @param directory - Directory to search for config.
  * @param defaults - Tool-specific default values.
  * @returns Merged configuration with tool defaults.
  */
-export async function loadMergedToolConfig<T extends Record<string, unknown>>(
+export async function createMergedToolConfig<T extends Record<string, unknown>>(
   directory: string,
   defaults: T
 ): Promise<T & Record<string, unknown>> {
@@ -206,7 +206,10 @@ export async function runConfiguredToolCommand<TReport, TScoring>(params: {
   ) => Record<string, unknown>;
   score: (report: TReport) => TScoring;
 }): Promise<{ report: TReport; scoring: TScoring }> {
-  const merged = await loadMergedToolConfig(params.directory, params.defaults);
+  const merged = await createMergedToolConfig(
+    params.directory,
+    params.defaults
+  );
   const report = await params.analyze(
     buildCommonScanOptions(
       params.directory,

@@ -2,69 +2,34 @@
  * Testability command - Analyze test coverage and testability
  */
 
+import { type Command } from 'commander';
 import {
-  defineToolCommand,
+  defineStandardTool,
   chalk,
-  createStandardToolConfig,
   renderStandardSummary,
+  type CommonToolOptions,
 } from './shared/command-builder';
 
-interface TestabilityOptions {
+export { testabilityAction } from './shared/standard-tool-actions';
+
+interface TestabilityOptions extends CommonToolOptions {
   minCoverage?: string;
-  include?: string;
-  exclude?: string;
-  output?: string;
-  outputFile?: string;
-  score?: boolean;
 }
 
-const testabilityConfig = createStandardToolConfig<TestabilityOptions>({
-  toolName: 'testability-index',
-  label: 'Testability Analysis',
-  emoji: '🧪',
-  importPath: '@aiready/testability',
-  analyzeFnName: 'analyzeTestability',
-  scoreFnName: 'calculateTestabilityScore',
-  defaults: { minCoverageRatio: 0.3 },
-  getCliOptions: (opts) => ({
-    minCoverageRatio: opts.minCoverage
-      ? parseFloat(opts.minCoverage)
-      : undefined,
-  }),
-  renderConsole: ({ results, summary, score, elapsedTime }) => {
-    const rawData = (results as Record<string, any>).rawData || results;
-    const summaryRecord = summary as Record<string, any>;
-    const coverage = Math.round(
-      ((summaryRecord.coverageRatio as number) || 0) * 100
-    );
-    const metrics = `Coverage: ${coverage}%  (${rawData.testFiles} test / ${rawData.sourceFiles} source files)`;
-
-    renderStandardSummary({
-      label: 'Testability',
-      emoji: '🧪',
-      summary: summaryRecord,
-      score,
-      elapsedTime,
-      metrics,
-    });
-
-    if (summaryRecord.aiChangeSafetyRating === 'blind-risk') {
-      console.log(
-        chalk.red.bold(
-          '\n     ⚠️  NO TESTS — AI changes to this codebase are completely unverifiable!\n'
-        )
-      );
-    }
-  },
-});
-
-export function defineTestabilityCommand(program: import('commander').Command) {
-  defineToolCommand(program, {
+/**
+ * Define the testability command.
+ */
+export function defineTestabilityCommand(program: Command) {
+  defineStandardTool(program, {
     name: 'testability',
     description: 'Analyze test coverage and AI change safety',
     toolName: 'testability-index',
     label: 'Testability Analysis',
     emoji: '🧪',
+    importPath: '@aiready/testability',
+    analyzeFnName: 'analyzeTestability',
+    scoreFnName: 'calculateTestabilityScore',
+    defaults: { minCoverageRatio: 0.3 },
     options: [
       {
         flags: '--min-coverage <number>',
@@ -72,17 +37,35 @@ export function defineTestabilityCommand(program: import('commander').Command) {
         defaultValue: '0.3',
       },
     ],
-    actionConfig: testabilityConfig,
-  });
-}
+    getCliOptions: (opts: TestabilityOptions) => ({
+      minCoverageRatio: opts.minCoverage
+        ? parseFloat(opts.minCoverage)
+        : undefined,
+    }),
+    renderConsole: ({ results, summary, score, elapsedTime }) => {
+      const rawData = (results as Record<string, any>).rawData || results;
+      const summaryRecord = summary as Record<string, any>;
+      const coverage = Math.round(
+        ((summaryRecord.coverageRatio as number) || 0) * 100
+      );
+      const metrics = `Coverage: ${coverage}%  (${rawData.testFiles} test / ${rawData.sourceFiles} source files)`;
 
-export async function testabilityAction(
-  directory: string,
-  options: TestabilityOptions
-) {
-  const { executeToolAction } = await import('./scan-helpers');
+      renderStandardSummary({
+        label: 'Testability',
+        emoji: '🧪',
+        summary: summaryRecord,
+        score,
+        elapsedTime,
+        metrics,
+      });
 
-  return await executeToolAction(directory, options, {
-    ...testabilityConfig,
+      if (summaryRecord.aiChangeSafetyRating === 'blind-risk') {
+        console.log(
+          chalk.red.bold(
+            '\n     ⚠️  NO TESTS — AI changes to this codebase are completely unverifiable!\n'
+          )
+        );
+      }
+    },
   });
 }

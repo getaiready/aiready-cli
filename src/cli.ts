@@ -6,7 +6,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import {
-  defineScanCommand,
+  setupScanCommand,
   defineBaselineCommand,
   initAction,
   definePatternsCommand,
@@ -121,7 +121,7 @@ LANDING: ${CLI_CONSTANTS.LANDING_URL}`
   );
 
 // Core analysis commands
-defineScanCommand(program);
+setupScanCommand(program);
 defineBaselineCommand(program);
 definePatternsCommand(program);
 defineContextCommand(program);

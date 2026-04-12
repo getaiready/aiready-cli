@@ -4,19 +4,16 @@
 
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { writeFileSync, readFileSync, existsSync } from 'fs';
-import { resolve as resolvePath, join, relative } from 'path';
+import { writeFileSync } from 'fs';
+import { resolve as resolvePath } from 'path';
 import {
   handleJSONOutput,
   handleCLIError,
   resolveOutputPath,
   getRepoMetadata,
-  emitIssuesAsAnnotations,
-  Severity,
   safeJsonStringify,
 } from '@aiready/core';
-import type { UnifiedReport, ScoringResult } from '@aiready/core';
-import { getReportTimestamp, warnIfGraphCapExceeded } from '../utils';
+import { getReportTimestamp, printGraphCapWarnings } from '../utils';
 import {
   mapToUnifiedReport,
   printOverallScore,
@@ -26,6 +23,8 @@ import { uploadAction } from './upload';
 import { type ScanOptions } from './scan-helpers';
 import { resolveScanConfig } from './scan-config';
 import { runUnifiedScan } from './scan-orchestrator';
+import { applyGatingRules, handleGatekeeper } from './scan-gatekeeper';
+import { printBugReportSuggestion } from './scan-reporting-helpers';
 
 /**
  * CLI action handler for the "scan" command.
@@ -34,7 +33,10 @@ import { runUnifiedScan } from './scan-orchestrator';
  * @param directory - The directory to analyze (defaults to ".")
  * @param options - CLI options from commander
  */
-export async function scanAction(directory: string, options: ScanOptions) {
+export async function performScanAction(
+  directory: string,
+  options: ScanOptions
+) {
   console.log(chalk.blue('🚀 Starting AIReady unified analysis...\n'));
 
   const startTime = Date.now();
@@ -54,23 +56,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
     );
 
     // 3. Post-processing & Reporting
-    console.log(
-      chalk.dim(
-        '\n──────────────────────────────────────────────────────────────────'
-      )
-    );
-    console.log(chalk.dim('💬 Found a bug or have a metric idea?'));
-    console.log(chalk.dim('👉 Copy/paste this to your AI agent:'));
-    console.log(
-      chalk.cyan(
-        `   "Any feedback for the tools? Please use 'aiready bug' to report ❤️"`
-      )
-    );
-    console.log(
-      chalk.dim(
-        '──────────────────────────────────────────────────────────────────'
-      )
-    );
+    printBugReportSuggestion();
 
     const outputData = {
       ...mapToUnifiedReport(results, scoringResult),
@@ -115,7 +101,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
       });
     }
 
-    await warnIfGraphCapExceeded(outputData, resolvedDir);
+    await printGraphCapWarnings(outputData, resolvedDir);
 
     // 6. Final Scoring Summary
     if (scoringResult) {
@@ -162,181 +148,6 @@ export async function scanAction(directory: string, options: ScanOptions) {
   }
 }
 
-/**
- * Applies baseline filtering and severity overrides to the report.
- */
-function applyGatingRules(
-  report: UnifiedReport,
-  options: ScanOptions,
-  finalOptions: Record<string, unknown>,
-  resolvedDir: string
-) {
-  // 1. Load Baseline if requested
-  const baselineHashes = new Set<string>();
-  if (options.baseline) {
-    const baselinePath = join(resolvedDir, '.aiready', 'baseline.json');
-    if (existsSync(baselinePath)) {
-      try {
-        const baseline = JSON.parse(readFileSync(baselinePath, 'utf-8'));
-        if (baseline.results) {
-          baseline.results.forEach((fileRes: any) => {
-            const relPath = relative(
-              resolvedDir,
-              resolvePath(resolvedDir, fileRes.fileName || fileRes.filePath)
-            );
-            if (fileRes.issues) {
-              fileRes.issues.forEach((issue: any) => {
-                baselineHashes.add(
-                  getIssueHash(issue, issue.toolId || 'unknown', relPath)
-                );
-              });
-            }
-          });
-        }
-        console.log(
-          chalk.dim(
-            `   Loaded baseline with ${baselineHashes.size} existing issues to filter.`
-          )
-        );
-      } catch (err) {
-        console.warn(
-          chalk.yellow(
-            `   Warning: Failed to load baseline from ${baselinePath}`
-          )
-        );
-      }
-    } else {
-      console.warn(
-        chalk.yellow(`   Warning: Baseline file not found at ${baselinePath}`)
-      );
-    }
-  }
-
-  // 2. Apply Severity Overrides and Filter Baseline
-  let criticalCount = 0;
-  let majorCount = 0;
-  let minorCount = 0;
-
-  report.results.forEach((fileRes: Record<string, any>) => {
-    const relPath = relative(
-      resolvedDir,
-      resolvePath(resolvedDir, fileRes.fileName || fileRes.filePath)
-    );
-    const filteredIssues = (fileRes.issues || []).filter((issue: any) => {
-      // a. Apply Severity Overrides
-      const toolId = issue.toolId || 'unknown';
-      const category = issue.category || '';
-      const toolConfig =
-        (finalOptions.tools as Record<string, any>)?.[toolId] || {};
-      const overrides =
-        (toolConfig.severityOverrides as Record<string, any>) || {};
-
-      if (overrides[category]) {
-        issue.severity = overrides[category];
-      }
-
-      // b. Baseline Filtering
-      if (options.baseline) {
-        const hash = getIssueHash(issue, toolId, relPath);
-        if (baselineHashes.has(hash)) {
-          return false; // Skip existing issue
-        }
-      }
-      return true;
-    });
-
-    fileRes.issues = filteredIssues;
-    filteredIssues.forEach((i: any) => {
-      const s = String(i.severity || '').toLowerCase();
-      if (s === 'critical') criticalCount++;
-      else if (s === 'major') majorCount++;
-      else if (s === 'minor') minorCount++;
-    });
-  });
-
-  // Update summary counts
-  report.summary.criticalIssues = criticalCount;
-  report.summary.majorIssues = majorCount;
-  report.summary.minorIssues = minorCount;
-
-  if (options.baseline && baselineHashes.size > 0) {
-    const totalRemaining = criticalCount + majorCount + minorCount;
-    console.log(
-      chalk.green(
-        `   Baseline filtering applied: ${totalRemaining} new issues remaining.`
-      )
-    );
-  }
-}
-
-/**
- * Handles threshold checks and CI failures based on scan results.
- */
-async function handleGatekeeper(
-  outputData: UnifiedReport,
-  scoringResult: ScoringResult | undefined,
-  options: ScanOptions,
-  finalOptions: Record<string, unknown>,
-  resolvedDir: string
-) {
-  if (!scoringResult) return;
-
-  const threshold = options.threshold
-    ? parseInt(options.threshold)
-    : (finalOptions.threshold as number | undefined);
-
-  const isCI = options.ci ?? process.env.CI === 'true';
-
-  // AIReady is a quality gate. If a threshold is defined, it should be enforced by default
-  // unless explicitly disabled with --fail-on none.
-  const defaultFailOn = isCI || threshold !== undefined ? 'critical' : 'none';
-
-  const failOnLevel =
-    options.failOn ??
-    (finalOptions.failOn as string | undefined) ??
-    defaultFailOn;
-
-  let shouldFail = false;
-  let failReason = '';
-
-  // Emit annotations only in CI
-  if (isCI && outputData.results && outputData.results.length > 0) {
-    console.log(
-      chalk.cyan(
-        `\n📝 Emitting GitHub Action annotations for ${outputData.results.length} issues...`
-      )
-    );
-    emitIssuesAsAnnotations(outputData.results);
-  }
-
-  if (failOnLevel !== 'none') {
-    if (threshold && scoringResult.overall < threshold) {
-      shouldFail = true;
-      failReason = `Score ${scoringResult.overall} < threshold ${threshold}`;
-    }
-  }
-
-  if (failOnLevel !== 'none' && !shouldFail) {
-    if (failOnLevel === 'critical' && outputData.summary.criticalIssues > 0) {
-      shouldFail = true;
-      failReason = `Found ${outputData.summary.criticalIssues} critical issues`;
-    } else if (
-      failOnLevel === 'major' &&
-      outputData.summary.criticalIssues + outputData.summary.majorIssues > 0
-    ) {
-      shouldFail = true;
-      failReason = `Found ${outputData.summary.criticalIssues} critical and ${outputData.summary.majorIssues} major issues`;
-    }
-  }
-
-  if (shouldFail) {
-    console.log(chalk.red(`\n🚫 SCAN FAILED: ${failReason}`));
-    process.exit(1);
-  } else {
-    console.log(chalk.green('\n✅ SCAN PASSED'));
-  }
-}
-
 export const SCAN_HELP_TEXT = `
 Run a comprehensive AI-readiness scan of your codebase.
 
@@ -360,9 +171,11 @@ ${chalk.bold('CI/CD Integration:')}
 `;
 
 /**
- * Define the scan command.
+ * Define the scan command in the commander program.
+ *
+ * @param program - The Commander program instance to register the command with.
  */
-export function defineScanCommand(program: Command) {
+export function setupScanCommand(program: Command) {
   program
     .command('scan')
     .description(
@@ -414,24 +227,6 @@ export function defineScanCommand(program: Command) {
     .option('--verbose', 'Show verbose output for debugging')
     .addHelpText('after', SCAN_HELP_TEXT)
     .action(async (directory, options) => {
-      await scanAction(directory, options);
+      await performScanAction(directory, options);
     });
-}
-
-/**
- * Generate a unique hash for an issue to identify it across scans.
- * Excludes line numbers to handle code shifts.
- */
-function getIssueHash(
-  issue: any,
-  toolId: string,
-  relativePath: string
-): string {
-  const parts = [
-    toolId,
-    issue.category || issue.type || '',
-    relativePath,
-    (issue.message || '').trim().toLowerCase(),
-  ];
-  return parts.join('|');
 }

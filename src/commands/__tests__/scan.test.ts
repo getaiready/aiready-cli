@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { scanAction } from '../scan';
+import { performScanAction } from '../scan';
 import * as core from '@aiready/core';
 import * as index from '../../index';
 import * as upload from '../upload';
@@ -95,7 +95,7 @@ describe('Scan CLI Action', () => {
   });
 
   it('runs standard scan with scoring', async () => {
-    await scanAction('.', { score: true });
+    await performScanAction('.', { score: true });
     expect(index.analyzeUnified).toHaveBeenCalled();
     expect(index.scoreUnified).toHaveBeenCalled();
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -104,7 +104,7 @@ describe('Scan CLI Action', () => {
   });
 
   it('handles profiles correctly', async () => {
-    await scanAction('.', { profile: 'agentic' });
+    await performScanAction('.', { profile: 'agentic' });
     expect(core.loadMergedConfig).toHaveBeenCalled();
   });
 
@@ -112,7 +112,7 @@ describe('Scan CLI Action', () => {
     vi.mocked(readFileSync).mockReturnValue(
       JSON.stringify({ scoring: { overall: 70 } })
     );
-    await scanAction('.', { compareTo: 'prev.json', score: true });
+    await performScanAction('.', { compareTo: 'prev.json', score: true });
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('Trend: +10')
     );
@@ -123,7 +123,7 @@ describe('Scan CLI Action', () => {
       .spyOn(process, 'exit')
       .mockImplementation((() => {}) as any);
 
-    await scanAction('.', { ci: true, failOn: 'critical', score: true });
+    await performScanAction('.', { ci: true, failOn: 'critical', score: true });
 
     expect(exitSpy).toHaveBeenCalledWith(1);
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -137,7 +137,7 @@ describe('Scan CLI Action', () => {
   });
 
   it('handles upload flag', async () => {
-    await scanAction('.', { upload: true, apiKey: 'test-key' });
+    await performScanAction('.', { upload: true, apiKey: 'test-key' });
     expect(upload.uploadAction).toHaveBeenCalled();
   });
 
@@ -147,7 +147,7 @@ describe('Scan CLI Action', () => {
       output: { format: 'json', file: 'out.json' },
       rootDir: '/test',
     });
-    await scanAction('.', {});
+    await performScanAction('.', {});
     expect(core.handleJSONOutput).toHaveBeenCalled();
   });
 
@@ -163,7 +163,7 @@ describe('Scan CLI Action', () => {
       rootDir: '/test',
     });
 
-    await scanAction('.', { score: true });
+    await performScanAction('.', { score: true });
 
     expect(exitSpy).not.toHaveBeenCalled();
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -184,7 +184,7 @@ describe('Scan CLI Action', () => {
       rootDir: '/test',
     });
 
-    await scanAction('.', { score: true });
+    await performScanAction('.', { score: true });
 
     expect(exitSpy).toHaveBeenCalledWith(1);
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -205,7 +205,7 @@ describe('Scan CLI Action', () => {
       rootDir: '/test',
     });
 
-    await scanAction('.', { score: true });
+    await performScanAction('.', { score: true });
 
     expect(exitSpy).toHaveBeenCalledWith(1);
     expect(consoleSpy).toHaveBeenCalledWith(

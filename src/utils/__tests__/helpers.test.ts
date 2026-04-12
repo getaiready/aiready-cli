@@ -3,10 +3,10 @@ import { getReportTimestamp, truncateArray } from '..';
 import {
   generateMarkdownReport,
   buildToolScoringOutput,
-  loadMergedToolConfig,
+  createMergedToolConfig,
   buildCommonScanOptions,
   runConfiguredToolCommand,
-  warnIfGraphCapExceeded,
+  printGraphCapWarnings,
 } from '../helpers';
 
 vi.mock('@aiready/core', () => ({
@@ -101,10 +101,10 @@ describe('buildToolScoringOutput', () => {
   });
 });
 
-describe('loadMergedToolConfig', () => {
+describe('createMergedToolConfig', () => {
   it('should load and merge tool config with defaults', async () => {
     const defaults = { maxDepth: 5, include: ['*.ts'] };
-    const result = await loadMergedToolConfig('/test/dir', defaults);
+    const result = await createMergedToolConfig('/test/dir', defaults);
 
     expect(result).toBeDefined();
     expect(result.maxDepth).toBe(5);
@@ -183,7 +183,7 @@ describe('runConfiguredToolCommand', () => {
   });
 });
 
-describe('warnIfGraphCapExceeded', () => {
+describe('printGraphCapWarnings', () => {
   let consoleSpy: any;
 
   beforeEach(() => {
@@ -196,7 +196,7 @@ describe('warnIfGraphCapExceeded', () => {
       context: [{ relatedFiles: [1, 2], dependencies: [1] }],
       patterns: [],
     };
-    await warnIfGraphCapExceeded(report, '/test');
+    await printGraphCapWarnings(report, '/test');
     // Should not print warning
     expect(consoleSpy).not.toHaveBeenCalled();
   });
@@ -214,7 +214,7 @@ describe('warnIfGraphCapExceeded', () => {
       context: Array(20).fill({ relatedFiles: [1], dependencies: [1] }),
       patterns: [],
     };
-    await warnIfGraphCapExceeded(report, '/test');
+    await printGraphCapWarnings(report, '/test');
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('Graph may be truncated')
     );
@@ -238,7 +238,7 @@ describe('warnIfGraphCapExceeded', () => {
       ],
       patterns: [],
     };
-    await warnIfGraphCapExceeded(report, '/test');
+    await printGraphCapWarnings(report, '/test');
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('Graph may be truncated')
     );

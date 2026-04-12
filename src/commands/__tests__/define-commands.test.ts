@@ -12,7 +12,7 @@ const fakeProgram = {
 describe('Define command registrations', () => {
   it('should define scan command without throwing', async () => {
     const mod = await import('../scan');
-    expect(() => mod.defineScanCommand(fakeProgram)).not.toThrow();
+    expect(() => mod.setupScanCommand(fakeProgram)).not.toThrow();
   }, 20000);
 
   it('should define patterns command without throwing', async () => {

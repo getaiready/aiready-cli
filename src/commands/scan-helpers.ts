@@ -64,7 +64,7 @@ export interface ToolActionConfig<TResults, TSummary, TOptions> {
     calculateScore?: (
       data: unknown,
       resultsCount?: number
-    ) => ToolScoringOutput;
+    ) => ToolScoringOutput | Promise<ToolScoringOutput>;
   }>;
   renderConsole: (data: {
     results: TResults;
@@ -141,7 +141,7 @@ export async function executeToolAction<
         (resultsAny.length as number) ||
         ((resultsAny.summary as any)?.filesAnalyzed as number) ||
         ((resultsAny.summary as any)?.totalFiles as number);
-      toolScore = calculateScore(scoreData, filesCount);
+      toolScore = await calculateScore(scoreData, filesCount);
     }
 
     // 5. Handle output
