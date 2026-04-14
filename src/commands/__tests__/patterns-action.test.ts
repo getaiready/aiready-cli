@@ -135,7 +135,7 @@ describe('Patterns Action', () => {
 
     expect(spy).toHaveBeenCalled();
     const config = spy.mock.calls[0][1];
-    const cliOpts = config.getCliOptions({
+    const cliOpts = config.getCliOptions!({
       similarity: '0.6',
       minLines: '10',
       maxCandidates: '4',

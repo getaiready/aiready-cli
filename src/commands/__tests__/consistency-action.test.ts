@@ -237,7 +237,7 @@ describe('Consistency Action (mocked executeToolAction)', () => {
 
     expect(spy).toHaveBeenCalled();
     const config = spy.mock.calls[0][1];
-    const cliOpts = config.getCliOptions({
+    const cliOpts = config.getCliOptions!({
       naming: false,
       patterns: true,
       minSeverity: 'major',
