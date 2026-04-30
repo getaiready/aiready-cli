@@ -38,7 +38,7 @@ export interface CommonToolOptions extends BaseCommandOptions {
  * Configuration for defining a tool command
  */
 export interface ToolCommandConfig<
-  TOptions extends CommonToolOptions = CommonToolOptions,
+  _TOptions extends CommonToolOptions = CommonToolOptions,
 > {
   /** Command name (e.g., 'context', 'patterns') */
   name: string;
@@ -60,7 +60,7 @@ export interface ToolCommandConfig<
     'toolName' | 'label' | 'emoji'
   >;
   /** Custom action handler (optional, overrides default actionConfig-based handler) */
-  customAction?: (directory: string, options: TOptions) => Promise<any>;
+  customAction?: (directory: string, options: _TOptions) => Promise<any>;
 }
 
 /**
@@ -102,8 +102,8 @@ function addCommonOptions(cmd: Command): Command {
  * @param config - Tool command configuration
  */
 export function defineToolCommand<
-  TOptions extends CommonToolOptions = CommonToolOptions,
->(program: Command, config: ToolCommandConfig<TOptions>): void {
+  _TOptions extends CommonToolOptions = CommonToolOptions,
+>(program: Command, config: ToolCommandConfig<_TOptions>): void {
   let cmd = program
     .command(config.name)
     .description(config.description)
@@ -125,7 +125,7 @@ export function defineToolCommand<
   }
 
   // Set up action handler
-  cmd.action(async (directory: string, options: TOptions) => {
+  cmd.action(async (directory: string, options: _TOptions) => {
     const { executeToolAction } = await import('../scan-helpers');
     if (config.customAction) {
       await config.customAction(directory, options);
@@ -144,7 +144,7 @@ export function defineToolCommand<
  * Higher-level utility to define a standard tool command in one call.
  * Combines StandardToolConfig with CLI command metadata.
  */
-export function defineStandardTool<TOptions extends CommonToolOptions>(
+export function defineStandardTool<_TOptions extends CommonToolOptions>(
   program: Command,
   config: StandardToolConfig<any> & {
     name: string;

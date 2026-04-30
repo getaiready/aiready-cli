@@ -41,7 +41,7 @@ export function applyGatingRules(
             `   Loaded baseline with ${baselineHashes.size} existing issues to filter.`
           )
         );
-      } catch (err) {
+      } catch (_err) {
         console.warn(
           chalk.yellow(
             `   Warning: Failed to load baseline from ${baselinePath}`

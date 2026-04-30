@@ -6,7 +6,6 @@ import { testabilityAction } from '../commands/testability';
 import { agentGroundingAction } from '../commands/agent-grounding';
 import { bugAction } from '../commands/bug';
 import { remediateAction } from '../commands/remediate';
-import { visualizeAction } from '../commands/visualize';
 import { uploadAction } from '../commands/upload';
 import { executeToolAction } from '../commands/scan-helpers';
 import * as fs from 'fs';

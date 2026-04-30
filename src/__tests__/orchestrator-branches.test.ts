@@ -38,7 +38,7 @@ describe('UnifiedOrchestrator branch coverage', () => {
     const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const options = { tools: ['non-existent'], rootDir: '.' } as any;
 
-    const result = await orchestrator.analyze(options);
+    const _result = await orchestrator.analyze(options);
 
     expect(consoleWarn).toHaveBeenCalled();
     consoleWarn.mockRestore();

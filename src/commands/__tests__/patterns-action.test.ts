@@ -176,7 +176,7 @@ describe('Patterns Action', () => {
     await adapter.analyze({});
     expect(mockAnalyzePatterns).toHaveBeenCalled();
     const results = { results: [] };
-    const summary = adapter.generateSummary(results);
+    const _summary = adapter.generateSummary(results);
     expect(mockGenerateSummary).toHaveBeenCalledWith(results);
   });
 

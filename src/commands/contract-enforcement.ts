@@ -3,17 +3,10 @@
  */
 
 import { type Command } from 'commander';
-import {
-  defineToolCommand,
-  type CommonToolOptions,
-} from './shared/command-builder';
+import { defineToolCommand } from './shared/command-builder';
 import { contractEnforcementConfig } from './shared/standard-tool-actions';
 
 export { contractEnforcementAction } from './shared/standard-tool-actions';
-
-interface ContractEnforcementOptions extends CommonToolOptions {
-  minChainDepth?: string;
-}
 
 /**
  * Define the contract enforcement command.

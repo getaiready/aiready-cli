@@ -3,8 +3,6 @@
  */
 
 import chalk from 'chalk';
-import { readFileSync } from 'fs';
-import { resolve as resolvePath } from 'path';
 import { calculateTokenBudget } from '@aiready/core';
 import { analyzeUnified, scoreUnified, type ScoringResult } from '../index';
 import {

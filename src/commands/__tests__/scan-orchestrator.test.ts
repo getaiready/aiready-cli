@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { runUnifiedScan } from '../scan-orchestrator';
 import * as index from '../../index';
 import * as core from '@aiready/core';
-import fs from 'fs';
 
 vi.mock('../../index', () => ({
   analyzeUnified: vi.fn(),

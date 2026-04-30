@@ -135,7 +135,7 @@ describe('ScoringOrchestrator', () => {
     } as any;
 
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const result = await orchestrator.score(results, {} as any);
+    const _result = await orchestrator.score(results, {} as any);
     expect(errSpy).toHaveBeenCalled();
     errSpy.mockRestore();
   });

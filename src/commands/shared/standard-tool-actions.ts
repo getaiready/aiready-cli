@@ -366,7 +366,7 @@ export const contractEnforcementConfig =
         })),
       };
     },
-    renderConsole: ({ results, summary, score, elapsedTime }) => {
+    renderConsole: ({ results: _results, summary, score, elapsedTime }) => {
       const summaryRecord = summary as Record<string, any>;
       const metrics = `Patterns: ${summaryRecord.totalDefensivePatterns} (${summaryRecord.defensiveDensity}/kLOC)`;
 
