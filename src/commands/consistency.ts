@@ -5,9 +5,9 @@
 import { type Command } from 'commander';
 import {
   defineStandardTool,
-  renderSubSection,
   chalk,
   renderStandardSummary,
+  renderIssues,
   type CommonToolOptions,
 } from './shared/command-builder';
 import type { Severity } from '@aiready/core';
@@ -80,43 +80,16 @@ export function defineConsistencyCommand(program: Command) {
       });
 
       if (summaryData.totalIssues > 0 && report.results) {
-        renderSubSection('Top Consistency Issues');
-        const sortedIssues = [...report.results]
-          .flatMap((file: any) =>
-            (file.issues || []).map((issue: any) => ({
-              ...issue,
-              file: file.fileName,
-            }))
-          )
-          .sort((a: any, b: any) => {
-            const levels: Record<string, number> = {
-              critical: 4,
-              major: 3,
-              minor: 2,
-              info: 1,
-            };
-            return (levels[b.severity] || 0) - (levels[a.severity] || 0);
-          })
-          .slice(0, 5);
+        const allIssues = [...report.results].flatMap((file: any) =>
+          (file.issues || []).map((issue: any) => ({
+            ...issue,
+            file: file.fileName,
+          }))
+        );
 
-        sortedIssues.forEach((issue: any) => {
-          const icon =
-            issue.severity === 'critical'
-              ? '🔴'
-              : issue.severity === 'major'
-                ? '🟡'
-                : '🔵';
-          const color =
-            issue.severity === 'critical'
-              ? chalk.red
-              : issue.severity === 'major'
-                ? chalk.yellow
-                : chalk.blue;
-
-          console.log(
-            `  ${icon} ${color(issue.severity.toUpperCase())}: ${chalk.white(issue.file)}${issue.line ? `:${issue.line}` : ''}`
-          );
-          console.log(`     ${issue.message}`);
+        renderIssues({
+          issues: allIssues,
+          title: 'Top Consistency Issues',
         });
       } else if (summaryData.totalIssues === 0) {
         console.log(

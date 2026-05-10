@@ -246,6 +246,61 @@ export function renderStandardSummary(params: {
 }
 
 /**
+ * Standard issue rendering for CLI tools.
+ */
+export function renderIssues(params: {
+  issues: any[];
+  title?: string;
+  maxIssues?: number;
+}) {
+  const { issues, title = 'Top Issues', maxIssues = 5 } = params;
+
+  if (issues.length === 0) return;
+
+  renderSubSection(title);
+
+  const sortedIssues = [...issues]
+    .sort((a: any, b: any) => {
+      const levels: Record<string, number> = {
+        critical: 4,
+        major: 3,
+        minor: 2,
+        info: 1,
+      };
+      return (levels[b.severity] || 0) - (levels[a.severity] || 0);
+    })
+    .slice(0, maxIssues);
+
+  sortedIssues.forEach((issue: any) => {
+    const icon =
+      issue.severity === 'critical'
+        ? '🔴'
+        : issue.severity === 'major'
+          ? '🟡'
+          : '🔵';
+    const color =
+      issue.severity === 'critical'
+        ? chalk.red
+        : issue.severity === 'major'
+          ? chalk.yellow
+          : chalk.blue;
+
+    const fileLoc = issue.file
+      ? `${chalk.white(issue.file)}${issue.line ? `:${issue.line}` : ''}`
+      : '';
+
+    const metadata = issue.metadata ? ` (${issue.metadata})` : '';
+
+    console.log(
+      `  ${icon} ${color(issue.severity.toUpperCase())}: ${fileLoc}${metadata}`
+    );
+    if (issue.message) {
+      console.log(`     ${issue.message}`);
+    }
+  });
+}
+
+/**
  * Creates a standard ToolActionConfig from a StandardToolConfig to reduce duplication.
  */
 export function createStandardToolConfig<TOptions = any>(

@@ -8,6 +8,7 @@ import {
   renderSubSection,
   renderToolScoreFooter,
   printTerminalHeader,
+  renderIssues,
   chalk,
   type CommonToolOptions,
 } from './shared/command-builder';
@@ -87,24 +88,12 @@ export function defineContextCommand(program: Command) {
       }
 
       if (summary.topExpensiveFiles && summary.topExpensiveFiles.length > 0) {
-        renderSubSection('Top Context-Expensive Files');
-        summary.topExpensiveFiles.slice(0, 5).forEach((file: any) => {
-          const icon =
-            file.severity === 'critical'
-              ? '🔴'
-              : file.severity === 'major'
-                ? '🟡'
-                : '🔵';
-          const color =
-            file.severity === 'critical'
-              ? chalk.red
-              : file.severity === 'major'
-                ? chalk.yellow
-                : chalk.blue;
-
-          console.log(
-            `  ${icon} ${color(file.severity.toUpperCase())}: ${chalk.white(file.file)} (${chalk.bold(file.contextBudget.toLocaleString())} tokens)`
-          );
+        renderIssues({
+          issues: summary.topExpensiveFiles.map((f: any) => ({
+            ...f,
+            metadata: `${chalk.bold(f.contextBudget.toLocaleString())} tokens`,
+          })),
+          title: 'Top Context-Expensive Files',
         });
       }
 

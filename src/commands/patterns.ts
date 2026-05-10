@@ -5,9 +5,8 @@
 import { type Command } from 'commander';
 import {
   defineStandardTool,
-  renderSubSection,
-  chalk,
   renderStandardSummary,
+  renderIssues,
   type CommonToolOptions,
 } from './shared/command-builder';
 
@@ -93,20 +92,19 @@ export function definePatternsCommand(program: Command) {
       });
 
       if ((summary.totalPatterns as number) > 0 && duplicates.length > 0) {
-        renderSubSection('Top Duplicate Patterns');
-        [...duplicates]
-          .sort((a, b) => (b.similarity || 0) - (a.similarity || 0))
-          .slice(0, 5)
-          .forEach((dup) => {
-            const sim = dup.similarity || 0;
-            const file1 = (dup.file1 || '').split('/').pop();
-            const file2 = (dup.file2 || '').split('/').pop();
-            const isHigh = sim > 0.9;
-            const icon = sim > 0.95 ? '🔴' : isHigh ? '🟡' : '🔵';
-            console.log(
-              `${icon} ${chalk.bold(file1)} ↔ ${chalk.bold(file2)} (${Math.round(sim * 100)}%)`
-            );
-          });
+        renderIssues({
+          issues: duplicates.map((dup: any) => ({
+            severity:
+              dup.similarity > 0.95
+                ? 'critical'
+                : dup.similarity > 0.9
+                  ? 'major'
+                  : 'minor',
+            file: `${dup.file1.split('/').pop()} ↔ ${dup.file2.split('/').pop()}`,
+            message: `${Math.round(dup.similarity * 100)}% similar code`,
+          })),
+          title: 'Top Duplicate Patterns',
+        });
       }
     },
   });
