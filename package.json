@@ -27,6 +27,7 @@
     "test": "vitest run",
     "lint": "eslint src",
     "clean": "rm -rf dist",
+    "preinstall": "mkdir -p dist && touch dist/cli.js",
     "prepublishOnly": "pnpm build",
     "type-check": "tsc --noEmit",
     "format-check": "prettier --check . --ignore-path ../../.prettierignore",
